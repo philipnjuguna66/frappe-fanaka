@@ -1,0 +1,191 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "format:REQ-{YYYY}-{MM}-{####}",
+ "creation": "2024-08-09 13:42:28.693354",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_nitw",
+  "items_column",
+  "items",
+  "section_break_lsuh",
+  "total_amount",
+  "column_break_bcdj",
+  "requisition_owner",
+  "column_break_vmiy",
+  "user_full_name",
+  "section_break_xksh",
+  "description",
+  "section_break_isqb",
+  "cost_center",
+  "paying_account",
+  "paying_date",
+  "reference",
+  "expense_account",
+  "payment_mode",
+  "section_break_eaue",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "column_break_bcdj",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "User",
+   "fieldname": "requisition_owner",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Requisition Owner",
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "section_break_xksh",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Text Editor",
+   "label": "Description"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "section_break_isqb",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "paying_account",
+   "fieldtype": "Link",
+   "label": "Paying Account",
+   "link_filters": "[[\"Account\",\"account_type\",\"=\",\"Bank\"]]",
+   "options": "Account"
+  },
+  {
+   "fieldname": "paying_date",
+   "fieldtype": "Date",
+   "label": "Paying Date"
+  },
+  {
+   "fieldname": "expense_account",
+   "fieldtype": "Link",
+   "label": "Expense Account",
+   "link_filters": "[[\"Account\",\"root_type\",\"=\",\"Expense\"],[\"Account\",\"disabled\",\"=\",0],[\"Account\",\"is_group\",\"=\",0]]",
+   "options": "Account"
+  },
+  {
+   "fieldname": "section_break_nitw",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "items_column",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "items",
+   "fieldtype": "Table",
+   "label": "Items",
+   "options": "Requisition Item"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "section_break_lsuh",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_vmiy",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Requisition",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fetch_from": "requisition_owner.full_name",
+   "fieldname": "user_full_name",
+   "fieldtype": "Data",
+   "label": "User Full Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "payment_mode",
+   "fieldtype": "Link",
+   "label": "Mode Of Payment",
+   "link_filters": "[[\"Mode of Payment\",\"name\",\"!=\",\"Cash\"]]",
+   "options": "Mode of Payment"
+  },
+  {
+   "fieldname": "section_break_eaue",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "reference",
+   "fieldtype": "Data",
+   "label": "Reference"
+  },
+  {
+   "fieldname": "total_amount",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Total Amount",
+   "non_negative": 1,
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "cost_center",
+   "fieldtype": "Link",
+   "label": "Cost Center",
+   "options": "Cost Center",
+   "reqd": 1
+  }
+ ],
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2024-08-11 20:24:19.884947",
+ "modified_by": "Administrator",
+ "module": "Fanaka App",
+ "name": "Requisition",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Accounts Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "track_seen": 1
+}
