@@ -1,0 +1,158 @@
+{
+ "actions": [],
+ "autoname": "format:ST-{MM}-{YYYY}-{###}",
+ "creation": "2024-08-29 11:18:40.327980",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "lead",
+  "lead_name",
+  "scheduled_time",
+  "send_reminder",
+  "marketer",
+  "no_of_seats",
+  "projects",
+  "column_break_nhdq",
+  "driver",
+  "date_visited",
+  "vehicle",
+  "start_odometer",
+  "end_odometer",
+  "distance",
+  "visit_id",
+  "status"
+ ],
+ "fields": [
+  {
+   "fieldname": "lead",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Lead",
+   "options": "Lead",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "lead.lead_name",
+   "fieldname": "lead_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Lead Name",
+   "print_hide": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "scheduled_time",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Scheduled Time",
+   "reqd": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "send_reminder",
+   "fieldtype": "Check",
+   "label": "Send Reminder"
+  },
+  {
+   "default": "User",
+   "fieldname": "marketer",
+   "fieldtype": "Link",
+   "label": "Marketer",
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_nhdq",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "driver",
+   "fieldtype": "Link",
+   "label": "Driver",
+   "options": "User"
+  },
+  {
+   "fieldname": "date_visited",
+   "fieldtype": "Date",
+   "label": "Date Visited"
+  },
+  {
+   "fieldname": "vehicle",
+   "fieldtype": "Link",
+   "label": "Vehicle",
+   "options": "Vehicle"
+  },
+  {
+   "fieldname": "start_odometer",
+   "fieldtype": "Data",
+   "label": "Start Odometer"
+  },
+  {
+   "fieldname": "end_odometer",
+   "fieldtype": "Int",
+   "label": "End Odometer"
+  },
+  {
+   "fieldname": "distance",
+   "fieldtype": "Data",
+   "label": "Distance",
+   "read_only": 1
+  },
+  {
+   "description": "No Of seats to Reserve",
+   "fieldname": "no_of_seats",
+   "fieldtype": "Int",
+   "label": "No Of Seats",
+   "non_negative": 1,
+   "reqd": 1
+  },
+  {
+   "default": "{}",
+   "fieldname": "projects",
+   "fieldtype": "JSON",
+   "label": "Projects",
+   "reqd": 1
+  },
+  {
+   "fieldname": "visit_id",
+   "fieldtype": "Data",
+   "label": "Visit Id",
+   "read_only": 1,
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Not Visited\nVisited\nBounced",
+   "reqd": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2024-09-03 16:39:46.862353",
+ "modified_by": "Administrator",
+ "module": "Fanaka App",
+ "name": "Site Visit",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
