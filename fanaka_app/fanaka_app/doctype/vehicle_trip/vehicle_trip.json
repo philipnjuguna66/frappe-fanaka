@@ -1,0 +1,98 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2024-09-30 11:16:50.751131",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_imzh",
+  "driver",
+  "start_odometer",
+  "distance",
+  "column_break_xzwc",
+  "vehicle",
+  "end_odometer",
+  "section_break_aszt",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_imzh",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Vehicle Trip",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "driver",
+   "fieldtype": "Link",
+   "label": "Driver",
+   "options": "User"
+  },
+  {
+   "fieldname": "start_odometer",
+   "fieldtype": "Int",
+   "label": "Start Odometer"
+  },
+  {
+   "fieldname": "distance",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Distance",
+   "non_negative": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_xzwc",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "vehicle",
+   "fieldtype": "Link",
+   "label": "Vehicle",
+   "options": "Vehicle"
+  },
+  {
+   "fieldname": "end_odometer",
+   "fieldtype": "Int",
+   "label": "End Odometer"
+  },
+  {
+   "fieldname": "section_break_aszt",
+   "fieldtype": "Section Break"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2024-09-30 11:19:45.872825",
+ "modified_by": "Administrator",
+ "module": "Fanaka App",
+ "name": "Vehicle Trip",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
