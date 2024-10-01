@@ -7,9 +7,9 @@
  "field_order": [
   "section_break_imzh",
   "driver",
-  "purpose",
   "start_odometer",
   "distance",
+  "purpose",
   "column_break_xzwc",
   "vehicle",
   "end_odometer",
@@ -43,7 +43,9 @@
    "fieldname": "start_odometer",
    "fieldtype": "Int",
    "in_list_view": 1,
-   "label": "Start Odometer"
+   "label": "Start Odometer",
+   "non_negative": 1,
+   "reqd": 1
   },
   {
    "fieldname": "distance",
@@ -51,7 +53,8 @@
    "in_list_view": 1,
    "label": "Distance",
    "non_negative": 1,
-   "read_only": 1
+   "read_only": 1,
+   "reqd": 1
   },
   {
    "fieldname": "column_break_xzwc",
@@ -62,13 +65,16 @@
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Vehicle",
-   "options": "Vehicle"
+   "options": "Vehicle",
+   "reqd": 1
   },
   {
    "fieldname": "end_odometer",
    "fieldtype": "Int",
    "in_list_view": 1,
-   "label": "End Odometer"
+   "label": "End Odometer",
+   "non_negative": 1,
+   "reqd": 1
   },
   {
    "fieldname": "purpose",
@@ -84,7 +90,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-10-01 14:40:40.406540",
+ "modified": "2024-10-01 14:44:17.445875",
  "modified_by": "Administrator",
  "module": "Fanaka App",
  "name": "Vehicle Trip",
