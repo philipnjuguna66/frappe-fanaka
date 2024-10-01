@@ -65,6 +65,11 @@
    "label": "End Odometer"
   },
   {
+   "fieldname": "purpose",
+   "fieldtype": "data",
+   "label": "Purpose"
+  },
+  {
    "fieldname": "section_break_aszt",
    "fieldtype": "Section Break"
   }
