@@ -1,6 +1,7 @@
 import frappe
 import json
 from frappe.utils.oauth import login_oauth_user, get_info_via_oauth
+from frappe.integrations.oauth2_logins import login_via_oauth2
 
 def custom_decoder(response):
     """Custom decoder to handle Fanaka_ provider's OAuth token response."""
@@ -24,7 +25,7 @@ def custom_decoder(response):
 def login_via_fanaka_oauth(code=None, state=None):
     provider = "fanaka_"
     # Use custom decoder to interpret the OAuth response
-    user_info = get_info_via_oauth(provider, code, decoder=custom_decoder)
+    user_info = login_via_oauth2(provider, code, state, decoder=custom_decoder)
 
     if not user_info.get("email_verified"):
         user_info["email_verified"] = True
