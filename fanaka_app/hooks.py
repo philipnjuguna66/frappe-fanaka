@@ -164,8 +164,10 @@ app_license = "mit"
 # }
 
 # hooks.py
+
+# hooks.py in fanaka_app
 override_whitelisted_methods = {
-    "frappe.integrations.oauth2_logins.custom.fanaka_": "fanaka_app.api.oauth_custom.login_via_custom_oauth"
+    "frappe.integrations.oauth2_logins.custom.Fanaka_": "fanaka_app.api.oauth_custom.login_via_fanaka_oauth"
 }
 
 
