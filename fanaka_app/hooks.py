@@ -159,6 +159,9 @@ app_license = "mit"
 # Overriding Methods
 # ------------------------------
 #
+override_whitelisted_methods = {
+    "frappe.integrations.oauth2_logins.login_via_custom_oauth": "fanaka_app.helpers.login_via_custom_oauth"
+}
 # override_whitelisted_methods = {
 # 	"frappe.desk.doctype.event.event.get_events": "fanaka_app.event.get_events"
 # }
