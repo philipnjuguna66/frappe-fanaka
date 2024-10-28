@@ -1,23 +1,37 @@
 import frappe
 import json
-from frappe import _
-from frappe.utils.oauth import get_info_via_oauth
 from frappe.utils.oauth import login_oauth_user
 
+
+
+def custom_decoder(response):
+    """Custom decoder to handle Fanaka_ provider's OAuth token response."""
+    data = json.loads(response.content)
+    # Map response data to expected keys if necessary
+    access_token = data.get("access_token")
+    refresh_token = data.get("refresh_token")
+    token_type = data.get("token_type", "Bearer")
+    expires_in = data.get("expires_in")
+
+    if not access_token:
+        raise KeyError("Access token not found in response.")
+
+    return {
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "token_type": token_type,
+        "expires_in": expires_in
+    }
 @frappe.whitelist(allow_guest=True)
 def login_via_fanaka_oauth(code=None, state=None):
-    provider = "fanaka_"
+    provider = "Fanaka_"
+    # Use custom decoder to interpret the OAuth response
+    user_info = get_info_via_oauth(provider, code, decoder=custom_decoder)
 
-    # Get user information without enforcing email verification
-    user_info = get_info_via_oauth(provider, code)
-
-    # Manually set email as verified if not provided
     if not user_info.get("email_verified"):
         user_info["email_verified"] = True
 
     email = user_info.get("email")
-
-    # Check if user exists, or create if not
     user = frappe.db.get_value("User", {"email": email})
     if not user:
         user_doc = frappe.get_doc({
@@ -29,7 +43,5 @@ def login_via_fanaka_oauth(code=None, state=None):
         })
         user_doc.insert(ignore_permissions=True)
 
-    # Log in user
     frappe.local.login_manager.user = email
     frappe.local.login_manager.post_login()
-
