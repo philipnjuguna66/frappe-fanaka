@@ -36,7 +36,7 @@ def login_via_fanaka_oauth(code=None, state=None):
     provider = "fanaka_"  # Your provider name in Frappe's OAuth settings
 
     # Use custom decoder to interpret the OAuth response
-    user_info = login_via_oauth2(provider, code, state, decoder=custom_decoder)
+    user_info = login_via_oauth2(provider, code, state)
 
     # Ensure the email is verified (set default if not provided)
     if not user_info.get("email_verified"):
