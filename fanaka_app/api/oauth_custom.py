@@ -1,25 +1,38 @@
 import frappe
-from frappe.integrations.oauth2_logins import login_via_oauth2
-from frappe.utils.oauth import login_via_oauth2 as original_login_via_oauth2
+import json
+from frappe import _
+from frappe.utils.oauth import get_info_via_oauth
+from frappe.utils.oauth import login_oauth_user
 
-def custom_get_info_via_oauth(provider, code, decoder=None):
-    # Call the original function to fetch user info
-    user_info = original_login_via_oauth2(provider, code, decoder)
-
-    # Check for the provider and modify verification requirements for Fanaka_
-    if provider == "Fanaka_" and not user_info.get("email_verified"):
-        # Assume email is verified for this specific provider
-        user_info["email_verified"] = True
-
-    return user_info
-
-# Override the function in your login function
 @frappe.whitelist(allow_guest=True)
 def login_via_fanaka_oauth(code=None, state=None):
-    # Use the custom get_info_via_oauth to fetch user info
-    info = custom_get_info_via_oauth("Fanaka_", code)
-    email = info.get("email")
+    """
+    Custom OAuth login function for Fanaka_ to bypass email verification.
+    """
+    provider = "Fanaka_"
 
-    # Proceed with login
+    # Get user information without enforcing email verification
+    user_info = get_info_via_oauth(provider, code)
+
+    # Manually set email as verified if not provided
+    if not user_info.get("email_verified"):
+        user_info["email_verified"] = True
+
+    email = user_info.get("email")
+
+    # Check if user exists, or create if not
+    user = frappe.db.get_value("User", {"email": email})
+    if not user:
+        user_doc = frappe.get_doc({
+            "doctype": "User",
+            "email": email,
+            "first_name": user_info.get("first_name"),
+            "enabled": 1,
+            "user_type": "Website User"
+        })
+        user_doc.insert(ignore_permissions=True)
+
+    # Log in user
     frappe.local.login_manager.user = email
     frappe.local.login_manager.post_login()
+
