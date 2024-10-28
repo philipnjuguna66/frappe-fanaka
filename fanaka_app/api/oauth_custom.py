@@ -2,7 +2,6 @@ import frappe
 import json
 from frappe.utils.oauth import login_oauth_user, get_info_via_oauth
 
-
 def custom_decoder(response):
     """Custom decoder to handle Fanaka_ provider's OAuth token response."""
     data = json.loads(response.content)
