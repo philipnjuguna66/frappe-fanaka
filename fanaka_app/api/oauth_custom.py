@@ -1,6 +1,6 @@
 import frappe
 import json
-from frappe.integrations.oauth2_logins import login_via_oauth2, decoder_compat
+from frappe.integrations.oauth2_logins import login_via_oauth2
 
 def custom_decoder(response):
     """Custom decoder to handle Fanaka_ provider's OAuth token response."""
@@ -32,4 +32,33 @@ def custom_decoder(response):
 
 @frappe.whitelist(allow_guest=True)
 def login_via_fanaka_oauth(code=None, state=None):
-    login_via_oauth2('fanaka_', code=code, state=state, decoder=custom_decoder)
+    """Handle login via the Fanaka OAuth provider."""
+    provider = "fanaka_"  # Your provider name in Frappe's OAuth settings
+
+    # Use custom decoder to interpret the OAuth response
+    user_info = login_via_oauth2(provider, code, state, decoder=custom_decoder)
+
+    # Ensure the email is verified (set default if not provided)
+    if not user_info.get("email_verified"):
+        user_info["email_verified"] = True
+
+    # Retrieve the user's email
+    email = user_info.get("email")
+    if not email:
+        raise ValueError("Email not found in user information.")
+
+
+    user = frappe.db.get_value("User", {"email": email})
+    if not user:
+        user_doc = frappe.get_doc({
+            "doctype": "User",
+            "email": email,
+            "first_name": user_info.get("first_name"),
+            "enabled": 1,
+            "user_type": "Website User"
+        })
+        user_doc.insert(ignore_permissions=True)
+
+    # Set up the session for the user
+    frappe.local.login_manager.user = email
+    frappe.local.login_manager.post_login()
