@@ -1,7 +1,6 @@
 import frappe
 import json
-from frappe.utils.oauth import login_oauth_user
-
+from frappe.utils.oauth import login_oauth_user, get_info_via_oauth
 
 
 def custom_decoder(response):
