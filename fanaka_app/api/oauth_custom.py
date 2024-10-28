@@ -6,6 +6,8 @@ from frappe.utils.oauth import login_oauth_user
 
 @frappe.whitelist(allow_guest=True)
 def login_via_fanaka_oauth(code=None, state=None):
+    frappe.throw(_("Please login via Fanaka OAuth"))
+
     """
     Custom OAuth login function for Fanaka_ to bypass email verification.
     """
