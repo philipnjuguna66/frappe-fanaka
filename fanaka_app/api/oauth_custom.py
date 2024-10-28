@@ -32,4 +32,4 @@ def custom_decoder(response):
 
 @frappe.whitelist(allow_guest=True)
 def login_via_fanaka_oauth(code=None, state=None):
-    login_via_oauth2('fanaka_', code=code, state=state, decoder=decoder_compat)
+    login_via_oauth2('fanaka_', code=code, state=state, decoder=custom_decoder)
