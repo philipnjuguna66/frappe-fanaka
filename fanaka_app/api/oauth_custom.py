@@ -47,7 +47,7 @@ def login_via_fanaka_oauth(code=None, state=None):
     if not email:
         raise ValueError("Email not found in user information.")
 
-    # Check if the user exists; if not, create a new user
+
     user = frappe.db.get_value("User", {"email": email})
     if not user:
         user_doc = frappe.get_doc({
