@@ -162,6 +162,14 @@ app_license = "mit"
 # override_whitelisted_methods = {
 # 	"frappe.desk.doctype.event.event.get_events": "fanaka_app.event.get_events"
 # }
+
+# hooks.py
+override_whitelisted_methods = {
+    "frappe.integrations.oauth2_logins.custom.CustomOAuth": "fanaka_app.api.oauth_custom.login_via_custom_oauth"
+}
+
+
+
 #
 # each overriding function accepts a `data` argument;
 # generated from the base implementation of the doctype dashboard,
