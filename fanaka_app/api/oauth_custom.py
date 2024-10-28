@@ -24,7 +24,7 @@ def custom_decoder(response):
     }
 @frappe.whitelist(allow_guest=True)
 def login_via_fanaka_oauth(code=None, state=None):
-    provider = "Fanaka_"
+    provider = "fanaka_"
     # Use custom decoder to interpret the OAuth response
     user_info = get_info_via_oauth(provider, code, decoder=custom_decoder)
 
