@@ -9,7 +9,7 @@ def login_via_fanaka_oauth(code=None, state=None):
     """
     Custom OAuth login function for Fanaka_ to bypass email verification.
     """
-    provider = "Fanaka_"
+    provider = "fanaka_"
 
     # Get user information without enforcing email verification
     user_info = get_info_via_oauth(provider, code)
