@@ -1,6 +1,6 @@
 import frappe
 import json
-from frappe.integrations.oauth2_logins import login_via_oauth2
+from frappe.integrations.oauth2_logins import login_via_oauth2, decoder_compat
 
 def custom_decoder(response):
     """Custom decoder to handle Fanaka_ provider's OAuth token response."""
@@ -32,4 +32,4 @@ def custom_decoder(response):
 
 @frappe.whitelist(allow_guest=True)
 def login_via_fanaka_oauth(code=None, state=None):
-    login_via_oauth2('fanaka_', code=code, state=state)
+    login_via_oauth2('fanaka_', code=code, state=state, decoder=decoder_compat)
