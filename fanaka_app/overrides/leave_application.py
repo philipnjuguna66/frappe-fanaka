@@ -9,7 +9,7 @@ class FanakaLeaveApplication(LeaveApplication):
 
         try:
             frappe.log_error(f"leave application validations triggered for {self.leave_type} | Name: {self.name}", "Custom Hook Log")
-            if (self.leave_type == "Annual Leave"):
+            if (self.leave_type.upper() == "ANNUAL LEAVE"):
                 if self.from_date:
                     days_to_leave_start = date_diff(self.from_date, today())
                     if days_to_leave_start < 3:
