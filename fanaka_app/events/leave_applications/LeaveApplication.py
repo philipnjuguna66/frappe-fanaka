@@ -3,9 +3,6 @@ from frappe.utils import date_diff, today
 
 def pass_requirement(doc, event):
     if doc.get('doctype') == 'Leave Application':
-
-
-
         # Validate leave application date (at least 3 days in advance)
         if doc.leave_type === "Annual leave" && doc.from_date:
             days_to_leave_start = date_diff(doc.from_date, today())
