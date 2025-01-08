@@ -24,5 +24,5 @@ def pass_requirement(doc, event):
             }
         )
 
-        if existing_draft_leaves >= 2:
+        if existing_draft_leaves >= 1:
             frappe.throw("You cannot create a third Annual Leave application while previous ones are still in 'Draft' status.")
