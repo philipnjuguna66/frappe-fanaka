@@ -5,6 +5,8 @@ def pass_requirement(doc, event):
     if doc.get('doctype') == 'Leave Application':
         # Validate leave application date (at least 3 days in advance)
 
+        frappe.throw(f"Leave Application Type {doc.get('leave_type')}")
+
         if(doc.get('leave_type') == "Annual Leave"):
             if doc.from_date:
                 days_to_leave_start = date_diff(doc.from_date, today())
