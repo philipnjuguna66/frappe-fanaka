@@ -130,10 +130,8 @@ app_license = "mit"
 # 	}
 # }
 
-doc_events = {
-	"Leave Application": {
-		"before_save": "fanaka_app.events.leave_applications.Leave_application.pass_requirement",
-	}
+override_doctype_class = {
+	"Leave Application": "fanaka_app.overrides.leave_application.FanakaLeaveApplication"
 }
 
 # Scheduled Tasks
