@@ -38,21 +38,7 @@ def custom_decoder(response):
 @frappe.whitelist(allow_guest=True)
 def login_via_fanaka_oauth(code=None, state=None):
     """Handle login via the Fanaka OAuth provider."""
-    provider = "fanaka_mis"  # Your provider name in Frappe's OAuth settings
+    provider = "fanaka_mis"
+    login_via_oauth2(provider, code, state, decoder=custom_decoder)
 
-    # Use custom decoder to interpret the OAuth response
-    user_info = login_via_oauth2(provider, code, state, decoder=custom_decoder)
-
-
-    print(f"Login User Info: {user_info}")
-
-
-    # raw_response = user_info.get("raw_response", {})
-    # unique_id = raw_response.get("sub")  # This should now work as expected
-    # email = raw_response.get("email")
-    # frappe.local.login_manager.user = email
-    #
-    # frappe.local.login_manager.post_login()
-    #
-    # return {"status": "success", "email": email, "unique_id": unique_id}
 

@@ -130,6 +130,12 @@ app_license = "mit"
 # 	}
 # }
 
+doc_events = {
+	"Leave Application": {
+		"before_insert": "fanaka_app.events.leave_application.LeaveApplication.pass_requirement",
+	}
+}
+
 # Scheduled Tasks
 # ---------------
 
