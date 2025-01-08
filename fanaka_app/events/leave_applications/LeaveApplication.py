@@ -20,7 +20,7 @@ def pass_requirement(doc, event):
             filters={
                 'employee': doc.employee,
                 'leave_type': 'Annual Leave',
-                'status': 'Draft'
+                'status': 'Open'
             }
         )
 
