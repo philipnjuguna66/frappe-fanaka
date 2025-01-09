@@ -42,3 +42,11 @@ def login_via_fanaka_oauth(code=None, state=None):
     login_via_oauth2(provider, code, state, decoder=custom_decoder)
 
 
+@frappe.whitelist()
+def submit(doc):
+    doc = frappe.get_doc(doc)
+    doc.submit()
+
+    return doc.as_dict()
+
+
