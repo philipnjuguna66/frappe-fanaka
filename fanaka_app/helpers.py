@@ -14,6 +14,6 @@ def update_clearance_date(journal_name):
 @frappe.whitelist()
 def submit_leave(name):
     doc = frappe.get_doc("Leave Application", name)
-    doc.submit()
+    doc.submit(ignore_permissions=True)
 
     return doc.as_dict()
