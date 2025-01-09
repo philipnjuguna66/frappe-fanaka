@@ -24,7 +24,7 @@ class FanakaLeaveApplication(LeaveApplication):
                     'status': 'Open'
                 }
             )
-            if existing_draft_leaves >= 1:
+            if existing_draft_leaves >= 2:
                 frappe.throw("You cannot create a third Annual Leave application while previous ones are still in 'Open' status.")
         except Exception as e:
             frappe.log_error(f"Error in custom_before_save: {str(e)}", "Custom Hook Error")
