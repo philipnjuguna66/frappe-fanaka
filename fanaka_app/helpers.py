@@ -9,3 +9,11 @@ def update_clearance_date(journal_name):
     journal.db_set("clearance_date", journal.posting_date)
 
 
+
+
+@frappe.whitelist()
+def submit(doc):
+    doc = frappe.get_doc(doc)
+    doc.submit()
+
+    return doc.as_dict()
