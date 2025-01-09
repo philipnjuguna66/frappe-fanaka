@@ -5,7 +5,6 @@ from frappe.utils import date_diff, today
 class FanakaLeaveApplication(LeaveApplication):
     def before_save(self):
         # Call the parent validate method to retain existing logic
-        super().validate()
 
         try:
             frappe.log_error(f"leave application validations triggered for {self.leave_type} | Name: {self.name}", "Custom Hook Log")
