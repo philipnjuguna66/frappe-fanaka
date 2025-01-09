@@ -131,7 +131,7 @@ app_license = "mit"
 # }
 
 override_doctype_class = {
-	#"Leave Application": "fanaka_app.overrides.leave_application.FanakaLeaveApplication"
+	"Leave Application": "fanaka_app.overrides.leave_application.FanakaLeaveApplication"
 }
 
 # Scheduled Tasks
