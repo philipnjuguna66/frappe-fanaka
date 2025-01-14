@@ -3,7 +3,7 @@ from hrms.hr.doctype.leave_application.leave_application import LeaveApplication
 from frappe.utils import date_diff, today
 
 class FanakaLeaveApplication(LeaveApplication):
-    def validate(self):
+    def before_insert(self):
         # Call the parent validate method to retain existing logic
         super().validate()
 

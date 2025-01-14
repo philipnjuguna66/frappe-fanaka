@@ -118,6 +118,10 @@ app_license = "mit"
 # 	"ToDo": "custom_app.overrides.CustomToDo"
 # }
 
+override_doctype_class = {
+	#"Leave Application": "fanaka_app.overrides.leave_application.FanakaLeaveApplication"
+}
+
 # Document Events
 # ---------------
 # Hook on document methods and events
@@ -130,9 +134,14 @@ app_license = "mit"
 # 	}
 # }
 
-override_doctype_class = {
-	"Leave Application": "fanaka_app.overrides.leave_application.FanakaLeaveApplication"
+doc_events = {
+	"Leave Application": {
+		"before_insert": "fanaka_app.events.leave_applications.leave_application.pass_requirement",
+
+	}
 }
+
+
 
 # Scheduled Tasks
 # ---------------
