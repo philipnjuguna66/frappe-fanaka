@@ -5,7 +5,7 @@ def pass_requirement(doc, event):
         frappe.log_error(f"leave application validations triggered for {doc.leave_type} | Name: {doc.name}", "Custom Hook Log")
         if (doc.leave_type.upper() == "ANNUAL LEAVE"):
             if doc.from_date:
-                days_to_leave_start = date_diff(doc.from_date, today())
+                days_to_leave_start = date_diff(doc.from_date, today()) +1
                 if days_to_leave_start < 3:
                     frappe.throw("You can only apply for Annual Leave at least 3 days in advance.")
 
