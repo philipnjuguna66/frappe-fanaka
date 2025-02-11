@@ -1,0 +1,73 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-02-11 17:45:48.023883",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "phone_number",
+  "message",
+  "provider_id",
+  "type",
+  "date_sent",
+  "delivery_status"
+ ],
+ "fields": [
+  {
+   "fieldname": "phone_number",
+   "fieldtype": "Phone",
+   "in_list_view": 1,
+   "label": "Phone Number",
+   "reqd": 1
+  },
+  {
+   "fieldname": "message",
+   "fieldtype": "Data",
+   "label": "Message"
+  },
+  {
+   "fieldname": "provider_id",
+   "fieldtype": "Data",
+   "label": "Provider Id"
+  },
+  {
+   "fieldname": "type",
+   "fieldtype": "Data",
+   "label": "Type"
+  },
+  {
+   "fieldname": "date_sent",
+   "fieldtype": "Datetime",
+   "label": "Date Sent"
+  },
+  {
+   "fieldname": "delivery_status",
+   "fieldtype": "Data",
+   "label": "Delivery Status"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-02-11 17:50:18.481579",
+ "modified_by": "Administrator",
+ "module": "Fanaka App",
+ "name": "Sms Sent",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
