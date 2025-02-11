@@ -15,7 +15,7 @@
  "fields": [
   {
    "fieldname": "phone_number",
-   "fieldtype": "Phone",
+   "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Phone Number",
    "reqd": 1
@@ -23,26 +23,31 @@
   {
    "fieldname": "message",
    "fieldtype": "Data",
+   "in_list_view": 1,
    "label": "Message"
   },
   {
    "fieldname": "provider_id",
    "fieldtype": "Data",
+   "in_list_view": 1,
    "label": "Provider Id"
   },
   {
    "fieldname": "type",
    "fieldtype": "Data",
+   "in_list_view": 1,
    "label": "Type"
   },
   {
    "fieldname": "date_sent",
    "fieldtype": "Datetime",
+   "in_list_view": 1,
    "label": "Date Sent"
   },
   {
    "fieldname": "delivery_status",
    "fieldtype": "Data",
+   "in_list_view": 1,
    "label": "Delivery Status"
   }
  ],
