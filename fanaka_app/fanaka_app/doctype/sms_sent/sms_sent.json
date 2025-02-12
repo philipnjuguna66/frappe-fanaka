@@ -1,6 +1,6 @@
 {
  "actions": [],
- "allow_rename": 1,
+ "autoname": "format:SMS-{YY}-{MM}-{DD}-{####}",
  "creation": "2025-02-11 17:45:48.023883",
  "doctype": "DocType",
  "engine": "InnoDB",
@@ -22,7 +22,7 @@
   },
   {
    "fieldname": "message",
-   "fieldtype": "Data",
+   "fieldtype": "Long Text",
    "in_list_view": 1,
    "label": "Message"
   },
@@ -53,10 +53,11 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-02-11 17:50:18.481579",
+ "modified": "2025-02-12 16:08:39.797668",
  "modified_by": "Administrator",
  "module": "Fanaka App",
  "name": "Sms Sent",
+ "naming_rule": "Expression",
  "owner": "Administrator",
  "permissions": [
   {
