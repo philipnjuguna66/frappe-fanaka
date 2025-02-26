@@ -8,7 +8,6 @@
  "field_order": [
   "expense_category",
   "expense_category_name",
-  "expense_name_copy",
   "amount"
  ],
  "fields": [
@@ -36,20 +35,12 @@
    "hidden": 1,
    "in_list_view": 1,
    "label": "Expense Name"
-  },
-  {
-   "fetch_from": "expense_category.expense_account",
-   "fetch_if_empty": 1,
-   "fieldname": "expense_name_copy",
-   "fieldtype": "Data",
-   "in_list_view": 1,
-   "label": "Expense Name Copy"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-08-11 19:30:51.829367",
+ "modified": "2025-02-20 09:50:17.863153",
  "modified_by": "Administrator",
  "module": "Fanaka App",
  "name": "Requisition Item",

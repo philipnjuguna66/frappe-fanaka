@@ -17,6 +17,8 @@
   "user_full_name",
   "section_break_xksh",
   "description",
+  "attachments_section",
+  "attachments",
   "section_break_isqb",
   "cost_center",
   "paying_account",
@@ -44,17 +46,20 @@
   {
    "collapsible": 1,
    "fieldname": "section_break_xksh",
-   "fieldtype": "Section Break"
+   "fieldtype": "Section Break",
+   "label": "Requisition Description"
   },
   {
    "fieldname": "description",
    "fieldtype": "Text Editor",
-   "label": "Description"
+   "label": "Description",
+   "reqd": 1
   },
   {
    "collapsible": 1,
    "fieldname": "section_break_isqb",
-   "fieldtype": "Section Break"
+   "fieldtype": "Section Break",
+   "label": "Payment Details"
   },
   {
    "fieldname": "paying_account",
@@ -77,7 +82,8 @@
   },
   {
    "fieldname": "section_break_nitw",
-   "fieldtype": "Section Break"
+   "fieldtype": "Section Break",
+   "label": "Requisition Items"
   },
   {
    "fieldname": "items_column",
@@ -92,7 +98,8 @@
   {
    "collapsible": 1,
    "fieldname": "section_break_lsuh",
-   "fieldtype": "Section Break"
+   "fieldtype": "Section Break",
+   "label": "Subtotals"
   },
   {
    "fieldname": "column_break_vmiy",
@@ -146,11 +153,22 @@
    "label": "Cost Center",
    "options": "Cost Center",
    "reqd": 1
+  },
+  {
+   "fieldname": "attachments_section",
+   "fieldtype": "Section Break",
+   "label": "Attachments"
+  },
+  {
+   "fieldname": "attachments",
+   "fieldtype": "Table",
+   "label": "Attachments",
+   "options": "Requisition Attachment"
   }
  ],
  "is_submittable": 1,
  "links": [],
- "modified": "2024-08-11 20:24:19.884947",
+ "modified": "2025-02-24 14:26:48.907185",
  "modified_by": "Administrator",
  "module": "Fanaka App",
  "name": "Requisition",
