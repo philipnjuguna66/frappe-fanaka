@@ -1,0 +1,49 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-02-20 09:59:48.672657",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "attachments_column",
+  "attachment_name",
+  "column_break_qtah",
+  "invoices"
+ ],
+ "fields": [
+  {
+   "fieldname": "attachments_column",
+   "fieldtype": "Column Break",
+   "label": "Attachments"
+  },
+  {
+   "fieldname": "attachment_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Attachment Name"
+  },
+  {
+   "fieldname": "column_break_qtah",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "invoices",
+   "fieldtype": "Attach",
+   "in_list_view": 1,
+   "label": "Invoices"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2025-02-20 10:03:21.172943",
+ "modified_by": "Administrator",
+ "module": "Fanaka App",
+ "name": "Requisition Attachment",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
