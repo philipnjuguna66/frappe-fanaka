@@ -1,0 +1,70 @@
+{
+ "actions": [],
+ "autoname": "format: {project}-{MM}-{YYYY}-{####}",
+ "creation": "2025-03-17 14:59:50.303903",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "plot_no",
+  "block_no",
+  "price",
+  "size",
+  "project",
+  "status"
+ ],
+ "fields": [
+  {
+   "fieldname": "plot_no",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Plot No",
+   "reqd": 1
+  },
+  {
+   "fieldname": "block_no",
+   "fieldtype": "Data",
+   "label": "Block No"
+  },
+  {
+   "fieldname": "price",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Price",
+   "non_negative": 1,
+   "reqd": 1
+  },
+  {
+   "description": "Size in Ha .e.g 0.035 HA",
+   "fieldname": "size",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Size"
+  },
+  {
+   "fieldname": "project",
+   "fieldtype": "Link",
+   "label": "Project",
+   "options": "Project"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2025-03-17 15:17:03.935441",
+ "modified_by": "Administrator",
+ "module": "Fanaka App",
+ "name": "Plot",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
