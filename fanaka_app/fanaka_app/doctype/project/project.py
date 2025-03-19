@@ -19,6 +19,24 @@ def subdivide_plots(project, no_of_plots, plot_size, price_per_plot):
         })
         plot.insert()  # Save the plot record
 
+
+        item_code = plot.name
+
+        if not frappe.db.exists("Item", item_code):
+            # Create a new item if it doesn't exist
+            item = frappe.get_doc({
+                "doctype": "Item",
+                "item_code": item_code,
+                "item_name": item_code,
+                "item_group": "Real Estate",  # Replace with your item group
+                "stock_uom": "Unit",  # Unit of measure
+                "is_stock_item": 1,  # Enable stock tracking
+                "default_warehouse": "Stores - FRE",  # Default warehouse
+            })
+
+        item.insert()
+
+
         # Create Stock Entry for the plot
         stock_entry = frappe.get_doc({
             "doctype": "Stock Entry",
