@@ -34,7 +34,7 @@ def subdivide_plots(project, no_of_plots, plot_size, price_per_plot):
                 "default_warehouse": "Stores - FRE",  # Default warehouse
             })
 
-        item.insert()
+            item.insert()
 
         # Create Stock Entry for the plot
         stock_entry = frappe.get_doc({
