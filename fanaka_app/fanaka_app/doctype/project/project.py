@@ -19,4 +19,22 @@ def subdivide_plots(project, no_of_plots, plot_size, price_per_plot):
         })
         plot.insert()  # Save the plot record
 
+        # Create Stock Entry for the plot
+        stock_entry = frappe.get_doc({
+            "doctype": "Stock Entry",
+            "stock_entry_type": "Material Receipt",  # Receiving plots into stock
+            "project": project,  # Link to the parent Project
+            "items": [
+                {
+                    "item_code": plot.name,  # Replace with your plot item
+                    "qty": 1,  # Each plot is 1 unit
+                    "t_warehouse": "Stores - FRE",  # Warehouse for the project
+                    "basic_rate": flt(price_per_plot),  # Cost of the plot
+                    "cost_center": "Main - Your Company"  # Replace with your cost center
+                }
+            ]
+        })
+        stock_entry.insert()  # Save the stock entry
+        stock_entry.submit()
+
     return f"{no_of_plots} plots created successfully!"
