@@ -13,7 +13,7 @@ class FanakaLeaveApplication(LeaveApplication):
                 if self.from_date:
                     days_to_leave_start = date_diff(self.from_date, today())
                     if days_to_leave_start < 3:
-                        pass
+                        frappe.throw("You can only apply for Annual Leave at least 3 days in advance.")
 
 
             # Check for existing leave applications in "Draft" status
