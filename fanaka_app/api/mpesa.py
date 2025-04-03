@@ -1,0 +1,22 @@
+import frappe
+import base64
+import json
+import requests
+from frappe.utils import now
+import os
+from pathlib import Path
+from cryptography.hazmat.primitives.asymmetric import padding
+from cryptography.hazmat.primitives.hashes import SHA1
+from cryptography.hazmat.primitives.serialization import load_pem_public_key
+
+
+@frappe.whitelist()
+def get_access_token():
+    consumer_key = os.getenv("MPESA_BUSINESS_CONSUMER_KEY")
+    consumer_secret = os.getenv("MPESA_BUSINESS_CONSUMER_SECRET")
+    response = requests.get(
+        "https://api.safaricom.co.ke/oauth/v1/generate",
+        auth=(consumer_key, consumer_secret),
+        params={"grant_type": "client_credentials"},
+    )
+    return response.json().get("access_token", None)
