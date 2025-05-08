@@ -140,6 +140,10 @@ doc_events = {
 	"Leave Application": {
 		# "before_insert": "fanaka_app.events.leave_applications.leave_application.pass_requirement",
 
+	},
+	"Purchase Invoice": {
+		 "before_save": "fanaka_app.events.purchase_invoice.purchase_invoice.create_purchase_invoice",
+
 	}
 }
 

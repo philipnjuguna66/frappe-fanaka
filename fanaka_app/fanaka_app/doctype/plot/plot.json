@@ -11,7 +11,9 @@
   "price",
   "size",
   "project",
-  "status"
+  "status",
+  "serial_no",
+  "plot_id"
  ],
  "fields": [
   {
@@ -51,13 +53,25 @@
    "fieldname": "status",
    "fieldtype": "Select",
    "label": "Status"
+  },
+  {
+   "fieldname": "serial_no",
+   "fieldtype": "Data",
+   "label": "Serial No",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "plot_id",
+   "fieldtype": "Data",
+   "label": "Plot Id"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-03-17 15:17:03.935441",
+ "modified": "2025-05-08 09:28:14.679764",
  "modified_by": "Administrator",
  "module": "Fanaka App",
  "name": "Plot",

@@ -19,5 +19,5 @@ def get_access_token():
         auth=(consumer_key, consumer_secret),
         params={"grant_type": "client_credentials"},
     )
-    return [consumer_secret, consumer_key]
+
     return response.json()['access_token']
