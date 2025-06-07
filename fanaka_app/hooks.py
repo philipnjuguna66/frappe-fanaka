@@ -144,7 +144,11 @@ doc_events = {
 	"Purchase Invoice": {
 		 "before_save": "fanaka_app.events.purchase_invoice.purchase_invoice.create_purchase_invoice",
 
+	},
+	"Stock Entry": {
+		"before_insert": "fanaka_app.events.stock_entry.stock_entry.generate_plot_serial_numbers"
 	}
+
 }
 
 

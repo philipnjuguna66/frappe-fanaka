@@ -19,6 +19,8 @@ class ProjectExpenses(Document):
                 frappe.throw("Bank Account is mandatory")
             if not self.payment_date:
                 frappe.throw("Payment Date is mandatory")
+            if not self.supplier:
+                frappe.throw("Supplier is mandatory")
 
             # Validate accounts exist and are valid
             for account in [self.expense_account, self.bank_account]:
@@ -30,6 +32,10 @@ class ProjectExpenses(Document):
                 if acc.company != company:
                     frappe.throw(f"Account {account} does not belong to company {company}")
 
+            # Validate supplier
+            if not frappe.db.exists("Supplier", self.supplier):
+                frappe.throw(f"Supplier {self.supplier} does not exist")
+
             expense_amount = flt(self.amount)
             if expense_amount <= 0:
                 frappe.throw("Amount must be greater than zero")
@@ -39,13 +45,17 @@ class ProjectExpenses(Document):
                 je = frappe.new_doc("Journal Entry")
                 je.posting_date = self.payment_date
                 je.company = company
-                je.voucher_type = 'Journal Entry'  # Explicitly set voucher type
-                je.remark = f"Project Expense for {self.project_name or self.project} - {self.name}"
+                je.voucher_type = 'Journal Entry'
+                je.remark = f"Project Expense for {self.project_name or self.project} - Supplier: {self.supplier}"
                 
                 # Add reference details if available
                 if self.reference_code:
                     je.cheque_no = self.reference_code
                     je.cheque_date = self.payment_date
+
+                # Add supplier details
+                je.party_type = "Supplier"
+                je.party = self.supplier
 
                 # Append expense entry
                 je.append("accounts", {
@@ -53,7 +63,9 @@ class ProjectExpenses(Document):
                     "debit_in_account_currency": expense_amount,
                     "credit_in_account_currency": 0,
                     "project": self.project,
-                    "cost_center": self.cost_center if hasattr(self, 'cost_center') else None
+                   # "party_type": "Supplier",
+                   # "party": self.supplier,
+                    "cost_center": self.branch if hasattr(self, 'cost_center') else None
                 })
 
                 # Append bank entry
@@ -62,7 +74,9 @@ class ProjectExpenses(Document):
                     "credit_in_account_currency": expense_amount,
                     "debit_in_account_currency": 0,
                     "project": self.project,
-                    "cost_center": self.cost_center if hasattr(self, 'cost_center') else None
+                    #"party_type": "Supplier",
+                   # "party": self.supplier,
+                    "cost_center": self.branch if hasattr(self, 'cost_center') else None
                 })
 
                 # Insert with additional validations
@@ -73,8 +87,6 @@ class ProjectExpenses(Document):
                 
                 # Submit the journal entry
                 je.submit()
-
-                frappe.db.commit()
                 
                 frappe.msgprint(f"Journal Entry {je.name} created successfully")
 

@@ -7,11 +7,14 @@
  "field_order": [
   "section_break_gjfm",
   "project",
+  "supplier",
   "expense_account",
   "amount",
   "reference_code",
+  "branch",
   "column_break_mgcn",
   "project_name",
+  "supplier_name",
   "bank_account",
   "payment_date",
   "section_break_hpve",
@@ -94,12 +97,32 @@
   {
    "fieldname": "section_break_hpve",
    "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "supplier",
+   "fieldtype": "Link",
+   "label": "Supplier",
+   "options": "Supplier"
+  },
+  {
+   "fetch_from": "supplier.supplier_name",
+   "fetch_if_empty": 1,
+   "fieldname": "supplier_name",
+   "fieldtype": "Data",
+   "label": "Supplier Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "branch",
+   "fieldtype": "Link",
+   "label": "Branch",
+   "options": "Cost Center"
   }
  ],
  "grid_page_length": 50,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-06-07 12:04:43.741089",
+ "modified": "2025-06-07 17:33:56.810483",
  "modified_by": "Administrator",
  "module": "Fanaka App",
  "name": "Project Expenses",
