@@ -1,0 +1,157 @@
+{
+ "actions": [],
+ "autoname": "format:PRJEXP-{project}-{DD}-{MM}-{YY}-{####}",
+ "creation": "2025-06-07 11:31:25.050590",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_gjfm",
+  "project",
+  "expense_account",
+  "amount",
+  "reference_code",
+  "column_break_mgcn",
+  "project_name",
+  "bank_account",
+  "payment_date",
+  "section_break_hpve",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_gjfm",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Project Expenses",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "project",
+   "fieldtype": "Link",
+   "label": "Project",
+   "options": "Project",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "project.project_name",
+   "fetch_if_empty": 1,
+   "fieldname": "project_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Project Name",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "expense_account",
+   "fieldtype": "Link",
+   "label": "Expense Account",
+   "link_filters": "[[\"Account\",\"root_type\",\"=\",\"Expense\"],[\"Account\",\"is_group\",\"=\",0]]",
+   "options": "Account",
+   "reqd": 1
+  },
+  {
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "label": "Amount",
+   "non_negative": 1,
+   "precision": "2",
+   "reqd": 1
+  },
+  {
+   "description": "Payment Reference code",
+   "fieldname": "reference_code",
+   "fieldtype": "Data",
+   "label": "Reference Code"
+  },
+  {
+   "fieldname": "column_break_mgcn",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Account Receiving the funds",
+   "fieldname": "bank_account",
+   "fieldtype": "Link",
+   "label": "Bank Account",
+   "link_filters": "[[\"Account\",\"root_type\",\"=\",\"Asset\"],[\"Account\",\"is_group\",\"=\",0],[\"Account\",\"account_type\",\"=\",\"Bank\"]]",
+   "options": "Account",
+   "reqd": 1
+  },
+  {
+   "description": "Date Deposited",
+   "fieldname": "payment_date",
+   "fieldtype": "Date",
+   "label": "Payment Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_break_hpve",
+   "fieldtype": "Section Break"
+  }
+ ],
+ "grid_page_length": 50,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2025-06-07 12:04:43.741089",
+ "modified_by": "Administrator",
+ "module": "Fanaka App",
+ "name": "Project Expenses",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Accounts Manager",
+   "select": 1,
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Accounts User",
+   "select": 1,
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "track_seen": 1,
+ "track_views": 1
+}
