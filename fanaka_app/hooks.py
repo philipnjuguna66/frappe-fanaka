@@ -33,7 +33,10 @@ app_license = "mit"
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
 
-doctype_js = {"Project" : "public/js/project.js"}
+doctype_js = {
+	"Project" : "public/js/project.js",
+	"Stock Entry": "public/js/stock_entry_custom.js"
+}
 
 # Svg Icons
 # ------------------
@@ -122,6 +125,7 @@ doctype_js = {"Project" : "public/js/project.js"}
 
 override_doctype_class = {
 	#"Leave Application": "fanaka_app.overrides.leave_application.FanakaLeaveApplication"
+	"Stock Entry": "fanaka_app.overrides.stock_entry.StockEntry"
 }
 
 # Document Events
