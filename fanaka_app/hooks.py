@@ -142,7 +142,7 @@ override_doctype_class = {
 
 doc_events = {
 	"Leave Application": {
-		# "before_insert": "fanaka_app.events.leave_applications.leave_application.pass_requirement",
+		 "before_insert": "fanaka_app.events.leave_applications.leave_application.pass_requirement",
 
 	},
 	"Purchase Invoice": {
