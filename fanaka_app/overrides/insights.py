@@ -1,4 +1,5 @@
-Maxwell D. Dorliea <notifications@github.com> Unsubscribe
+# your_custom_app/overrides/insights.py
+
 import frappe
 import re
 from insights.www.insights import (
