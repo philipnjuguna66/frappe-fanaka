@@ -153,7 +153,7 @@ doc_events = {
 
 	},
 	"Purchase Invoice": {
-		 "before_save": "fanaka_app.events.purchase_invoice.purchase_invoice.create_purchase_invoice",
+		# "before_save": "fanaka_app.events.purchase_invoice.purchase_invoice.create_purchase_invoice",
 
 	},
 	"Stock Entry": {
