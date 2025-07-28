@@ -1,6 +1,6 @@
 {
  "actions": [],
- "autoname": "format: {project}-{MM}-{YYYY}-{####}",
+ "autoname": "format: {project_name}-{MM}-{YYYY}-{####}",
  "creation": "2025-03-17 14:59:50.303903",
  "default_view": "List",
  "doctype": "DocType",
@@ -9,6 +9,7 @@
  "field_order": [
   "plot_no",
   "project",
+  "project_name",
   "block_no",
   "price",
   "size",
@@ -77,12 +78,22 @@
    "options": "Project",
    "reqd": 1,
    "search_index": 1
+  },
+  {
+   "fetch_from": "project.project_name",
+   "fetch_if_empty": 1,
+   "fieldname": "project_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Project Name",
+   "reqd": 1,
+   "search_index": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-07-28 14:29:32.963910",
+ "modified": "2025-07-28 16:26:17.329432",
  "modified_by": "Administrator",
  "module": "Fanaka App",
  "name": "Plot",
