@@ -82,7 +82,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-07-28 13:24:49.662405",
+ "modified": "2025-07-28 14:29:32.963910",
  "modified_by": "Administrator",
  "module": "Fanaka App",
  "name": "Plot",
@@ -90,8 +90,6 @@
  "owner": "Administrator",
  "permissions": [
   {
-   "create": 1,
-   "delete": 1,
    "email": 1,
    "export": 1,
    "print": 1,
