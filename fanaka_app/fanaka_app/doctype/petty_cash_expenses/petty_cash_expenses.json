@@ -1,0 +1,150 @@
+{
+ "actions": [],
+ "autoname": "format:PTC-{MM}-{YY}-{###}",
+ "creation": "2025-07-29 12:47:27.478941",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "expense_account",
+  "petty_cash_account",
+  "amount",
+  "column_break_mhib",
+  "expense_account_name",
+  "expense_date",
+  "cost_center",
+  "journal_entry",
+  "section_break_wiwn",
+  "description",
+  "section_break_gotq",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Petty Cash Expenses",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "expense_account",
+   "fieldtype": "Link",
+   "label": "Expense Account",
+   "link_filters": "[[\"Account\",\"root_type\",\"=\",\"Expense\"],[\"Account\",\"is_group\",\"=\",0]]",
+   "options": "Account",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "expense_account.account_name",
+   "fieldname": "expense_account_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Expense Account Name"
+  },
+  {
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Amount",
+   "non_negative": 1,
+   "precision": "2",
+   "reqd": 1
+  },
+  {
+   "fieldname": "expense_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Expense Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_break_gotq",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_mhib",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Description",
+   "reqd": 1
+  },
+  {
+   "fieldname": "petty_cash_account",
+   "fieldtype": "Link",
+   "label": "Petty Cash Account",
+   "link_filters": "[[\"Account\",\"account_type\",\"=\",\"Cash\"]]",
+   "options": "Account",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_break_wiwn",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "cost_center",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Cost Center",
+   "link_filters": "[[\"Cost Center\",\"is_group\",\"=\",0],[\"Cost Center\",\"disabled\",\"=\",0]]",
+   "options": "Cost Center",
+   "reqd": 1
+  },
+  {
+   "fieldname": "journal_entry",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "in_list_view": 1,
+   "label": "Journal Entry ",
+   "no_copy": 1,
+   "options": "Journal Entry",
+   "set_only_once": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2025-07-29 13:38:37.190559",
+ "modified_by": "Administrator",
+ "module": "Fanaka App",
+ "name": "Petty Cash Expenses",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Sales User",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
