@@ -56,8 +56,7 @@ class PettyCashExpenses(Document):
 
             # Link the created Journal Entry back to the Petty Cash Transaction
             self.db_set('journal_entry', journal_entry.name)
-            frappe.msgprint(f"Journal Entry {journal_entry.name} created successfully and linked to Petty Cash Transaction {self.name}.")
-
+          
         except Exception as e:
             # Log any errors that occur during the process
             frappe.log_error(frappe.get_traceback(), "Petty Cash Journal Entry Creation Failed")
