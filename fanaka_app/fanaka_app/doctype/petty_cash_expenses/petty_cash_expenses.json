@@ -8,6 +8,7 @@
   "expense_account",
   "petty_cash_account",
   "amount",
+  "user",
   "column_break_mhib",
   "expense_account_name",
   "expense_date",
@@ -104,13 +105,21 @@
    "no_copy": 1,
    "options": "Journal Entry",
    "set_only_once": 1
+  },
+  {
+   "default": "user",
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "label": "User",
+   "options": "User",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-07-29 13:38:37.190559",
+ "modified": "2025-07-30 10:45:14.649337",
  "modified_by": "Administrator",
  "module": "Fanaka App",
  "name": "Petty Cash Expenses",
