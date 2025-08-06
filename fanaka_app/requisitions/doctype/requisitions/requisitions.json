@@ -56,7 +56,7 @@
    "fieldname": "payment_method",
    "fieldtype": "Select",
    "label": "Payment Method",
-   "options": "phone\ntill\nPaybill\ncheque\nbank_transfer\nothers",
+   "options": "phone\ntill\npaybill\ncheque\nbank_transfer\nothers",
    "reqd": 1
   },
   {
@@ -115,11 +115,13 @@
    "options": "Account"
   },
   {
+   "default": "Today",
    "fieldname": "posting_date",
    "fieldtype": "Date",
    "label": "Posting Date"
   },
   {
+   "default": "Today",
    "fieldname": "reference_date",
    "fieldtype": "Date",
    "label": "Reference Date"
@@ -177,7 +179,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-08-06 08:40:57.607969",
+ "modified": "2025-08-06 13:31:21.663956",
  "modified_by": "Administrator",
  "module": "Requisitions",
  "name": "Requisitions",
