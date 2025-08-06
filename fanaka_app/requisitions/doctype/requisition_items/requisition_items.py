@@ -5,5 +5,5 @@
 from frappe.model.document import Document
 
 
-class RequisitionAttachment(Document):
+class RequisitionItems(Document):
 	pass

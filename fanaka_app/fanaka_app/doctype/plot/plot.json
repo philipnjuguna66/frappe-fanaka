@@ -7,15 +7,18 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
-  "plot_no",
   "project",
   "project_name",
-  "block_no",
-  "price",
   "size",
   "status",
-  "serial_no",
+  "customer",
+  "customer_name",
+  "column_break_xcfb",
+  "plot_no",
+  "block_no",
+  "price",
   "plot_id",
+  "serial_no",
   "purchase_cost"
  ],
  "fields": [
@@ -49,14 +52,16 @@
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Size",
-   "read_only": 1
+   "read_only": 1,
+   "reqd": 1
   },
   {
    "fieldname": "status",
    "fieldtype": "Select",
    "label": "Status",
    "options": "AVAILABLE\nSOLD\nHELD",
-   "read_only": 1
+   "read_only": 1,
+   "reqd": 1
   },
   {
    "fieldname": "serial_no",
@@ -97,12 +102,39 @@
    "read_only": 1,
    "reqd": 1,
    "search_index": 1
+  },
+  {
+   "fieldname": "customer",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Customer",
+   "options": "Customer",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "customer.customer_name",
+   "fetch_if_empty": 1,
+   "fieldname": "customer_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Customer Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_xcfb",
+   "fieldtype": "Column Break"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
- "links": [],
- "modified": "2025-07-31 09:51:18.660093",
+ "links": [
+  {
+   "group": "Sales",
+   "link_doctype": "Customer",
+   "link_fieldname": "name"
+  }
+ ],
+ "modified": "2025-08-06 12:21:34.955133",
  "modified_by": "Administrator",
  "module": "Fanaka App",
  "name": "Plot",
