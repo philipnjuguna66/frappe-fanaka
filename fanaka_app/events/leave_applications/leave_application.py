@@ -7,7 +7,8 @@ def pass_requirement(doc, event):
             if doc.from_date:
                 days_to_leave_start = date_diff(doc.from_date, today()) +1
                 if days_to_leave_start < 1:
-                    frappe.throw("You can only apply for Annual Leave at least 3 days in advance.")
+                    pass
+                    #frappe.throw("You can only apply for Annual Leave at least 3 days in advance.")
 
         # Check for existing leave applications in "Draft" status
         existing_draft_leaves = frappe.db.count(
