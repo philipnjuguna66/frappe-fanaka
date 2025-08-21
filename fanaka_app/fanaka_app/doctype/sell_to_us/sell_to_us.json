@@ -24,7 +24,7 @@
   },
   {
    "fieldname": "phone_number",
-   "fieldtype": "Phone",
+   "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Phone Number",
    "reqd": 1
@@ -73,7 +73,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-08-21 13:18:46.111062",
+ "modified": "2025-08-21 15:34:07.831913",
  "modified_by": "Administrator",
  "module": "Fanaka App",
  "name": "Sell To Us",
