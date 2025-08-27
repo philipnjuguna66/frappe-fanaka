@@ -5,13 +5,13 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
+  "seller_type",
+  "phone_number",
+  "block_number",
+  "distance_from_road",
+  "column_break_mqro",
   "vendor_name",
   "email",
-  "block_number",
-  "nearest_land_mark",
-  "column_break_mqro",
-  "phone_number",
-  "seller_id_no",
   "location"
  ],
  "fields": [
@@ -45,13 +45,6 @@
    "reqd": 1
   },
   {
-   "fieldname": "seller_id_no",
-   "fieldtype": "Data",
-   "in_list_view": 1,
-   "label": "Seller Id No",
-   "reqd": 1
-  },
-  {
    "fieldname": "location",
    "fieldtype": "Data",
    "in_list_view": 1,
@@ -59,21 +52,28 @@
    "reqd": 1
   },
   {
-   "fieldname": "nearest_land_mark",
-   "fieldtype": "Data",
-   "in_list_view": 1,
-   "label": "Nearest Land Mark",
+   "fieldname": "column_break_mqro",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "seller_type",
+   "fieldtype": "Select",
+   "label": "Seller Type",
+   "options": "Owner\nAgent",
    "reqd": 1
   },
   {
-   "fieldname": "column_break_mqro",
-   "fieldtype": "Column Break"
+   "fieldname": "distance_from_road",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Distance From Road",
+   "reqd": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-08-21 15:34:07.831913",
+ "modified": "2025-08-27 10:56:07.452718",
  "modified_by": "Administrator",
  "module": "Fanaka App",
  "name": "Sell To Us",
@@ -106,6 +106,7 @@
  ],
  "row_format": "Dynamic",
  "search_fields": "vendor_name, email",
+ "show_name_in_global_search": 1,
  "show_title_field_in_link": 1,
  "sort_field": "modified",
  "sort_order": "DESC",
