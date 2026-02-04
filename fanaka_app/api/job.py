@@ -38,8 +38,6 @@ def create_job_application():
         "applicant_name",
         "email_id",
         "phone_number",
-        "country",
-        "job_title",
         "cover_letter"
     ]
 
@@ -48,7 +46,7 @@ def create_job_application():
             frappe.throw(f"{field} is required")
 
     job_application = frappe.get_doc({
-        "doctype": "Job Application",
+        "doctype": "Job Applicant",
         "applicant_name": data.get("applicant_name"),
         "email_id": data.get("email_id"),
         "phone_number": data.get("phone_number"),

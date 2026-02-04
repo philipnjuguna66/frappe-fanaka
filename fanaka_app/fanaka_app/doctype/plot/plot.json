@@ -9,17 +9,20 @@
  "field_order": [
   "project",
   "project_name",
+  "company",
   "size",
   "status",
-  "customer",
-  "customer_name",
   "column_break_xcfb",
   "plot_no",
   "block_no",
   "price",
   "plot_id",
   "serial_no",
-  "purchase_cost"
+  "purchase_cost",
+  "section_break_wryf",
+  "customer",
+  "column_break_igcj",
+  "customer_name"
  ],
  "fields": [
   {
@@ -123,6 +126,22 @@
   {
    "fieldname": "column_break_xcfb",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "section_break_wryf",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_igcj",
+   "fieldtype": "Column Break"
   }
  ],
  "grid_page_length": 50,
@@ -134,7 +153,7 @@
    "link_fieldname": "name"
   }
  ],
- "modified": "2025-08-06 12:21:34.955133",
+ "modified": "2026-02-04 12:32:06.525619",
  "modified_by": "Administrator",
  "module": "Fanaka App",
  "name": "Plot",
@@ -153,6 +172,7 @@
   }
  ],
  "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
  "search_fields": "plot_no, project",
  "show_title_field_in_link": 1,
  "sort_field": "modified",
