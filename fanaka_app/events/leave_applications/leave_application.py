@@ -2,6 +2,52 @@ import frappe
 import json
 from frappe.utils import date_diff, today, getdate
 
+
+def validate_leave_block(doc, method=None):
+    """
+    Prevent leave application if date falls inside
+    Leave Block List created from Holiday List.
+    """
+
+    if not doc.from_date or not doc.to_date:
+        return
+
+    from_date = getdate(doc.from_date)
+    to_date = getdate(doc.to_date)
+
+    # Get all submitted block lists for this leave type + company
+    block_lists = frappe.get_all(
+        "Leave Block List",
+        filters={
+            "leave_type": doc.leave_type,
+            "company": doc.company,
+
+        },
+        fields=["name"]
+    )
+
+    if not block_lists:
+        return
+
+    block_list_names = [b.name for b in block_lists]
+
+    # Get blocked dates inside range
+    blocked_dates = frappe.get_all(
+        "Leave Block List Dates",
+        filters={
+            "parent": ["in", block_list_names],
+            "block_date": ["between", [from_date, to_date]]
+        },
+        fields=["block_date"]
+    )
+
+    if blocked_dates:
+        dates = ", ".join(str(d.block_date) for d in blocked_dates)
+
+        frappe.throw(
+            f"Leave cannot be applied on blocked date(s): {dates}"
+        )
+
 def pass_requirement(doc, event):
     try:
         if (doc.leave_type.upper() == "ANNUAL LEAVE"):

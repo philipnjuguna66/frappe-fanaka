@@ -149,6 +149,7 @@ override_doctype_class = {
 
 doc_events = {
 	"Leave Application": {
+		 "validate": "fanaka_app.events.leave_applications.leave_application.validate_leave_block",
 		 "before_insert": "fanaka_app.events.leave_applications.leave_application.pass_requirement",
 
 	},
