@@ -1,0 +1,207 @@
+{
+ "actions": [],
+ "autoname": "naming_series:",
+ "creation": "2025-03-17 15:05:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "project",
+  "plot",
+  "status",
+  "column_break_1",
+  "sales_person",
+  "transaction_date",
+  "section_break_1",
+  "customers",
+  "section_break_2",
+  "price",
+  "discount",
+  "interest",
+  "grand_total",
+  "section_break_3",
+  "penalties",
+  "section_break_4",
+  "next_of_kins",
+  "column_break_2",
+  "witnesses",
+  "section_break_5",
+  "agreement_template",
+  "offer_letter_template",
+  "generated_agreement",
+  "generated_offer_letter"
+ ],
+ "fields": [
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Series",
+   "options": "LS-.YYYY.-",
+   "reqd": 1
+  },
+  {
+   "fieldname": "project",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Project",
+   "options": "Project",
+   "reqd": 1
+  },
+  {
+   "fieldname": "plot",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Plot",
+   "options": "Plot",
+   "reqd": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Draft\nActive\nCompleted\nCancelled",
+   "default": "Draft",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "sales_person",
+   "fieldtype": "Link",
+   "label": "Sales Person",
+   "options": "Sales Person"
+  },
+  {
+   "fieldname": "transaction_date",
+   "fieldtype": "Date",
+   "label": "Date",
+   "default": "Today",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_break_1",
+   "fieldtype": "Section Break",
+   "label": "Customers"
+  },
+  {
+   "fieldname": "customers",
+   "fieldtype": "Table",
+   "label": "Customers",
+   "options": "Land Sale Customer"
+  },
+  {
+   "fieldname": "section_break_2",
+   "fieldtype": "Section Break",
+   "label": "Financials"
+  },
+  {
+   "fieldname": "price",
+   "fieldtype": "Currency",
+   "label": "Price",
+   "reqd": 1
+  },
+  {
+   "fieldname": "discount",
+   "fieldtype": "Currency",
+   "label": "Discount"
+  },
+  {
+   "fieldname": "interest",
+   "fieldtype": "Currency",
+   "label": "Interest"
+  },
+  {
+   "fieldname": "grand_total",
+   "fieldtype": "Currency",
+   "label": "Grand Total",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_3",
+   "fieldtype": "Section Break",
+   "label": "Penalties"
+  },
+  {
+   "fieldname": "penalties",
+   "fieldtype": "Table",
+   "label": "Penalties",
+   "options": "Land Sale Penalty"
+  },
+  {
+   "fieldname": "section_break_4",
+   "fieldtype": "Section Break",
+   "label": "Next of Kin & Witnesses"
+  },
+  {
+   "fieldname": "next_of_kins",
+   "fieldtype": "Table",
+   "label": "Next of Kins",
+   "options": "Land Sale Next of Kin"
+  },
+  {
+   "fieldname": "column_break_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "witnesses",
+   "fieldtype": "Table",
+   "label": "Witnesses",
+   "options": "Land Sale Witness"
+  },
+  {
+   "fieldname": "section_break_5",
+   "fieldtype": "Section Break",
+   "label": "Agreements"
+  },
+  {
+   "fieldname": "agreement_template",
+   "fieldtype": "Link",
+   "label": "Agreement Template",
+   "options": "Terms and Conditions"
+  },
+  {
+   "fieldname": "offer_letter_template",
+   "fieldtype": "Link",
+   "label": "Offer Letter Template",
+   "options": "Terms and Conditions"
+  },
+  {
+   "fieldname": "generated_agreement",
+   "fieldtype": "Text Editor",
+   "label": "Generated Agreement",
+   "read_only": 1
+  },
+  {
+   "fieldname": "generated_offer_letter",
+   "fieldtype": "Text Editor",
+   "label": "Generated Offer Letter",
+   "read_only": 1
+  }
+ ],
+ "links": [],
+ "modified": "2025-03-17 15:05:00.000000",
+ "modified_by": "Administrator",
+ "module": "Fanaka App",
+ "name": "Land Sale",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
