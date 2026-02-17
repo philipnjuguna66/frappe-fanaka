@@ -1,0 +1,130 @@
+{
+ "actions": [],
+ "autoname": "format:CM-{YY}-{MM}-{###}",
+ "creation": "2026-02-12 11:18:33.684439",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "sales_person",
+  "plots_sold",
+  "commission_amount",
+  "personal_collection",
+  "column_break_cerv",
+  "collection_amount",
+  "posting_date",
+  "personal_plots",
+  "rate",
+  "section_break_jsjq",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "sales_person",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Sales Person",
+   "options": "Sales Person",
+   "reqd": 1
+  },
+  {
+   "fieldname": "plots_sold",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Plots Sold",
+   "non_negative": 1
+  },
+  {
+   "fieldname": "commission_amount",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Commission Amount",
+   "non_negative": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_cerv",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "collection_amount",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Collection Amount",
+   "non_negative": 1,
+   "precision": "2",
+   "reqd": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Commission Entry",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "posting_date",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Posting Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "personal_collection",
+   "fieldtype": "Currency",
+   "label": "Personal Collection",
+   "non_negative": 1,
+   "precision": "2"
+  },
+  {
+   "fieldname": "personal_plots",
+   "fieldtype": "Int",
+   "label": "Personal Plots"
+  },
+  {
+   "fieldname": "rate",
+   "fieldtype": "Data",
+   "label": "Rate"
+  },
+  {
+   "default": "0",
+   "fieldname": "section_break_jsjq",
+   "fieldtype": "Section Break"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2026-02-16 11:19:22.589080",
+ "modified_by": "Administrator",
+ "module": "Fanaka App",
+ "name": "Commission Entry",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "track_seen": 1,
+ "track_views": 1
+}

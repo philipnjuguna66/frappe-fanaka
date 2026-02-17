@@ -1,16 +1,15 @@
 import frappe
-from frappe.utils import date_diff, today
+import json
+from frappe.utils import date_diff, today, getdate
+
 def pass_requirement(doc, event):
     try:
-        frappe.log_error(f"leave application validations triggered for {doc.leave_type} | Name: {doc.name}", "Custom Hook Log")
         if (doc.leave_type.upper() == "ANNUAL LEAVE"):
             if doc.from_date:
-                days_to_leave_start = date_diff(doc.from_date, today()) +1
+                days_to_leave_start = date_diff(doc.from_date, today()) + 1
                 if days_to_leave_start < 1:
                     pass
-                    #frappe.throw("You can only apply for Annual Leave at least 3 days in advance.")
 
-        # Check for existing leave applications in "Draft" status
         existing_draft_leaves = frappe.db.count(
             'Leave Application',
             filters={
@@ -21,5 +20,99 @@ def pass_requirement(doc, event):
         if existing_draft_leaves >= 2:
             frappe.throw("You cannot create a third Annual Leave application while previous ones are still in 'Open' status.")
     except Exception as e:
-        frappe.log_error(f"Error in custom_before_save: {str(e)}", "Custom Hook Error")
+        frappe.log_error(f"Error in pass_requirement: {str(e)}", "Custom Hook Error")
         raise
+
+def sync_holiday_list_to_blocks(doc, method=None):
+    """
+    Hooked to Holiday List after_save.
+    Creates or updates Leave Block Lists for every Leave Type.
+    Naming format: snake_case(holiday_list_name + leave_type_name)
+    """
+
+    try:
+        frappe.log_error(f"Starting Sync for: {doc.name}", "Leave Block Sync Debug")
+
+        leave_types = frappe.get_all("Leave Type", fields=["name"])
+
+        if not doc.holidays:
+            frappe.log_error("No holidays found", "Leave Block Sync Debug")
+            return
+
+        holiday_dates = [
+            getdate(h.holiday_date)
+            for h in doc.holidays
+            if h.holiday_date
+        ]
+
+        for lt in leave_types:
+            leave_type = lt.name
+
+            # Generate snake_case name
+            raw_name = f"{doc.name}_{leave_type}"
+            formatted_name = frappe.scrub(raw_name)
+
+            # 🔎 Check if block list already exists
+            existing_name = frappe.db.exists(
+                "Leave Block List",
+                {
+                    "block_list_name": formatted_name,
+                    "leave_type": leave_type,
+                }
+            )
+
+            if existing_name:
+                block_doc = frappe.get_doc("Leave Block List", existing_name)
+                is_new_doc = False
+            else:
+                block_doc = frappe.new_doc("Leave Block List")
+                block_doc.leave_block_list_name = formatted_name
+                block_doc.leave_type = leave_type
+
+                for h_date in holiday_dates:
+                    block_doc.append("leave_block_list_dates", {
+                        "block_date": h_date,
+                        "reason": f"Auto sync from {doc.name}"
+                    })
+                # Insert first (important for proper naming)
+                block_doc.insert(ignore_permissions=True)
+                is_new_doc = True
+
+                frappe.log_error(
+                    f"Created new block list: {formatted_name}",
+                    "Leave Block Sync Debug"
+                )
+
+            # Get existing dates
+            existing_dates = {
+                getdate(d.block_date)
+                for d in block_doc.leave_block_list_dates
+                if d.block_date
+            }
+
+            added = False
+
+            for h_date in holiday_dates:
+                if h_date not in existing_dates:
+                    block_doc.append("leave_block_list_dates", {
+                        "block_date": h_date,
+                        "reason": f"Auto sync from {doc.name}"
+                    })
+                    added = True
+
+            # Save only if dates were added and not newly inserted
+            if added and not is_new_doc:
+                block_doc.save(ignore_permissions=True)
+
+                frappe.log_error(
+                    f"Updated {formatted_name} with new dates",
+                    "Leave Block Sync Debug"
+                )
+
+        frappe.msgprint("Leave Block Lists synchronized successfully.")
+
+    except Exception:
+        frappe.log_error(
+            frappe.get_traceback(),
+            "Leave Block Sync Error"
+        )

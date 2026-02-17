@@ -42,7 +42,7 @@ insights.www.insights.get_context = fanaka_app.overrides.insights.get_context
 
 doctype_js = {
 	"Project" : "public/js/project.js",
-	"Stock Entry": "public/js/stock_entry_custom.js"
+	"Stock Entry": "public/js/stock_entry_custom.js",
 }
 
 # Svg Icons
@@ -152,12 +152,19 @@ doc_events = {
 		 "before_insert": "fanaka_app.events.leave_applications.leave_application.pass_requirement",
 
 	},
+	"Holiday List": {
+		"before_save": "fanaka_app.events.leave_applications.leave_application.sync_holiday_list_to_blocks"
+	},
 	"Purchase Invoice": {
 		# "before_save": "fanaka_app.events.purchase_invoice.purchase_invoice.create_purchase_invoice",
 
 	},
 	"Stock Entry": {
 		"before_insert": "fanaka_app.events.stock_entry.stock_entry.generate_plot_serial_numbers"
+	},
+	"Commission Entry": {
+		"after_insert": "fanaka_app.api.commission_engine.calculate_commission",
+		"on_submit": "fanaka_app.api.commission_engine.process_commission_to_salary"
 	}
 
 }
