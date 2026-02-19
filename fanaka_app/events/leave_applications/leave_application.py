@@ -33,7 +33,7 @@ def validate_leave_block(doc, method=None):
 
     # Get blocked dates inside range
     blocked_dates = frappe.get_all(
-        "Leave Block List Dates",
+        "Leave Block List Date",
         filters={
             "parent": ["in", block_list_names],
             "block_date": ["between", [from_date, to_date]]
