@@ -1,0 +1,114 @@
+{
+ "actions": [],
+ "autoname": "format:ZOOM-{YYYY}-{MM}-{####}",
+ "creation": "2026-02-20 08:51:58.924755",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "title",
+  "zoom_link",
+  "column_break_ytfj",
+  "meeting_id",
+  "passcode",
+  "section_break_wkep",
+  "date",
+  "region",
+  "column_break_khhm",
+  "time"
+ ],
+ "fields": [
+  {
+   "fieldname": "zoom_link",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Zoom Link",
+   "reqd": 1
+  },
+  {
+   "fieldname": "meeting_id",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Meeting ID",
+   "reqd": 1
+  },
+  {
+   "fieldname": "passcode",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Passcode",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_ytfj",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "label": "Title",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_break_wkep",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "date",
+   "fieldtype": "Date",
+   "label": "Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "region",
+   "fieldtype": "Data",
+   "label": "Region",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_khhm",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "time",
+   "fieldtype": "Time",
+   "label": "Time",
+   "reqd": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [
+  {
+   "link_doctype": "Webinar Attendance",
+   "link_fieldname": "zoom_link"
+  }
+ ],
+ "modified": "2026-02-20 09:27:52.196570",
+ "modified_by": "Administrator",
+ "module": "Fanaka App",
+ "name": "Webinar",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "quick_entry": 1,
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "show_title_field_in_link": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "title"
+}
