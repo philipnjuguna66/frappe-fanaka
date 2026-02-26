@@ -1,6 +1,6 @@
 {
  "actions": [],
- "autoname": "format: stamp-{YYYY}-{MM}",
+ "autoname": "format: stamp-{YYYY}-{MM}-{###}",
  "creation": "2026-02-26 13:52:01.552928",
  "doctype": "DocType",
  "engine": "InnoDB",
@@ -101,7 +101,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-02-26 14:07:02.158531",
+ "modified": "2026-02-26 14:45:21.210417",
  "modified_by": "Administrator",
  "module": "Fanaka App",
  "name": "Signed Completion Agreement",
