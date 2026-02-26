@@ -1,0 +1,130 @@
+{
+ "actions": [],
+ "autoname": "format: stamp-{YYYY}-{MM}",
+ "creation": "2026-02-26 13:52:01.552928",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "signed_on",
+  "sale_id",
+  "customer",
+  "column_break_ymee",
+  "sales_invoice",
+  "phone_number",
+  "id_no",
+  "section_break_mdwu",
+  "project",
+  "column_break_juju",
+  "plot",
+  "section_break_r9st",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_r9st",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Signed Completion Agreement",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "signed_on",
+   "fieldtype": "Date",
+   "label": "Signed On"
+  },
+  {
+   "fieldname": "sale_id",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Sale Id",
+   "reqd": 1
+  },
+  {
+   "fieldname": "customer",
+   "fieldtype": "Link",
+   "label": "Customer",
+   "options": "Customer"
+  },
+  {
+   "fieldname": "column_break_ymee",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "sales_invoice",
+   "fieldtype": "Link",
+   "label": "Sales Invoice",
+   "options": "Sales Invoice"
+  },
+  {
+   "fetch_from": "customer.mobile_no",
+   "fieldname": "phone_number",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Phone Number",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "customer.custom_customer_id_no",
+   "fieldname": "id_no",
+   "fieldtype": "Data",
+   "label": "ID NO"
+  },
+  {
+   "fieldname": "section_break_mdwu",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "project",
+   "fieldtype": "Link",
+   "label": "Project",
+   "options": "Project"
+  },
+  {
+   "fieldname": "column_break_juju",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "plot",
+   "fieldtype": "Link",
+   "label": "Plot",
+   "options": "Plot"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2026-02-26 14:07:02.158531",
+ "modified_by": "Administrator",
+ "module": "Fanaka App",
+ "name": "Signed Completion Agreement",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
