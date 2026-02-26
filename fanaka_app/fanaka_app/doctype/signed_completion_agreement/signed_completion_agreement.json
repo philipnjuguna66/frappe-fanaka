@@ -14,8 +14,10 @@
   "id_no",
   "section_break_mdwu",
   "project",
+  "paid_amount",
   "column_break_juju",
   "plot",
+  "sale_amount",
   "section_break_r9st",
   "amended_from"
  ],
@@ -95,13 +97,25 @@
    "fieldtype": "Link",
    "label": "Plot",
    "options": "Plot"
+  },
+  {
+   "fieldname": "paid_amount",
+   "fieldtype": "Float",
+   "label": "Paid Amount",
+   "non_negative": 1
+  },
+  {
+   "fieldname": "sale_amount",
+   "fieldtype": "Float",
+   "label": "Sale Amount",
+   "non_negative": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-02-26 14:45:21.210417",
+ "modified": "2026-02-26 16:07:12.859134",
  "modified_by": "Administrator",
  "module": "Fanaka App",
  "name": "Signed Completion Agreement",
