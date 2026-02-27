@@ -5,14 +5,14 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "name1",
+  "lead_name",
   "email",
   "phone",
   "zoom_link"
  ],
  "fields": [
   {
-   "fieldname": "name1",
+   "fieldname": "lead_name",
    "fieldtype": "Data",
    "in_filter": 1,
    "in_list_view": 1,
