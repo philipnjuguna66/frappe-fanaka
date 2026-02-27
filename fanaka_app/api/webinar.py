@@ -9,7 +9,7 @@ def create_lead():
     required_fields = [
         "name",
         "email",
-        "phone_number"
+        "phone"
     ]
 
     for field in required_fields:
@@ -20,7 +20,7 @@ def create_lead():
         "doctype": "Webinar Attendance",
         "lead_name": data.get("name"),
         "email": data.get("email"),
-        "phone_number": data.get("phone"),
+        "phone": data.get("phone"),
         #"country": data.get("country"),
 
     })
