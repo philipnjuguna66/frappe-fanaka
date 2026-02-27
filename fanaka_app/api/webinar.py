@@ -18,7 +18,7 @@ def create_lead():
 
     create_lead = frappe.get_doc({
         "doctype": "Webinar Attendance",
-        "name1": data.get("name"),
+        "lead_name": data.get("name"),
         "email": data.get("email"),
         "phone_number": data.get("phone"),
         #"country": data.get("country"),
