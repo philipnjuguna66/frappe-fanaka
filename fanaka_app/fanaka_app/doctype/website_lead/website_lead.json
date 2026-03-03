@@ -1,6 +1,6 @@
 {
  "actions": [],
- "autoname": "LEAD-{location}-{MM}-{YYYY)",
+ "autoname": "LEAD-{MM}-{YYYY)",
  "creation": "2026-03-03 11:03:33.541163",
  "doctype": "DocType",
  "engine": "InnoDB",
@@ -37,7 +37,7 @@
   },
   {
    "fieldname": "scheduled_at",
-   "fieldtype": "Data",
+   "fieldtype": "Date",
    "in_filter": 1,
    "in_list_view": 1,
    "in_preview": 1,
@@ -59,7 +59,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-03-03 15:08:29.210710",
+ "modified": "2026-03-03 15:27:32.971099",
  "modified_by": "Administrator",
  "module": "Fanaka App",
  "name": "Website Lead",
