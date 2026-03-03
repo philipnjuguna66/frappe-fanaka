@@ -6,7 +6,7 @@
  "engine": "InnoDB",
  "field_order": [
   "lead_name",
-  "phone_number",
+  "phone",
   "column_break_iwfm",
   "scheduled_at",
   "location"
@@ -20,15 +20,6 @@
    "in_preview": 1,
    "in_standard_filter": 1,
    "label": "Lead Name",
-   "reqd": 1
-  },
-  {
-   "fieldname": "phone_number",
-   "fieldtype": "Data",
-   "in_list_view": 1,
-   "in_preview": 1,
-   "in_standard_filter": 1,
-   "label": "Phone Number",
    "reqd": 1
   },
   {
@@ -54,12 +45,21 @@
    "in_standard_filter": 1,
    "label": "Location",
    "reqd": 1
+  },
+  {
+   "fieldname": "phone",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_preview": 1,
+   "in_standard_filter": 1,
+   "label": "Phone Number",
+   "reqd": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-03-03 15:27:32.971099",
+ "modified": "2026-03-03 15:46:07.379757",
  "modified_by": "Administrator",
  "module": "Fanaka App",
  "name": "Website Lead",

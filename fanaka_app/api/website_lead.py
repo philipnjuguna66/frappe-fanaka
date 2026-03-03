@@ -1,11 +1,10 @@
-import  frappe
-
+import frappe
+from frappe.utils import get_datetime
 
 @frappe.whitelist(allow_guest=True)
 def create_lead():
     data = frappe.local.form_dict
 
-    # Basic validation
     required_fields = [
         "lead_name",
         "scheduled_at",
@@ -17,22 +16,25 @@ def create_lead():
         if not data.get(field):
             frappe.throw(f"{field} is required")
 
-    create_lead = frappe.get_doc({
+    # Convert scheduled_at to proper datetime object
+    try:
+        scheduled_at = get_datetime(data.get("scheduled_at"))
+    except Exception:
+        frappe.throw("Invalid date format for scheduled_at. Use YYYY-MM-DD HH:MM:SS")
+
+    lead = frappe.get_doc({
         "doctype": "Website Lead",
         "lead_name": data.get("lead_name"),
-        "phone_number": data.get("phone_number"),
+        "phone": data.get("phone_number"),
         "location": data.get("location"),
-        "scheduled_at": data.get("scheduled_at"),
-        #"country": data.get("country"),
-
+        "scheduled_at": scheduled_at,
     })
 
-    create_lead.insert(ignore_permissions=True)
+    lead.insert(ignore_permissions=True)
     frappe.db.commit()
 
     return {
         "status": "success",
         "message": "Lead submitted successfully",
-        "name": create_lead.lead_name
+        "name": lead.name
     }
-
