@@ -37,7 +37,7 @@
   },
   {
    "fieldname": "scheduled_at",
-   "fieldtype": "Date",
+   "fieldtype": "Data",
    "in_filter": 1,
    "in_list_view": 1,
    "in_preview": 1,
@@ -59,7 +59,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-03-03 14:29:32.088046",
+ "modified": "2026-03-03 15:08:29.210710",
  "modified_by": "Administrator",
  "module": "Fanaka App",
  "name": "Website Lead",
