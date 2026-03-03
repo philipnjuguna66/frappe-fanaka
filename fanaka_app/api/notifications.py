@@ -3,10 +3,8 @@ from frappe.core.doctype.sms_settings.sms_settings import send_sms
 
 def handle_sms_cc(doc, method=None):
 
-    if not doc.enabled:
-        return
-
-    if "SMS" not in [channel.channel for channel in doc.channels]:
+    # If notification is not using SMS channel → exit
+    if doc.channel != "SMS":
         return
 
     if not doc.custom_additional_sms_numbers:
@@ -18,7 +16,7 @@ def handle_sms_cc(doc, method=None):
         if number.strip()
     ]
 
-    message = doc.message
+    message = doc.message or ""
 
     # Send SMS to each additional number
     for number in numbers:
