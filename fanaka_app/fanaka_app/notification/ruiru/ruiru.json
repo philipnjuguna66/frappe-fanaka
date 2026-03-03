@@ -1,0 +1,28 @@
+{
+ "attach_files": "",
+ "attach_print": 0,
+ "channel": "SMS",
+ "condition": "doc.location == \"Ruiru\"",
+ "creation": "2026-03-03 13:59:25.772712",
+ "custom_additional_sms_numbers": "0714686511",
+ "days_in_advance": 0,
+ "docstatus": 0,
+ "doctype": "Notification",
+ "document_type": "Website Lead",
+ "enabled": 1,
+ "event": "New",
+ "idx": 0,
+ "is_standard": 1,
+ "message": "Add your message here",
+ "message_type": "Plain Text",
+ "modified": "2026-03-03 13:59:25.772712",
+ "modified_by": "Administrator",
+ "module": "Fanaka App",
+ "name": "ruiru",
+ "owner": "Administrator",
+ "recipients": [
+  {}
+ ],
+ "send_system_notification": 0,
+ "send_to_all_assignees": 0
+}
