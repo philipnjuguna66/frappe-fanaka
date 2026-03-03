@@ -15,14 +15,21 @@
   {
    "fieldname": "lead_name",
    "fieldtype": "Data",
+   "in_filter": 1,
    "in_list_view": 1,
+   "in_preview": 1,
+   "in_standard_filter": 1,
    "label": "Lead Name",
    "reqd": 1
   },
   {
    "fieldname": "phone_number",
    "fieldtype": "Data",
-   "label": "Phone Number"
+   "in_list_view": 1,
+   "in_preview": 1,
+   "in_standard_filter": 1,
+   "label": "Phone Number",
+   "reqd": 1
   },
   {
    "fieldname": "column_break_iwfm",
@@ -31,18 +38,28 @@
   {
    "fieldname": "scheduled_at",
    "fieldtype": "Date",
-   "label": "Scheduled At"
+   "in_filter": 1,
+   "in_list_view": 1,
+   "in_preview": 1,
+   "in_standard_filter": 1,
+   "label": "Scheduled At",
+   "reqd": 1
   },
   {
    "fieldname": "location",
    "fieldtype": "Data",
-   "label": "Location"
+   "in_filter": 1,
+   "in_list_view": 1,
+   "in_preview": 1,
+   "in_standard_filter": 1,
+   "label": "Location",
+   "reqd": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-03-03 11:06:47.419965",
+ "modified": "2026-03-03 14:29:32.088046",
  "modified_by": "Administrator",
  "module": "Fanaka App",
  "name": "Website Lead",

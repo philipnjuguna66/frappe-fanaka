@@ -168,7 +168,7 @@ doc_events = {
 		"on_submit": "fanaka_app.api.commission_engine.process_commission_to_salary"
 	},
 	"Notification": {
-		"on_update": "fanaka_app.api.notifications.handle_sms_cc"
+		"on_save": "fanaka_app.api.notifications.handle_sms_cc"
 	}
 
 }
