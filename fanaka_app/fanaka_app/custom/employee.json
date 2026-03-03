@@ -1815,26 +1815,6 @@
    "parentfield": "links",
    "parenttype": "Customize Form",
    "table_fieldname": null
-  },
-  {
-   "creation": "2026-02-05 14:55:33.827276",
-   "custom": 0,
-   "docstatus": 0,
-   "group": "Dependents and Beneficiaries",
-   "hidden": 0,
-   "idx": 0,
-   "is_child_table": 0,
-   "link_doctype": "Employee Dependent and Beneficiary",
-   "link_fieldname": "employee",
-   "modified": "2024-11-16 18:44:16.533443",
-   "modified_by": "Administrator",
-   "name": "fb21q7lhkp",
-   "owner": "Administrator",
-   "parent": "Employee",
-   "parent_doctype": null,
-   "parentfield": "links",
-   "parenttype": "DocType",
-   "table_fieldname": null
   }
  ],
  "property_setters": [

@@ -5,10 +5,10 @@ app_description = "Fanaka Real Estate App"
 app_email = "philipnjuguna66@gmail.com"
 app_license = "mit"
 
-import insights.www.insights
-import fanaka_app.overrides.insights
+# import insights.www.insights
+# import fanaka_app.overrides.insights
 
-insights.www.insights.get_context = fanaka_app.overrides.insights.get_context
+# insights.www.insights.get_context = fanaka_app.overrides.insights.get_context
 
 
 # required_apps = []
