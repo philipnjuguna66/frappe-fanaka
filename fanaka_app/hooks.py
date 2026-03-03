@@ -166,6 +166,9 @@ doc_events = {
 	"Commission Entry": {
 		"after_insert": "fanaka_app.api.commission_engine.calculate_commission",
 		"on_submit": "fanaka_app.api.commission_engine.process_commission_to_salary"
+	},
+	"Notification": {
+		"on_update": "fanaka_app.api.notifications.handle_sms_cc"
 	}
 
 }
