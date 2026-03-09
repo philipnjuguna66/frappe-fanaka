@@ -10,8 +10,10 @@
   "employee_name",
   "section_break_hcip",
   "laptop",
+  "storage",
   "column_break_vnqw",
-  "status"
+  "status",
+  "ram"
  ],
  "fields": [
   {
@@ -20,7 +22,8 @@
    "in_list_view": 1,
    "label": "Employee",
    "options": "Employee",
-   "reqd": 1
+   "reqd": 1,
+   "search_index": 1
   },
   {
    "fieldname": "column_break_kpmu",
@@ -49,19 +52,40 @@
    "in_list_view": 1,
    "label": "Laptop",
    "options": "Laptops",
-   "reqd": 1
+   "reqd": 1,
+   "search_index": 1
   },
   {
    "fieldname": "status",
    "fieldtype": "Select",
+   "in_list_view": 1,
    "label": "Status",
-   "options": "ACTIVE\nRETURNED"
+   "options": "ACTIVE\nRETURNED",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "laptop.storage",
+   "fieldname": "storage",
+   "fieldtype": "Data",
+   "in_standard_filter": 1,
+   "is_virtual": 1,
+   "label": "Storage",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "laptop.ram",
+   "fieldname": "ram",
+   "fieldtype": "Data",
+   "in_standard_filter": 1,
+   "is_virtual": 1,
+   "label": "RAM",
+   "reqd": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-03-09 13:08:17.815243",
+ "modified": "2026-03-09 13:12:04.097947",
  "modified_by": "Administrator",
  "module": "Fanaka App",
  "name": "Employee Laptop",
