@@ -1,6 +1,6 @@
 {
  "actions": [],
- "autoname": "LAP-.YYYY-.###",
+ "autoname": "LAP-.YY-.###",
  "creation": "2026-03-09 12:38:52.393442",
  "doctype": "DocType",
  "engine": "InnoDB",
@@ -85,7 +85,7 @@
    "link_fieldname": "laptop"
   }
  ],
- "modified": "2026-03-09 13:07:58.981823",
+ "modified": "2026-03-09 13:31:01.892148",
  "modified_by": "Administrator",
  "module": "Fanaka App",
  "name": "Laptops",
