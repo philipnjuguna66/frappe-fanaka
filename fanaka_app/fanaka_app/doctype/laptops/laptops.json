@@ -12,6 +12,7 @@
   "model",
   "ram",
   "serial_number",
+  "storage",
   "section_break_ljxh",
   "issuses"
  ],
@@ -69,12 +70,22 @@
    "fieldtype": "Data",
    "label": "Laptop Name",
    "reqd": 1
+  },
+  {
+   "fieldname": "storage",
+   "fieldtype": "Data",
+   "label": "Storage"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
- "links": [],
- "modified": "2026-03-09 12:59:27.015321",
+ "links": [
+  {
+   "link_doctype": "Employee Laptop",
+   "link_fieldname": "laptop"
+  }
+ ],
+ "modified": "2026-03-09 13:07:58.981823",
  "modified_by": "Administrator",
  "module": "Fanaka App",
  "name": "Laptops",

@@ -30,6 +30,7 @@
    "fetch_from": "employee.employee_name",
    "fieldname": "employee_name",
    "fieldtype": "Data",
+   "in_standard_filter": 1,
    "is_virtual": 1,
    "label": "Employee Name",
    "reqd": 1
@@ -45,6 +46,7 @@
   {
    "fieldname": "laptop",
    "fieldtype": "Link",
+   "in_list_view": 1,
    "label": "Laptop",
    "options": "Laptops",
    "reqd": 1
@@ -59,7 +61,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-03-09 12:48:16.828288",
+ "modified": "2026-03-09 13:08:17.815243",
  "modified_by": "Administrator",
  "module": "Fanaka App",
  "name": "Employee Laptop",
