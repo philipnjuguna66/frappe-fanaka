@@ -10,7 +10,8 @@
   "employee_name",
   "section_break_hcip",
   "laptop",
-  "column_break_vnqw"
+  "column_break_vnqw",
+  "status"
  ],
  "fields": [
   {
@@ -47,12 +48,18 @@
    "label": "Laptop",
    "options": "Laptops",
    "reqd": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "ACTIVE\nRETURNED"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-03-09 12:42:46.483949",
+ "modified": "2026-03-09 12:48:16.828288",
  "modified_by": "Administrator",
  "module": "Fanaka App",
  "name": "Employee Laptop",
