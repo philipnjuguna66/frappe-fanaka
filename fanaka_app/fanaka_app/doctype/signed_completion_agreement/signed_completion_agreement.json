@@ -1,6 +1,6 @@
 {
  "actions": [],
- "autoname": "format: stamp-{YYYY}-{MM}-{###}",
+ "autoname": "format: stamp-.YY.-MM.-###",
  "creation": "2026-02-26 13:52:01.552928",
  "doctype": "DocType",
  "engine": "InnoDB",
@@ -115,11 +115,11 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-02-26 16:07:12.859134",
+ "modified": "2026-03-09 13:35:31.240214",
  "modified_by": "Administrator",
  "module": "Fanaka App",
  "name": "Signed Completion Agreement",
- "naming_rule": "Expression",
+ "naming_rule": "Expression (old style)",
  "owner": "Administrator",
  "permissions": [
   {
@@ -131,6 +131,32 @@
    "read": 1,
    "report": 1,
    "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Accounts Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Accounts User",
    "share": 1,
    "submit": 1,
    "write": 1
