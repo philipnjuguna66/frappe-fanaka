@@ -170,10 +170,11 @@
  "links": [
   {
    "link_doctype": "Customer",
-   "link_fieldname": "name"
+   "link_fieldname": "name",
+   "table_fieldname": "customer"
   }
  ],
- "modified": "2026-03-11 10:55:30.817188",
+ "modified": "2026-03-11 10:57:21.042777",
  "modified_by": "Administrator",
  "module": "Fanaka App",
  "name": "Signed Completion Agreement",
