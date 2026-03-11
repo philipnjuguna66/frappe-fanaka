@@ -17,3 +17,18 @@ frappe.ui.form.on("Requisitions", {
         }
     },
 });
+
+frappe.listview_settings['Requisitions'] = {
+    add_fields: ["requisition_owner"],
+    onload: function(listview) {
+        listview.page.fields_dict['requisition_owner'].get_query = function() {
+            return { filters: { enabled: 1 } };
+        };
+    },
+    formatters: {
+        requisition_owner(val, df, doc) {
+            // This replaces the email with the Full Name in the list UI without changing data
+            return frappe.user.full_name(val);
+        }
+    }
+};
