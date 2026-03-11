@@ -173,15 +173,13 @@
    "fieldname": "credit_account",
    "fieldtype": "Link",
    "label": "Credit Account",
-   "options": "Account",
-   "reqd": 1
+   "options": "Account"
   },
   {
    "fieldname": "debit_account",
    "fieldtype": "Link",
    "label": "Debit Account",
-   "options": "Account",
-   "reqd": 1
+   "options": "Account"
   },
   {
    "fetch_from": "requisition_owner.full_name",
@@ -197,7 +195,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-03-11 20:21:47.634536",
+ "modified": "2026-03-11 20:24:49.306782",
  "modified_by": "Administrator",
  "module": "Requisitions",
  "name": "Requisitions",
