@@ -14,10 +14,17 @@
   "id_no",
   "section_break_mdwu",
   "project",
-  "paid_amount",
+  "sale_amount",
+  "balance",
   "column_break_juju",
   "plot",
-  "sale_amount",
+  "paid_amount",
+  "etr_details_section",
+  "etr_date",
+  "cu_invoice_no",
+  "column_break_goxc",
+  "scu_id",
+  "rcpt_signature",
   "section_break_r9st",
   "amended_from"
  ],
@@ -51,6 +58,7 @@
   {
    "fieldname": "customer",
    "fieldtype": "Link",
+   "in_list_view": 1,
    "label": "Customer",
    "options": "Customer"
   },
@@ -61,6 +69,7 @@
   {
    "fieldname": "sales_invoice",
    "fieldtype": "Link",
+   "in_list_view": 1,
    "label": "Sales Invoice",
    "options": "Sales Invoice"
   },
@@ -76,6 +85,7 @@
    "fetch_from": "customer.custom_customer_id_no",
    "fieldname": "id_no",
    "fieldtype": "Data",
+   "in_list_view": 1,
    "label": "ID NO"
   },
   {
@@ -85,6 +95,7 @@
   {
    "fieldname": "project",
    "fieldtype": "Link",
+   "in_list_view": 1,
    "label": "Project",
    "options": "Project"
   },
@@ -95,27 +106,69 @@
   {
    "fieldname": "plot",
    "fieldtype": "Link",
+   "in_list_view": 1,
    "label": "Plot",
    "options": "Plot"
   },
   {
    "fieldname": "paid_amount",
    "fieldtype": "Float",
+   "in_list_view": 1,
    "label": "Paid Amount",
    "non_negative": 1
   },
   {
    "fieldname": "sale_amount",
    "fieldtype": "Float",
+   "in_list_view": 1,
    "label": "Sale Amount",
    "non_negative": 1
+  },
+  {
+   "fieldname": "balance",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Balance"
+  },
+  {
+   "fieldname": "etr_details_section",
+   "fieldtype": "Section Break",
+   "label": "ETR DETAILS"
+  },
+  {
+   "fieldname": "etr_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "ETR Date"
+  },
+  {
+   "fieldname": "cu_invoice_no",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "CU Invoice No."
+  },
+  {
+   "fieldname": "column_break_goxc",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "scu_id",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "SCU ID"
+  },
+  {
+   "fieldname": "rcpt_signature",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Rcpt Signature"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-03-09 15:17:11.407351",
+ "modified": "2026-03-11 10:48:21.703399",
  "modified_by": "Administrator",
  "module": "Fanaka App",
  "name": "Signed Completion Agreement",
