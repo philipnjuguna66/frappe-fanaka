@@ -7,72 +7,87 @@ class Requisitions(Document):
         self.create_journal_entry()
 
     def create_journal_entry(self):
-        if not self.bank_account or not self.expense_account:
-            frappe.throw("Please ensure Bank Account and Expense Account are set before submitting.")
+        # This implementation assumes you have added the following fields to your Requisition doctype:
+        # - is_inter_company: Checkbox to explicitly mark this as an inter-company transaction.
+        # - credit_account: Link to the Account to be credited (e.g., Bank or Payable account).
+        # - debit_account: Link to the Account to be debited (e.g., an Expense account).
+        # - total_amount: Currency field for the transaction amount.
+        # - posting_date: Date of the transaction.
+        # - cost_center: (Optional) Link to a Cost Center.
+        # - journal_entry: Link to Journal Entry, to store the created JE.
 
-        # Get Company for both accounts
-        bank_company = frappe.db.get_value("Account", self.bank_account, "company")
-        expense_company = frappe.db.get_value("Account", self.expense_account, "company")
-        
-        # Build Journal Entry
+        if not self.credit_account or not self.debit_account:
+            frappe.throw("Please ensure Credit and Debit accounts are set before submitting.")
+
+        # Determine the companies involved from the accounts
+        credit_company = frappe.db.get_value("Account", self.credit_account, "company")
+        debit_company_for_expense = frappe.db.get_value("Account", self.debit_account, "company")
+
+        # The Journal Entry is created in the company that is making the payment (credit)
         je = frappe.new_doc("Journal Entry")
-        je.voucher_type = "Bank Entry"
-        je.company = bank_company
+        je.voucher_type = "Journal Entry"
+        je.company = credit_company
         je.posting_date = self.posting_date
-        je.cheque_no = self.reference
-        je.cheque_date = self.reference_date
         
-        remark = f"Requisition Payment: {self.name}. Pay To: {self.pay_to or 'N/A'}"
-        if bank_company != expense_company:
-            remark += f" (Inter-company for {expense_company})"
-        
+        remark = f"Requisition: {self.name}"
+        if self.is_inter_company:
+            remark += f" (Inter-company for {debit_company_for_expense})"
         je.user_remark = remark
         
-        # Logic for Inter-company Posting
-        target_debit_account = self.expense_account
+        target_debit_account = self.debit_account
         
-        if bank_company != expense_company:
-            # Look for an Inter-company Account (Asset/Liability) in the PAYING company
-            # Usually named something like "Due from [Company B]"
-            inter_company_account = frappe.db.get_value("Account", {
-                "company": bank_company,
-                "inter_company_account_actual": expense_company, # Standard ERPNext field if configured
+        # Inter-company posting logic
+        if self.is_inter_company and credit_company != debit_company_for_expense:
+            # In an inter-company transaction, the paying company (credit_company)
+            # debits a 'receivable from other company' account, not the final expense account directly.
+            inter_company_receivable_account = frappe.db.get_value("Account", {
+                "company": credit_company,
+                "inter_company_account_for": debit_company_for_expense,
                 "is_group": 0
             }, "name")
             
-            if inter_company_account:
-                target_debit_account = inter_company_account
+            if inter_company_receivable_account:
+                target_debit_account = inter_company_receivable_account
             else:
-                # Fallback: post to expense but warn, or you can create a custom field for "Inter-company Bridge Account"
-                frappe.msgprint(f"<b>Warning:</b> No Inter-company bridge account found for {expense_company} in {bank_company}. Posting directly to the selected expense account.")
+                # If no inter-company account is set up, inform the user.
+                frappe.msgprint(
+                    f"<b>Warning:</b> No Inter-Company Receivable account found in '{credit_company}' "
+                    f"for '{debit_company_for_expense}'. Posting directly to the expense account. "
+                    "Please configure an inter-company account in the Chart of Accounts for proper accounting."
+                )
 
         # Debit Entry
         je.append("accounts", {
             "account": target_debit_account,
             "debit_in_account_currency": flt(self.total_amount),
             "cost_center": self.cost_center,
-            "user_remark": self.description
         })
         
-        # Credit Entry (Bank/Cash)
+        # Credit Entry
         je.append("accounts", {
-            "account": self.bank_account,
+            "account": self.credit_account,
             "credit_in_account_currency": flt(self.total_amount),
-            "cost_center": self.cost_center
+            "cost_center": self.cost_center,
         })
         
-        je.insert()
+        je.insert(ignore_permissions=True)
         je.submit()
         
-        # Link back to Requisition
+        # Link the Journal Entry back to the Requisition
         self.db_set("journal_entry", je.name)
-        frappe.msgprint(f"Journal Entry <a href='/app/journal-entry/{je.name}'>{je.name}</a> created.")
+        frappe.msgprint(f"Journal Entry <a href='/app/journal-entry/{je.name}'>{je.name}</a> created successfully.")
 
     def on_cancel(self):
         if self.journal_entry:
-            je_status = frappe.db.get_value("Journal Entry", self.journal_entry, "docstatus")
-            if je_status == 1:
-                frappe.throw(f"Cannot cancel requisition. Please cancel Journal Entry {self.journal_entry} first.")
-            elif je_status == 0:
-                frappe.delete_doc("Journal Entry", self.journal_entry)
-                self.db_set("journal_entry", "")
+            try:
+                je = frappe.get_doc("Journal Entry", self.journal_entry)
+                if je.docstatus == 1:  # If submitted
+                    je.cancel()
+                    frappe.msgprint(f"Journal Entry <a href='/app/journal-entry/{je.name}'>{je.name}</a> has been cancelled.")
+                elif je.docstatus == 0:  # If draft
+                    frappe.delete_doc("Journal Entry", self.journal_entry)
+                    frappe.msgprint(f"Draft Journal Entry {self.journal_entry} has been deleted.")
+            except frappe.DoesNotExistError:
+                pass # Journal entry already deleted
+
+            self.db_set("journal_entry", None)
