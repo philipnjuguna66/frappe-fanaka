@@ -18,11 +18,12 @@
   "section_break_igut",
   "description",
   "posting_requisitions_section",
-  "bank_account",
+  "is_inter_company",
+  "credit_account",
+  "debit_account",
   "posting_date",
   "reference_date",
   "column_break_jidd",
-  "expense_account",
   "reference",
   "section_break_umuf",
   "amended_from",
@@ -108,13 +109,6 @@
    "label": "Posting Requisitions"
   },
   {
-   "fieldname": "bank_account",
-   "fieldtype": "Link",
-   "label": "Bank Account",
-   "link_filters": "[[\"Account\",\"is_group\",\"=\",0],[\"Account\",\"disabled\",\"=\",0],[\"Account\",\"account_type\",\"=\",\"Bank\"]]",
-   "options": "Account"
-  },
-  {
    "default": "Today",
    "fieldname": "posting_date",
    "fieldtype": "Date",
@@ -131,13 +125,6 @@
    "fieldtype": "Column Break"
   },
   {
-   "fieldname": "expense_account",
-   "fieldtype": "Link",
-   "label": "Expense Account",
-   "link_filters": "[[\"Account\",\"is_group\",\"=\",0],[\"Account\",\"disabled\",\"=\",0],[\"Account\",\"root_type\",\"=\",\"Expense\"]]",
-   "options": "Account"
-  },
-  {
    "fieldname": "reference",
    "fieldtype": "Data",
    "label": "Reference"
@@ -148,8 +135,9 @@
   },
   {
    "fieldname": "journal_entry",
-   "fieldtype": "Data",
+   "fieldtype": "Link",
    "label": "Journal Entry",
+   "options": "Journal Entry",
    "read_only": 1
   },
   {
@@ -173,17 +161,37 @@
    "fieldtype": "Table",
    "label": "Requisition Attachments",
    "options": "Requisition Attachments"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_inter_company",
+   "fieldtype": "Check",
+   "label": "Is Inter Company"
+  },
+  {
+   "fieldname": "credit_account",
+   "fieldtype": "Link",
+   "label": "Credit Account",
+   "options": "Account",
+   "reqd": 1
+  },
+  {
+   "fieldname": "debit_account",
+   "fieldtype": "Link",
+   "label": "Debit Account",
+   "options": "Account",
+   "reqd": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-08-06 13:31:21.663956",
+ "modified": "2026-03-11 12:59:53.776819",
  "modified_by": "Administrator",
  "module": "Requisitions",
  "name": "Requisitions",
- "naming_rule": "Expression",
+ "naming_rule": "Expression (old style)",
  "owner": "Administrator",
  "permissions": [
   {
@@ -195,6 +203,63 @@
    "read": 1,
    "report": 1,
    "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Accounts Manager",
+   "select": 1,
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Accounts User",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "if_owner": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Sales User",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "if_owner": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Sales Manager",
    "share": 1,
    "write": 1
   }
