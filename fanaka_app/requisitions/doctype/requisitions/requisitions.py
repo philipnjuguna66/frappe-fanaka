@@ -42,7 +42,7 @@ class Requisitions(Document):
             # debits a 'receivable from other company' account, not the final expense account directly.
             inter_company_receivable_account = frappe.db.get_value("Account", {
                 "company": credit_company,
-                "inter_company_account_for": debit_company_for_expense,
+                "inter_company_account_actual": debit_company_for_expense,
                 "is_group": 0
             }, "name")
             
