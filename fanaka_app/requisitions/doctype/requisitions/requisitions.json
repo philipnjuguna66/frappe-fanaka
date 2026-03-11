@@ -172,15 +172,13 @@
    "fieldname": "credit_account",
    "fieldtype": "Link",
    "label": "Credit Account",
-   "options": "Account",
-   "reqd": 1
+   "options": "Account"
   },
   {
    "fieldname": "debit_account",
    "fieldtype": "Link",
    "label": "Debit Account",
-   "options": "Account",
-   "reqd": 1
+   "options": "Account"
   }
  ],
  "grid_page_length": 50,
