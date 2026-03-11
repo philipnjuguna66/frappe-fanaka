@@ -13,6 +13,7 @@
   "cost_center",
   "column_break_cpgv",
   "requisition_owner",
+  "owner_full_name",
   "pay_to",
   "account_reference",
   "section_break_igut",
@@ -49,7 +50,6 @@
    "in_list_view": 1,
    "label": "Total Amount",
    "non_negative": 1,
-   "read_only": 1,
    "reqd": 1
   },
   {
@@ -67,12 +67,13 @@
   {
    "allow_in_quick_entry": 1,
    "fieldname": "requisition_owner",
-   "fieldtype": "Data",
+   "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Requisition Owner",
    "options": "User",
    "read_only": 1,
-   "reqd": 1
+   "reqd": 1,
+   "search_index": 1
   },
   {
    "allow_in_quick_entry": 1,
@@ -172,20 +173,31 @@
    "fieldname": "credit_account",
    "fieldtype": "Link",
    "label": "Credit Account",
-   "options": "Account"
+   "options": "Account",
+   "reqd": 1
   },
   {
    "fieldname": "debit_account",
    "fieldtype": "Link",
    "label": "Debit Account",
-   "options": "Account"
+   "options": "Account",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "requisition_owner.full_name",
+   "fetch_if_empty": 1,
+   "fieldname": "owner_full_name",
+   "fieldtype": "Data",
+   "in_standard_filter": 1,
+   "is_virtual": 1,
+   "label": "Owner Full Name"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-03-11 12:59:53.776819",
+ "modified": "2026-03-11 20:21:47.634536",
  "modified_by": "Administrator",
  "module": "Requisitions",
  "name": "Requisitions",
