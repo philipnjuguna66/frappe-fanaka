@@ -27,7 +27,7 @@ def make_call(phone_number, reference_doctype=None, reference_name=None):
         response = voice.call(
             callFrom=outbound_number,
             callTo=[phone_number],
-            callBackUrl="https://erp.fanaka.co.ke/api/method/fanaka_app.api.call.voice_callback"
+            
         )
 
         frappe.logger().info(response)
@@ -224,4 +224,4 @@ def voice_event_callback():
         Thank you for calling Fanaka Real Estate.
     </Say>
 </Response>
-"""
+"""˚
