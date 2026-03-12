@@ -1,5 +1,30 @@
 frappe.listview_settings['Requisitions'] = {
 
+    add_fields: ["status"],
+
+    get_indicator(doc) {
+
+        if (doc.status === "pending") {
+            return ["Pending", "orange", "status,=,pending"];
+        }
+
+        if (doc.status === "approved") {
+            return ["Approved", "green", "status,=,approved"];
+        }
+
+        if (doc.status === "rejected") {
+            return ["Rejected", "red", "status,=,rejected"];
+        }
+
+        if (doc.status === "paid") {
+            return ["Paid", "blue", "status,=,paid"];
+        }
+
+        if (doc.status === "submitted") {
+            return ["Submitted", "purple", "status,=,submitted"];
+        }
+    },
+
     onload(listview) {
 
         const statuses = ["pending","approved","rejected","paid","submitted"];
