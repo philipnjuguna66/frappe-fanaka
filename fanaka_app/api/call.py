@@ -112,101 +112,55 @@ def log_call(data):
 @frappe.whitelist(allow_guest=True)
 def voice_callback():
 
-    request = frappe.local.request
-    data = request.form.to_dict()
+    try:
 
-    frappe.logger().info({
-        "voice_callback_data": data,
-        "headers": dict(request.headers)
-    })
+        data = frappe.local.request.form.to_dict()
 
-    session_id = data.get("sessionId")
-    direction = data.get("direction")
-    is_active = data.get("isActive")
+        frappe.logger().info({
+            "voice_callback": data
+        })
 
-    log_call(data)
+        session_id = data.get("sessionId")
+        direction = data.get("direction")
+        is_active = data.get("isActive")
 
-    # Only act when call is active
-    if is_active == "1":
+        log_call(data)
 
-        # -------------------------------------------------
-        # INBOUND CALL
-        # -------------------------------------------------
+        if is_active == "1":
 
-        if direction == "Inbound":
+            if direction == "Inbound":
 
-            xml_response = """
+                xml = """
 <Response>
-    <Say voice="en-US-Standard-C" playBeep="false">
-        Welcome to Fanaka Real Estate Limited.
-        Your Ideal Real Estate Partner.
-    </Say>
+<Say>
+Welcome to Fanaka Real Estate Limited.
+</Say>
 
-    <Dial
-        phoneNumbers="+254714686511"
-        record="true"
-        maxDuration="10"
-        sequential="true"
-    />
+<Dial phoneNumbers="+254714686511" record="true"/>
 </Response>
 """
 
-            frappe.local.response["type"] = "text/xml"
-            frappe.local.response["message"] = xml_response
-            return
+            else:
 
-
-        # -------------------------------------------------
-        # OUTBOUND CALL
-        # -------------------------------------------------
-
-        if direction == "Outbound":
-
-            user_phone = frappe.db.get_value(
-                "Call Log",
-                {"custom_session_id": session_id},
-                "custom_user_phone_number"
-            )
-
-            if not user_phone:
-                user_phone = "+254714686511"
-
-            xml_response = f"""
+                xml = """
 <Response>
-    <Dial
-        phoneNumbers="{user_phone}"
-        record="true"
-        maxDuration="10"
-        sequential="true"
-    />
+<Say>Connecting your call</Say>
 </Response>
 """
 
-            frappe.local.response["type"] = "text/xml"
-            frappe.local.response["message"] = xml_response
-            return
+        else:
 
-
-        # -------------------------------------------------
-        # FALLBACK
-        # -------------------------------------------------
-
-        xml_response = """
-<Response>
-    <Say>
-        Welcome to Fanaka Real Estate Limited.
-    </Say>
-</Response>
-"""
+            xml = "<Response></Response>"
 
         frappe.local.response["type"] = "text/xml"
-        frappe.local.response["message"] = xml_response
-        return
+        frappe.local.response["message"] = xml
 
+    except Exception:
 
-    return ""
+        frappe.log_error(frappe.get_traceback(), "Voice Callback Error")
 
-
+        frappe.local.response["type"] = "text/xml"
+        frappe.local.response["message"] = "<Response></Response>"
 # ---------------------------------------------------------
 # Voice Event Callback (Call Updates)
 # ---------------------------------------------------------
