@@ -1,7 +1,7 @@
 {
  "actions": [],
  "autoname": "autoincrement",
- "creation": "2026-03-12 12:50:58.226887",
+ "creation": "2026-03-12 12:58:19.605366",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
@@ -28,8 +28,9 @@
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
+ "issingle": 1,
  "links": [],
- "modified": "2026-03-12 12:52:35.805427",
+ "modified": "2026-03-12 12:59:23.019217",
  "modified_by": "Administrator",
  "module": "Fanaka App",
  "name": "Africa Talking Settings",
@@ -40,10 +41,8 @@
    "create": 1,
    "delete": 1,
    "email": 1,
-   "export": 1,
    "print": 1,
    "read": 1,
-   "report": 1,
    "role": "System Manager",
    "share": 1,
    "write": 1
