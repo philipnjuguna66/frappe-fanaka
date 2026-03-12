@@ -50,25 +50,40 @@ frappe.ui.form.on('Requisition Items', {
 
 frappe.listview_settings['Requisitions'] = {
     add_fields: ["status", "requisition_owner"],
-    
+
     onload: function(listview) {
-        const status_filters = ['pending', 'approved', 'rejected', 'paid', 'submitted'];
-        
-        // Use the native Page API to add buttons in Version 16
-        // This is cleaner and more reliable than manual DOM injection
-        
-        listview.page.add_inner_button(__('All'), () => {
-            listview.filter_area.remove('status');
+
+        const statuses = ["pending", "approved", "rejected", "paid", "submitted"];
+
+        // Show all records
+        listview.page.add_inner_button(__('All'), function () {
+            listview.filter_area.clear();
             listview.refresh();
         });
 
-        status_filters.forEach(status => {
-            let label = status.charAt(0).toUpperCase() + status.slice(1);
-            listview.page.add_inner_button(__(label), () => {
-                listview.filter_area.remove('status');
-                listview.filter_area.add('Requisitions', 'status', '=', status);
+        statuses.forEach(function(status) {
+
+            const label = status.charAt(0).toUpperCase() + status.slice(1);
+
+            listview.page.add_inner_button(__(label), function () {
+
+                // clear existing filters first
+                listview.filter_area.clear();
+
+                // add the selected filter
+                listview.filter_area.add(
+                    'Requisitions',
+                    'status',
+                    '=',
+                    status
+                );
+
+                // refresh list
+                listview.refresh();
             });
+
         });
+
     },
 
     formatters: {
