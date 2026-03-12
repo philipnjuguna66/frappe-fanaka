@@ -17,7 +17,7 @@ frappe.ui.form.on("Lead", {
                 function(values) {
 
                     frappe.call({
-                        method: "your_app.api.voice.make_call",
+                        method: "fanaka_app.api.call.make_call",
                         args: {
                             phone_number: values.phone_number
                         },
