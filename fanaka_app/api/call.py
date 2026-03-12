@@ -70,6 +70,17 @@ def log_call(data):
         "Call Log",
         {"id": session_id}
     )
+    status_map = {
+        "NotAnswered": "No Answer",
+        "Completed": "Completed",
+        "Busy": "Busy",
+        "Failed": "Failed",
+        "Ringing": "Ringing",
+        "Queued": "Queued",
+        "Cancelled": "Cancelled"
+    }
+
+    status = status_map.get(data.get("status"), "Failed")
 
     values = {
         "doctype": "Call Log",
@@ -78,7 +89,7 @@ def log_call(data):
         "from": data.get("callerNumber"),
         "to": data.get("destinationNumber"),
         "duration": data.get("durationInSeconds"),
-        "status": data.get("status"),
+        "status": status,
         "custom_recording_url": data.get("recordingUrl"),
         "custom_caller_carrier": data.get("callerCarrierName"),
         "custom_currency_code": data.get("currencyCode"),
