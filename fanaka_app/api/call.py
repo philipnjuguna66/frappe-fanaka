@@ -10,7 +10,7 @@ def make_call(phone_number, reference_doctype=None, reference_name=None):
         if phone_number.startswith("0"):
             phone_number = "+254" + phone_number[1:]
 
-        settings = frappe.get_single("Africa's Talking Settings")
+        settings = frappe.get_single("Africa Talking Settings")
 
         username = settings.username
         api_key = settings.get_password("api_key")
