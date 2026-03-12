@@ -8,7 +8,7 @@ def make_call(phone_number, user_phone=None):
     Initiates an outbound call using Africa's Talking
     """
 
-    settings = frappe.get_single("Africa's Talking Settings")
+    settings = frappe.get_single("Africa Talking Settings")
 
     username = settings.username
     api_key = settings.get_password("api_key")
