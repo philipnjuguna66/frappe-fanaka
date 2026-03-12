@@ -49,46 +49,53 @@ frappe.ui.form.on('Requisition Items', {
 });
 
 frappe.listview_settings['Requisitions'] = {
-    add_fields: ["status", "requisition_owner"],
 
-    onload: function(listview) {
+    onload(listview) {
 
-        const statuses = ["pending", "approved", "rejected", "paid", "submitted"];
+        const statuses = ["pending","approved","rejected","paid","submitted"];
 
-        // Show all records
-        listview.page.add_inner_button(__('All'), function () {
-            listview.filter_area.clear();
-            listview.refresh();
-        });
+        // wait for page to fully render
+        setTimeout(() => {
 
-        statuses.forEach(function(status) {
+            let container = listview.page.wrapper.find('.custom-status-buttons');
 
-            const label = status.charAt(0).toUpperCase() + status.slice(1);
+            // prevent duplicate buttons on refresh
+            if (container.length) return;
 
-            listview.page.add_inner_button(__(label), function () {
+            container = $(`<div class="custom-status-buttons" style="margin-bottom:10px;"></div>`);
+            listview.page.wrapper.find('.layout-main-section').prepend(container);
 
-                // clear existing filters first
+            // ALL BUTTON
+            let all_btn = $(`<button class="btn btn-sm btn-default">All</button>`);
+            all_btn.click(() => {
                 listview.filter_area.clear();
-
-                // add the selected filter
-                listview.filter_area.add(
-                    'Requisitions',
-                    'status',
-                    '=',
-                    status
-                );
-
-                // refresh list
                 listview.refresh();
             });
+            container.append(all_btn);
 
-        });
+            // STATUS BUTTONS
+            statuses.forEach(status => {
 
-    },
+                let label = status.charAt(0).toUpperCase() + status.slice(1);
 
-    formatters: {
-        requisition_owner(val) {
-            return frappe.utils.get_fullname(val);
-        }
+                let btn = $(`<button class="btn btn-sm btn-default" style="margin-left:5px;">${label}</button>`);
+
+                btn.click(() => {
+                    listview.filter_area.clear();
+
+                    listview.filter_area.add_filter([
+                        "Requisitions",
+                        "status",
+                        "=",
+                        status
+                    ]);
+
+                    listview.refresh();
+                });
+
+                container.append(btn);
+            });
+
+        }, 300);
     }
 };
