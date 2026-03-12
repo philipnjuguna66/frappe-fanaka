@@ -1,12 +1,7 @@
 import frappe
 import africastalking
 
-
-# ---------------------------------------------------------
-# MAKE CALL
-# ---------------------------------------------------------
-
-@frappe.whitelist()
+@frappe.whitelist(allow_guest=True)
 def make_call(phone_number, reference_doctype=None, reference_name=None):
 
     try:
@@ -26,8 +21,7 @@ def make_call(phone_number, reference_doctype=None, reference_name=None):
 
         response = voice.call(
             callFrom=outbound_number,
-            callTo=[phone_number],
-            
+            callTo=[phone_number]
         )
 
         frappe.logger().info(response)
@@ -63,11 +57,6 @@ def make_call(phone_number, reference_doctype=None, reference_name=None):
             "status": "error",
             "message": str(e)
         }
-
-
-# ---------------------------------------------------------
-# CALL LOGGING HELPER
-# ---------------------------------------------------------
 
 def log_call(data):
 
@@ -105,7 +94,7 @@ def log_call(data):
 
 
 # ---------------------------------------------------------
-# VOICE CALLBACK (CALL ROUTING)
+# Voice Callback (Main call routing)
 # ---------------------------------------------------------
 
 @frappe.whitelist(allow_guest=True)
@@ -125,7 +114,7 @@ def voice_callback():
 
     log_call(data)
 
-    # Only respond while call is active
+    # Only act when call is active
     if is_active == "1":
 
         # -------------------------------------------------
@@ -136,7 +125,7 @@ def voice_callback():
 
             xml_response = """
 <Response>
-    <Say voice="en-US-Standard-C">
+    <Say voice="en-US-Standard-C" playBeep="false">
         Welcome to Fanaka Real Estate Limited.
         Your Ideal Real Estate Partner.
     </Say>
@@ -144,7 +133,7 @@ def voice_callback():
     <Dial
         phoneNumbers="+254714686511"
         record="true"
-        maxDuration="600"
+        maxDuration="10"
         sequential="true"
     />
 </Response>
@@ -164,7 +153,7 @@ def voice_callback():
             user_phone = frappe.db.get_value(
                 "Call Log",
                 {"custom_session_id": session_id},
-                "to"
+                "custom_user_phone_number"
             )
 
             if not user_phone:
@@ -175,7 +164,7 @@ def voice_callback():
     <Dial
         phoneNumbers="{user_phone}"
         record="true"
-        maxDuration="600"
+        maxDuration="10"
         sequential="true"
     />
 </Response>
@@ -186,23 +175,28 @@ def voice_callback():
             return
 
 
-    # -------------------------------------------------
-    # DEFAULT FALLBACK (IMPORTANT)
-    # -------------------------------------------------
+        # -------------------------------------------------
+        # FALLBACK
+        # -------------------------------------------------
 
-    frappe.local.response["type"] = "text/xml"
-    frappe.local.response["message"] = """
+        xml_response = """
 <Response>
     <Say>
-        Thank you for calling Fanaka Real Estate Limited.
+        Welcome to Fanaka Real Estate Limited.
     </Say>
 </Response>
 """
-    return
+
+        frappe.local.response["type"] = "text/xml"
+        frappe.local.response["message"] = xml_response
+        return
+
+
+    return ""
 
 
 # ---------------------------------------------------------
-# VOICE EVENT CALLBACK (STATUS UPDATES)
+# Voice Event Callback (Call Updates)
 # ---------------------------------------------------------
 
 @frappe.whitelist(allow_guest=True)
@@ -217,11 +211,13 @@ def voice_event_callback():
 
     log_call(data)
 
-    frappe.local.response["type"] = "text/xml"
-    frappe.local.response["message"] = """
+    xml_response = """
 <Response>
     <Say>
         Thank you for calling Fanaka Real Estate.
     </Say>
 </Response>
-"""˚
+"""
+
+    frappe.local.response["type"] = "text/xml"
+    frappe.local.response["message"] = xml_response
