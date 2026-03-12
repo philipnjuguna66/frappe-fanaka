@@ -37,7 +37,8 @@ def make_call(phone_number, reference_doctype=None, reference_name=None):
         if session_id:
             call_log = frappe.get_doc({
                 "doctype": "Call Log",
-                "name": session_id,  # Use sessionId as the primary key
+                "id" : frappe.generate_hash(length=10),  # Generate a unique name for the Call Log
+                "custom_session_id": session_id,  # Use sessionId as the primary key
                 "call_type": "Outgoing",
                 "from": outbound_number,
                 "to": phone_number,
@@ -93,7 +94,7 @@ def log_call(data):
         else:
             doc = frappe.get_doc({
                 "doctype": "Call Log",
-                "name": session_id,
+                "custom_session_id": session_id,
                 "call_type": "Incoming" if data.get("direction") == "Inbound" else "Outgoing",
                 **values
             })
