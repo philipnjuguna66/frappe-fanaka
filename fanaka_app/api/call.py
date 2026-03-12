@@ -2,7 +2,7 @@ import frappe
 import africastalking
 from frappe import _
 
-# 2026-03-12 14:57:15 - Switched to 'id' for document creation and updates
+# 2026-03-12 15:01:45 - Debugged Internal Server Error for guest callbacks
 
 @frappe.whitelist(allow_guest=True)
 def make_call(phone_number, reference_doctype=None, reference_name=None):
@@ -101,11 +101,12 @@ def log_call(data):
             "currency_code": data.get("currencyCode")
         }
 
-        # Query using the 'id' field instead of 'name'
-        existing_log = frappe.db.get_value("Call Log", {"id": session_id}, "name")
+        # Query using the 'id' field. Using get_all to avoid permission issues sometimes present in get_value
+        logs = frappe.get_all("Call Log", filters={"id": session_id}, fields=["name"], limit=1)
+        existing_log_name = logs[0].name if logs else None
 
-        if existing_log:
-            frappe.db.set_value("Call Log", existing_log, values, update_modified=True)
+        if existing_log_name:
+            frappe.db.set_value("Call Log", existing_log_name, values, update_modified=True)
         else:
             doc = frappe.get_doc({
                 "doctype": "Call Log",
@@ -127,7 +128,7 @@ def voice_callback():
     """Main routing callback for Africa's Talking Voice."""
     try:
         data = frappe.form_dict
-        frappe.logger().info(f"Voice Callback: {data}")
+        frappe.logger().info(f"Voice Callback Request Data: {data}")
         
         log_call(data)
 
@@ -143,8 +144,13 @@ def voice_callback():
                     <Dial phoneNumbers="+254714686511" record="true" maxDuration="10" sequential="true"/>
                 </Response>"""
             elif direction == "Outbound":
-                # Lookup by 'id'
-                user_phone = frappe.db.get_value("Call Log", {"id": session_id}, "user_phone_number")
+                # Lookup user_phone_number by filtering on 'id'
+                user_phone = None
+                if session_id:
+                    logs = frappe.get_all("Call Log", filters={"id": session_id}, fields=["user_phone_number"], limit=1)
+                    if logs:
+                        user_phone = logs[0].user_phone_number
+                
                 if not user_phone:
                     user_phone = "+254714686511"
 
@@ -168,8 +174,9 @@ def voice_callback():
 
     except Exception:
         frappe.log_error(frappe.get_traceback(), _("Voice Callback Error"))
+        # Ensure we always return valid XML even on error to prevent AT from retrying indefinitely
         frappe.local.response["type"] = "text/xml"
-        frappe.local.response["message"] = "<Response></Response>"
+        frappe.local.response["message"] = '<?xml version="1.0" encoding="UTF-8"?><Response><Say>An internal error occurred.</Say></Response>'
 
 
 @frappe.whitelist(allow_guest=True)
@@ -190,4 +197,4 @@ def voice_event_callback():
     except Exception:
         frappe.log_error(frappe.get_traceback(), _("Voice Event Callback Error"))
         frappe.local.response["type"] = "text/xml"
-        frappe.local.response["message"] = "<Response></Response>"
+        frappe.local.response["message"] = '<?xml version="1.0" encoding="UTF-8"?><Response></Response>'
