@@ -91,7 +91,7 @@ def log_call(data):
             "duration": data.get("durationInSeconds") or 0,
             "status": status,
             "recording_url": recording_url,
-            "call_session_state": data.get("callSessionState"),
+           #"call_session_state": data.get("callSessionState"),
             "amount": data.get("amount") or 0,
             "currency_code": data.get("currencyCode")
         }
