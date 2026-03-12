@@ -7,6 +7,8 @@ class Requisitions(Document):
     def before_insert(self):
         if not self.requisition_owner:
             self.requisition_owner = frappe.session.user
+        if not self.status:
+            self.status = "pending"    
 
     def on_submit(self):
         self.make_journal_entry()

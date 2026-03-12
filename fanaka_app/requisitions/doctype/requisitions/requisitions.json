@@ -10,12 +10,12 @@
   "section_break_fjpy",
   "total_amount",
   "payment_method",
-  "cost_center",
+  "pay_to",
+  "account_reference",
   "column_break_cpgv",
   "requisition_owner",
   "owner_full_name",
-  "pay_to",
-  "account_reference",
+  "status",
   "section_break_igut",
   "description",
   "posting_requisitions_section",
@@ -23,12 +23,13 @@
   "credit_account",
   "debit_account",
   "posting_date",
-  "reference_date",
   "column_break_jidd",
+  "cost_center",
   "reference",
+  "reference_date",
   "section_break_umuf",
-  "amended_from",
-  "journal_entry"
+  "journal_entry",
+  "amended_from"
  ],
  "fields": [
   {
@@ -136,11 +137,14 @@
    "fieldtype": "Section Break"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "journal_entry",
    "fieldtype": "Link",
+   "in_list_view": 1,
    "label": "Journal Entry",
    "options": "Journal Entry",
-   "read_only": 1
+   "read_only": 1,
+   "search_index": 1
   },
   {
    "fieldname": "section_break_igut",
@@ -190,13 +194,28 @@
    "in_standard_filter": 1,
    "is_virtual": 1,
    "label": "Owner Full Name"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "pending\napproved\nrejected\npaid\nsubmitted",
+   "read_only": 1,
+   "search_index": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
- "links": [],
- "modified": "2026-03-12 09:37:54.878005",
+ "links": [
+  {
+   "link_doctype": "GL Entry",
+   "link_fieldname": "voucher_no"
+  }
+ ],
+ "modified": "2026-03-12 10:53:47.788718",
  "modified_by": "Administrator",
  "module": "Requisitions",
  "name": "Requisitions",
