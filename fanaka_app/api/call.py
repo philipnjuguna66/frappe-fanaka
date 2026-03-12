@@ -33,7 +33,7 @@ def make_call(phone_number, reference_doctype=None, reference_name=None):
         # Create Call Log
         call_log = frappe.get_doc({
             "doctype": "Call Log",
-            "id": frappe.generate_hash(length=10),
+            "id": session_id,
             "call_type": "Outgoing",
             "from": outbound_number,
             "to": phone_number,
@@ -68,12 +68,12 @@ def log_call(data):
 
     existing = frappe.db.exists(
         "Call Log",
-        {"custom_session_id": session_id}
+        {"id": session_id}
     )
 
     values = {
         "doctype": "Call Log",
-        "custom_session_id": session_id,
+        "id": session_id,
         "call_type": "Incoming" if data.get("direction") == "Inbound" else "Outgoing",
         "from": data.get("callerNumber"),
         "to": data.get("destinationNumber"),
