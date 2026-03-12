@@ -17,16 +17,22 @@ frappe.ui.form.on("Lead", {
                 function(values) {
 
                     frappe.call({
-                        method: "fanaka_app.api.call.make_call",
+                        method: "your_app.api.voice.make_call",
                         args: {
                             phone_number: values.phone_number
                         },
                         callback: function(r) {
 
+                            console.log("Server response:", r);
+
                             if (r.message && r.message.status === "success") {
                                 frappe.msgprint("📞 Call initiated successfully");
                             } else {
-                                frappe.msgprint("Call failed");
+                                frappe.msgprint({
+                                    title: "Call Failed",
+                                    message: r.message?.message || "Unknown error",
+                                    indicator: "red"
+                                });
                             }
 
                         }
