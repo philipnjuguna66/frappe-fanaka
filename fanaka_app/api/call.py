@@ -33,6 +33,7 @@ def make_call(phone_number, reference_doctype=None, reference_name=None):
         # Create Call Log
         call_log = frappe.get_doc({
             "doctype": "Call Log",
+            "id": frappe.generate_hash(length=10),
             "call_type": "Outgoing",
             "from": outbound_number,
             "to": phone_number,
