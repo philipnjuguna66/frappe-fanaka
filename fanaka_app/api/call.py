@@ -2,7 +2,7 @@ import frappe
 import africastalking
 from frappe import _
 
-# 2026-03-12 14:48:00 - Optimized for stability and XML response handling
+# 2026-03-12 14:57:15 - Switched to 'id' for document creation and updates
 
 @frappe.whitelist(allow_guest=True)
 def make_call(phone_number, reference_doctype=None, reference_name=None):
@@ -37,16 +37,17 @@ def make_call(phone_number, reference_doctype=None, reference_name=None):
         if session_id:
             call_log = frappe.get_doc({
                 "doctype": "Call Log",
-                "id" : frappe.generate_hash(length=10),  # Generate a unique name for the Call Log
-                "custom_session_id": session_id,  # Use sessionId as the primary key
+                "id": session_id,
+                "custom_session_id": session_id,
                 "call_type": "Outgoing",
                 "from": outbound_number,
                 "to": phone_number,
                 "status": "Ringing",
                 "reference_doctype": reference_doctype,
-                "reference_name": reference_name
+                "reference_name": reference_name,
+                "user_phone_number": phone_number
             })
-            call_log.insert(ignore_permissions=True)
+            call_log.insert(ignore_permissions=True, ignore_mandatory=True)
             frappe.db.commit()
 
         return {
@@ -63,7 +64,7 @@ def make_call(phone_number, reference_doctype=None, reference_name=None):
 
 
 def log_call(data):
-    """Updates or creates a Call Log based on AT webhook data."""
+    """Updates or creates a Call Log based on AT webhook data using 'id'."""
     try:
         session_id = data.get("sessionId")
         if not session_id:
@@ -80,25 +81,40 @@ def log_call(data):
             "Aborted": "Failed"
         }
 
-        status = status_map.get(data.get("status"), "Failed")
+        status = status_map.get(data.get("status"), data.get("status", "Ringing"))
         
+        # Capture Recording Info
+        recording_url = data.get("recordingUrl")
+        recording_html = ""
+        if recording_url:
+            recording_html = f'<audio controls src="{recording_url}" style="width: 100%; height: 35px;"></audio>'
+
         values = {
             "from": data.get("callerNumber"),
             "to": data.get("destinationNumber"),
             "duration": data.get("durationInSeconds") or 0,
-            "status": status
+            "status": status,
+            "recording_url": recording_url,
+            "recording_html": recording_html,
+            "call_session_state": data.get("callSessionState"),
+            "amount": data.get("amount") or 0,
+            "currency_code": data.get("currencyCode")
         }
 
-        if frappe.db.exists("Call Log", session_id):
-            frappe.db.set_value("Call Log", session_id, values, update_modified=True)
+        # Query using the 'id' field instead of 'name'
+        existing_log = frappe.db.get_value("Call Log", {"id": session_id}, "name")
+
+        if existing_log:
+            frappe.db.set_value("Call Log", existing_log, values, update_modified=True)
         else:
             doc = frappe.get_doc({
                 "doctype": "Call Log",
+                "id": session_id,
                 "custom_session_id": session_id,
                 "call_type": "Incoming" if data.get("direction") == "Inbound" else "Outgoing",
                 **values
             })
-            doc.insert(ignore_permissions=True)
+            doc.insert(ignore_permissions=True, ignore_mandatory=True)
         
         frappe.db.commit()
 
@@ -110,29 +126,43 @@ def log_call(data):
 def voice_callback():
     """Main routing callback for Africa's Talking Voice."""
     try:
-        # Use frappe.form_dict to capture POST data reliably
         data = frappe.form_dict
+        frappe.logger().info(f"Voice Callback: {data}")
         
         log_call(data)
 
-        is_active = data.get("isActive")
+        is_active = str(data.get("isActive", "0"))
         direction = data.get("direction")
+        session_id = data.get("sessionId")
 
         if is_active == "1":
             if direction == "Inbound":
-                xml = """<Response>
-                            <Say>Welcome to Fanaka Real Estate Limited.</Say>
-                            <Dial phoneNumbers="+254714686511" record="true"/>
-                         </Response>"""
-            else:
-                # For outbound calls, we usually just want to connect
-                xml = """<Response>
-                            <Say>Connecting your call</Say>
-                         </Response>"""
-        else:
-            xml = "<Response></Response>"
+                xml = """<?xml version="1.0" encoding="UTF-8"?>
+                <Response>
+                    <Say voice="en-US-Standard-C" playBeep="false">Welcome to Fanaka Real Estate Ltd: Your Ideal Real Estate Partner</Say>
+                    <Dial phoneNumbers="+254714686511" record="true" maxDuration="10" sequential="true"/>
+                </Response>"""
+            elif direction == "Outbound":
+                # Lookup by 'id'
+                user_phone = frappe.db.get_value("Call Log", {"id": session_id}, "user_phone_number")
+                if not user_phone:
+                    user_phone = "+254714686511"
 
-        # Set response headers and content
+                xml = f"""<?xml version="1.0" encoding="UTF-8"?>
+                <Response>
+                    <Dial phoneNumbers="{user_phone}" record="true" maxDuration="10" sequential="true"/>
+                </Response>"""
+            else:
+                xml = """<?xml version="1.0" encoding="UTF-8"?>
+                <Response>
+                    <Say voice="en-US-Standard-C" playBeep="false">Welcome to Fanaka Real Estate Ltd</Say>
+                </Response>"""
+        else:
+            xml = """<?xml version="1.0" encoding="UTF-8"?>
+            <Response>
+                <Say>Hello, thank you for calling. This call is now connected.</Say>
+            </Response>"""
+
         frappe.local.response["type"] = "text/xml"
         frappe.local.response["message"] = xml
 
@@ -149,8 +179,10 @@ def voice_event_callback():
         data = frappe.form_dict
         log_call(data)
 
-        # Standard acknowledgment for AT
-        xml = "<Response></Response>"
+        xml = """<?xml version="1.0" encoding="UTF-8"?>
+        <Response>
+            <Say>Hello, thank you for calling. This call is now connected.</Say>
+        </Response>"""
         
         frappe.local.response["type"] = "text/xml"
         frappe.local.response["message"] = xml
