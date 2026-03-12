@@ -42,6 +42,7 @@ app_license = "mit"
 
 doctype_js = {
 	"Project" : "public/js/project.js",
+	"Lead" : "public/js/lead.js",
 	"Stock Entry": "public/js/stock_entry_custom.js",
 }
 
