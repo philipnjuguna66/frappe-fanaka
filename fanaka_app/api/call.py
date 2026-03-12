@@ -42,7 +42,7 @@ def make_call(phone_number, reference_doctype=None, reference_name=None):
             "reference_name": reference_name
         })
 
-        call_log.insert(ignore_permissions=True)
+        call_log.insert(ignore_permissions=True, ignore_mandatory=True)
 
         return {
             "status": "success",
