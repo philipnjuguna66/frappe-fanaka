@@ -59,51 +59,67 @@ def make_call(phone_number, reference_doctype=None, reference_name=None):
             "message": str(e)
         }
 
+
 def log_call(data):
 
-    session_id = data.get("sessionId")
+    try:
 
-    if not session_id:
-        return
+        session_id = data.get("sessionId")
+        if not session_id:
+            return
 
-    existing = frappe.db.exists(
-        "Call Log",
-        {"id": session_id}
-    )
-    status_map = {
-        "NotAnswered": "No Answer",
-        "Completed": "Completed",
-        "Busy": "Busy",
-        "Failed": "Failed",
-        "Ringing": "Ringing",
-        "Queued": "Queued",
-        "Cancelled": "Cancelled"
-    }
+        # Map Africa's Talking statuses to ERPNext statuses
+        status_map = {
+            "NotAnswered": "No Answer",
+            "Completed": "Completed",
+            "Busy": "Busy",
+            "Failed": "Failed",
+            "Ringing": "Ringing",
+            "Queued": "Queued",
+            "Cancelled": "Cancelled",
+            "Aborted": "Failed"
+        }
 
-    status = status_map.get(data.get("status"), "Failed")
+        status = status_map.get(data.get("status"), "Failed")
 
-    values = {
-        "doctype": "Call Log",
-        "id": session_id,
-        "call_type": "Incoming" if data.get("direction") == "Inbound" else "Outgoing",
-        "from": data.get("callerNumber"),
-        "to": data.get("destinationNumber"),
-        "duration": data.get("durationInSeconds"),
-        "status": status,
-        "custom_recording_url": data.get("recordingUrl"),
-        "custom_caller_carrier": data.get("callerCarrierName"),
-        "custom_currency_code": data.get("currencyCode"),
-    }
+        values = {
+            "from": data.get("callerNumber"),
+            "to": data.get("destinationNumber"),
+            "duration": data.get("durationInSeconds"),
+            "status": status
+        }
 
-    if existing:
-        doc = frappe.get_doc("Call Log", existing)
-        doc.update(values)
-        doc.save(ignore_permissions=True)
+        # Try update first (prevents deadlocks)
+        existing = frappe.db.exists("Call Log", session_id)
 
-    else:
-        doc = frappe.get_doc(values)
-        doc.insert(ignore_permissions=True)
+        if existing:
 
+            frappe.db.set_value(
+                "Call Log",
+                session_id,
+                values,
+                update_modified=False
+            )
+
+        else:
+
+            doc = frappe.get_doc({
+                "doctype": "Call Log",
+                "name": session_id,
+                "id": session_id,
+                "call_type": "Incoming" if data.get("direction") == "Inbound" else "Outgoing",
+                **values
+            })
+
+            doc.insert(ignore_permissions=True)
+
+        frappe.db.commit()
+
+    except Exception:
+
+        frappe.log_error(frappe.get_traceback(), "Call Log Update Failed")
+
+        
 
 # ---------------------------------------------------------
 # Voice Callback (Main call routing)
