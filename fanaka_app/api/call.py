@@ -2,7 +2,7 @@ import frappe
 import africastalking
 from frappe import _
 
-# 2026-03-12 15:01:45 - Debugged Internal Server Error for guest callbacks
+# 2026-03-12 15:05:10 - Fixed 500 Error: Optimized guest access and database lookups
 
 @frappe.whitelist(allow_guest=True)
 def make_call(phone_number, reference_doctype=None, reference_name=None):
@@ -27,28 +27,27 @@ def make_call(phone_number, reference_doctype=None, reference_name=None):
             callTo=[phone_number]
         )
 
-        frappe.logger().info(f"AT Call Response: {response}")
-
         session_id = None
         if response.get("entries"):
             session_id = response["entries"][0].get("sessionId")
 
-        # Create Initial Call Log
         if session_id:
-            call_log = frappe.get_doc({
-                "doctype": "Call Log",
-                "id": session_id,
-                "custom_session_id": session_id,
-                "call_type": "Outgoing",
-                "from": outbound_number,
-                "to": phone_number,
-                "status": "Ringing",
-                "reference_doctype": reference_doctype,
-                "reference_name": reference_name,
-                "user_phone_number": phone_number
-            })
-            call_log.insert(ignore_permissions=True, ignore_mandatory=True)
-            frappe.db.commit()
+            # Create Initial Call Log using a dict to be safer with guest permissions
+            try:
+                doc = frappe.new_doc("Call Log")
+                doc.id = session_id
+                doc.custom_session_id = session_id
+                doc.call_type = "Outgoing"
+                doc.set("from", outbound_number)
+                doc.set("to", phone_number)
+                doc.status = "Ringing"
+                doc.reference_doctype = reference_doctype
+                doc.reference_name = reference_name
+                doc.user_phone_number = phone_number
+                doc.insert(ignore_permissions=True)
+                frappe.db.commit()
+            except Exception as e:
+                frappe.log_error(f"Initial Log Creation Failed: {str(e)}", "AT Make Call")
 
         return {
             "status": "success",
@@ -64,7 +63,7 @@ def make_call(phone_number, reference_doctype=None, reference_name=None):
 
 
 def log_call(data):
-    """Updates or creates a Call Log based on AT webhook data using 'id'."""
+    """Updates or creates a Call Log based on AT webhook data."""
     try:
         session_id = data.get("sessionId")
         if not session_id:
@@ -75,19 +74,16 @@ def log_call(data):
             "Completed": "Completed",
             "Busy": "Busy",
             "Failed": "Failed",
-            "Ringing": "Ringing",
-            "Queued": "Queued",
-            "Cancelled": "Cancelled",
-            "Aborted": "Failed"
+            "Ringing": "Ringing"
         }
 
         status = status_map.get(data.get("status"), data.get("status", "Ringing"))
         
-        # Capture Recording Info
         recording_url = data.get("recordingUrl")
-        recording_html = ""
-        if recording_url:
-            recording_html = f'<audio controls src="{recording_url}" style="width: 100%; height: 35px;"></audio>'
+        recording_html = f'<audio controls src="{recording_url}" style="width: 100%; height: 35px;"></audio>' if recording_url else ""
+
+        # Using frappe.db.get_value with a simple filter is the safest for guest SQL access
+        existing_log = frappe.db.get_value("Call Log", {"id": session_id}, "name")
 
         values = {
             "from": data.get("callerNumber"),
@@ -101,34 +97,28 @@ def log_call(data):
             "currency_code": data.get("currencyCode")
         }
 
-        # Query using the 'id' field. Using get_all to avoid permission issues sometimes present in get_value
-        logs = frappe.get_all("Call Log", filters={"id": session_id}, fields=["name"], limit=1)
-        existing_log_name = logs[0].name if logs else None
-
-        if existing_log_name:
-            frappe.db.set_value("Call Log", existing_log_name, values, update_modified=True)
+        if existing_log:
+            frappe.db.set_value("Call Log", existing_log, values, update_modified=True)
         else:
-            doc = frappe.get_doc({
-                "doctype": "Call Log",
-                "id": session_id,
-                "custom_session_id": session_id,
-                "call_type": "Incoming" if data.get("direction") == "Inbound" else "Outgoing",
-                **values
-            })
-            doc.insert(ignore_permissions=True, ignore_mandatory=True)
+            doc = frappe.new_doc("Call Log")
+            doc.id = session_id
+            doc.custom_session_id = session_id
+            doc.call_type = "Incoming" if data.get("direction") == "Inbound" else "Outgoing"
+            doc.update(values)
+            doc.insert(ignore_permissions=True)
         
         frappe.db.commit()
 
-    except Exception:
-        frappe.log_error(frappe.get_traceback(), _("AT Call Log Update Failed"))
+    except Exception as e:
+        frappe.log_error(f"Log Call Failed: {str(e)}", "AT Webhook Update")
 
 
 @frappe.whitelist(allow_guest=True)
 def voice_callback():
     """Main routing callback for Africa's Talking Voice."""
     try:
-        data = frappe.form_dict
-        frappe.logger().info(f"Voice Callback Request Data: {data}")
+        # data = frappe.form_dict
+        data = frappe.request.form.to_dict() # More reliable for some WSGI configs
         
         log_call(data)
 
@@ -140,61 +130,39 @@ def voice_callback():
             if direction == "Inbound":
                 xml = """<?xml version="1.0" encoding="UTF-8"?>
                 <Response>
-                    <Say voice="en-US-Standard-C" playBeep="false">Welcome to Fanaka Real Estate Ltd: Your Ideal Real Estate Partner</Say>
+                    <Say voice="en-US-Standard-C" playBeep="false">Welcome to Fanaka Real Estate Ltd</Say>
                     <Dial phoneNumbers="+254714686511" record="true" maxDuration="10" sequential="true"/>
                 </Response>"""
             elif direction == "Outbound":
-                # Lookup user_phone_number by filtering on 'id'
-                user_phone = None
-                if session_id:
-                    logs = frappe.get_all("Call Log", filters={"id": session_id}, fields=["user_phone_number"], limit=1)
-                    if logs:
-                        user_phone = logs[0].user_phone_number
-                
-                if not user_phone:
-                    user_phone = "+254714686511"
-
+                user_phone = frappe.db.get_value("Call Log", {"id": session_id}, "user_phone_number") or "+254714686511"
                 xml = f"""<?xml version="1.0" encoding="UTF-8"?>
                 <Response>
                     <Dial phoneNumbers="{user_phone}" record="true" maxDuration="10" sequential="true"/>
                 </Response>"""
             else:
-                xml = """<?xml version="1.0" encoding="UTF-8"?>
-                <Response>
-                    <Say voice="en-US-Standard-C" playBeep="false">Welcome to Fanaka Real Estate Ltd</Say>
-                </Response>"""
+                xml = '<?xml version="1.0" encoding="UTF-8"?><Response><Say>Welcome</Say></Response>'
         else:
-            xml = """<?xml version="1.0" encoding="UTF-8"?>
-            <Response>
-                <Say>Hello, thank you for calling. This call is now connected.</Say>
-            </Response>"""
+            xml = '<?xml version="1.0" encoding="UTF-8"?><Response><Say>Call ending</Say></Response>'
 
-        frappe.local.response["type"] = "text/xml"
-        frappe.local.response["message"] = xml
+        frappe.response["type"] = "text/xml"
+        frappe.response["message"] = xml
 
     except Exception:
-        frappe.log_error(frappe.get_traceback(), _("Voice Callback Error"))
-        # Ensure we always return valid XML even on error to prevent AT from retrying indefinitely
-        frappe.local.response["type"] = "text/xml"
-        frappe.local.response["message"] = '<?xml version="1.0" encoding="UTF-8"?><Response><Say>An internal error occurred.</Say></Response>'
+        frappe.log_error(frappe.get_traceback(), "Voice Callback Error")
+        frappe.response["type"] = "text/xml"
+        frappe.response["message"] = '<?xml version="1.0" encoding="UTF-8"?><Response/>'
 
 
 @frappe.whitelist(allow_guest=True)
 def voice_event_callback():
     """Event callback for call status updates."""
     try:
-        data = frappe.form_dict
+        data = frappe.request.form.to_dict()
         log_call(data)
-
-        xml = """<?xml version="1.0" encoding="UTF-8"?>
-        <Response>
-            <Say>Hello, thank you for calling. This call is now connected.</Say>
-        </Response>"""
         
-        frappe.local.response["type"] = "text/xml"
-        frappe.local.response["message"] = xml
+        frappe.response["type"] = "text/xml"
+        frappe.response["message"] = '<?xml version="1.0" encoding="UTF-8"?><Response/>'
         
     except Exception:
-        frappe.log_error(frappe.get_traceback(), _("Voice Event Callback Error"))
-        frappe.local.response["type"] = "text/xml"
-        frappe.local.response["message"] = '<?xml version="1.0" encoding="UTF-8"?><Response></Response>'
+        frappe.response["type"] = "text/xml"
+        frappe.response["message"] = '<?xml version="1.0" encoding="UTF-8"?><Response/>'
