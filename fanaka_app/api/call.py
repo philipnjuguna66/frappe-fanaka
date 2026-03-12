@@ -37,7 +37,7 @@ def make_call(phone_number, reference_doctype=None, reference_name=None):
             "call_type": "Outgoing",
             "from": outbound_number,
             "to": phone_number,
-            "status": "Initiated",
+            "status": "Ringing",
             "custom_session_id": session_id,
             "reference_doctype": reference_doctype,
             "reference_name": reference_name
