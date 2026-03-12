@@ -2,33 +2,33 @@ import frappe
 import africastalking
 
 
-@frappe.whitelist()
-def make_call(phone_number, user_phone=None):
-    """
-    Initiates an outbound call using Africa's Talking
-    """
-
-    settings = frappe.get_single("Africa Talking Settings")
-
-    username = settings.username
-    api_key = settings.get_password("api_key")
-    outbound_number = settings.outbound_number
-
-    africastalking.initialize(username, api_key)
-
-    voice = africastalking.Voice
+def make_call(phone_number, reference_doctype=None, reference_name=None):
 
     try:
+
+        # Normalize Kenyan numbers
+        if phone_number.startswith("0"):
+            phone_number = "+254" + phone_number[1:]
+
+        settings = frappe.get_single("Africa's Talking Settings")
+
+        username = settings.username
+        api_key = settings.get_password("api_key")
+        outbound_number = settings.outbound_number
+
+        africastalking.initialize(username, api_key)
+        voice = africastalking.Voice
 
         response = voice.call(
             callFrom=outbound_number,
             callTo=[phone_number]
         )
 
-        session_id = None
+        frappe.logger().info(response)
 
-        if response["entries"]:
-            session_id = response["entries"][0]["sessionId"]
+        session_id = None
+        if response.get("entries"):
+            session_id = response["entries"][0].get("sessionId")
 
         # Create Call Log
         call_log = frappe.get_doc({
@@ -36,14 +36,13 @@ def make_call(phone_number, user_phone=None):
             "call_type": "Outgoing",
             "from": outbound_number,
             "to": phone_number,
+            "status": "Initiated",
             "custom_session_id": session_id,
-            "custom_user_phone_number": user_phone,
-            "status": "Initiated"
+            "reference_doctype": reference_doctype,
+            "reference_name": reference_name
         })
 
         call_log.insert(ignore_permissions=True)
-
-        frappe.db.commit()
 
         return {
             "status": "success",
@@ -58,10 +57,6 @@ def make_call(phone_number, user_phone=None):
             "status": "error",
             "message": str(e)
         }
-
-# ---------------------------------------------------------
-# Utility: Save or Update Call Log
-# ---------------------------------------------------------
 
 def log_call(data):
 
