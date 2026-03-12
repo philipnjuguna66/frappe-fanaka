@@ -1,16 +1,24 @@
-// Copyright (c) 2025, Philip Njuguna and contributors
-// For license information, please see license.txt
-
 frappe.ui.form.on("Requisitions", {
+    is_inter_company: function(frm) {
+        if (frm.doc.is_inter_company) {
+            //frm.set_value('voucher_type', 'Inter Company Journal Entry');
+        } else {
+            //frm.set_value('voucher_type', 'Journal Entry');
+        }
+    },
+    
     refresh: function(frm) {
+        // Hide posting fields if already submitted to prevent confusion
+        if (frm.doc.docstatus === 1) {
+            frm.set_df_property('posting_requisitions_section', 'hidden', 0);
+        }
+        
+        // Existing View Ledger Button logic...
         if (frm.doc.docstatus === 1 && frm.doc.journal_entry) {
             frm.add_custom_button(__('View Ledger'), function() {
-                // Fetch the JE company to ensure the report filters correctly
-                frappe.db.get_value('Journal Entry', frm.doc.journal_entry, 'company', (r) => {
-                    frappe.set_route('query-report', 'General Ledger', {
-                        voucher_no: frm.doc.journal_entry,
-                        company: r.company
-                    });
+                frappe.set_route('query-report', 'General Ledger', {
+                    voucher_no: frm.doc.journal_entry,
+                    company: frm.doc.company
                 });
             }, __("View"));
         }

@@ -1,9 +1,0 @@
-# Copyright (c) 2026, Philip Njuguna and contributors
-# For license information, please see license.txt
-
-# import frappe
-from frappe.model.document import Document
-
-
-class RequisitionAccounts(Document):
-	pass
