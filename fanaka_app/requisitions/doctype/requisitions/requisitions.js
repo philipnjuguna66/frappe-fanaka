@@ -27,3 +27,23 @@ frappe.listview_settings['Requisitions'] = {
         }
     }
 };
+
+function calculate_total(frm) {
+    let total = 0;
+    if (frm.doc.requisition_items) {
+        frm.doc.requisition_items.forEach(function(d) {
+            total += d.subtotal;
+        });
+    }
+    frm.set_value('total_amount', total);
+    frm.refresh_field('total_amount');
+}
+
+frappe.ui.form.on('Requisition Items', {
+    subtotal(frm) {
+        calculate_total(frm);
+    },
+    requisition_items_remove(frm) {
+        calculate_total(frm);
+    }
+});

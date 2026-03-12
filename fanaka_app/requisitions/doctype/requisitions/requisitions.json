@@ -66,6 +66,7 @@
   },
   {
    "allow_in_quick_entry": 1,
+   "default": "User",
    "fieldname": "requisition_owner",
    "fieldtype": "Link",
    "in_list_view": 1,
@@ -195,7 +196,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-03-11 20:24:49.306782",
+ "modified": "2026-03-12 09:37:54.878005",
  "modified_by": "Administrator",
  "module": "Requisitions",
  "name": "Requisitions",
