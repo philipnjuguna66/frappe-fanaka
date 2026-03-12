@@ -2,6 +2,20 @@ frappe.listview_settings['Requisitions'] = {
 
     add_fields: ["status"],
 
+    refresh(frm) {
+
+        if (!frm.doc.status) return;
+
+        let color = "gray";
+
+        if (frm.doc.status === "approved") color = "green";
+        if (frm.doc.status === "pending") color = "orange";
+        if (frm.doc.status === "rejected") color = "red";
+        if (frm.doc.status === "paid") color = "blue";
+
+        frm.page.set_indicator(frm.doc.status.toUpperCase(), color);
+    },
+
     get_indicator(doc) {
 
         if (doc.status === "pending") {
