@@ -43,7 +43,7 @@ def make_call(phone_number, reference_doctype=None, reference_name=None):
                 doc.status = "Ringing"
                 doc.reference_doctype = reference_doctype
                 doc.reference_name = reference_name
-                doc.user_phone_number = phone_number
+            
                 doc.insert(ignore_permissions=True)
                 frappe.db.commit()
             except Exception as e:
@@ -91,7 +91,6 @@ def log_call(data):
             "duration": data.get("durationInSeconds") or 0,
             "status": status,
             "recording_url": recording_url,
-            "recording_html": recording_html,
             "call_session_state": data.get("callSessionState"),
             "amount": data.get("amount") or 0,
             "currency_code": data.get("currencyCode")
