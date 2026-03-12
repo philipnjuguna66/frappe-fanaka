@@ -1,7 +1,7 @@
 import frappe
 import africastalking
 
-
+@frappe.whitelist(allow_guest=True)
 def make_call(phone_number, reference_doctype=None, reference_name=None):
 
     try:
