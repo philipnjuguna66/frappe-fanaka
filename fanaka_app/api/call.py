@@ -47,10 +47,6 @@ def make_call(phone_number, reference_doctype=None, reference_name=None):
         if response.get("entries"):
             session_id = response["entries"][0].get("sessionId")
 
-        # Database saving is currently ignored to prevent insertion/validation errors
-        # if session_id:
-        #     pass 
-
         return {
             "status": "success",
             "session_id": session_id
@@ -71,24 +67,32 @@ def voice_callback():
         data = frappe.form_dict
         is_active = data.get('isActive')
         direction = data.get('direction')
+        
+        # 2026-03-13: Log the incoming callback data for debugging Dial behavior
+        # frappe.log_error(str(data), "AT Voice Callback Debug")
 
         if is_active == "1":
+            # For Inbound calls, we want to play a greeting then bridge to an agent
             if direction == "Inbound":
                 xml = """<?xml version="1.0" encoding="UTF-8"?>
                 <Response>
-                    <Say voice="en-US-Standard-C" playBeep="false">Welcome to Fanaka Real Estate Ltd</Say>
-                    <Dial phoneNumbers="+254714686511" record="true" maxDuration="10" sequential="true"/>
+                    <Say voice="en-US-Standard-C" playBeep="false">Welcome to Fanaka Real Estate Ltd. Connecting you to an agent.</Say>
+                    <Dial phoneNumbers="+254714686511" record="true" maxDuration="3600" sequential="true"/>
                 </Response>"""
+            
+            # For Outbound calls initiated via API
+            # AT calls the customer first. When customer picks up, this URL is hit.
+            # We then Dial the agent/user to bridge them.
             elif direction == "Outbound":
-                user_phone = "+254714686511"
+                agent_phone = "+254714686511"
                 xml = f"""<?xml version="1.0" encoding="UTF-8"?>
                 <Response>
-                    <Dial phoneNumbers="{user_phone}" record="true" maxDuration="10" sequential="true"/>
+                    <Dial phoneNumbers="{agent_phone}" record="true" maxDuration="3600" sequential="true"/>
                 </Response>"""
             else:
-                xml = '<?xml version="1.0" encoding="UTF-8"?><Response><Say>Welcome</Say></Response>'
+                xml = '<?xml version="1.0" encoding="UTF-8"?><Response><Say>Connection established.</Say></Response>'
         else:
-            xml = '<?xml version="1.0" encoding="UTF-8"?><Response><Say>Call ending</Say></Response>'
+            xml = '<?xml version="1.0" encoding="UTF-8"?><Response><Say>Call ended.</Say></Response>'
 
         frappe.response["type"] = "text/xml"
         frappe.response["message"] = xml
@@ -103,14 +107,7 @@ def voice_callback():
 def voice_event_callback():
     """Event callback for call status updates (Status Callback URL)."""
     try:
-        # 2026-03-13: Database saving is currently disabled. 
-        # We only acknowledge the event to keep Africa's Talking happy.
-        
-        # We can still log the data to the Error Log for debugging if needed, 
-        # but we avoid 'Call Log' document operations.
-        # data = frappe.form_dict
-        # frappe.log_error(str(data), "AT Voice Event Debug")
-
+        # Acknowledge the event to AT
         frappe.response["type"] = "text/xml"
         frappe.response["message"] = '<?xml version="1.0" encoding="UTF-8"?><Response/>'
         
