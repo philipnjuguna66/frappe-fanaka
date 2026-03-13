@@ -2,9 +2,8 @@ import frappe
 import africastalking
 from frappe import _
 
+# 2026-03-13 20:58:15 - Logic Update: Disabled Call Log database persistence to focus on callback stability
 # 2026-03-13 20:53:10 - Fixed LinkValidationError: Bypassed after_insert hooks using db_insert for new logs
-# 2026-03-13 20:45:12 - Fixed LinkValidationError: Ensured reference fields are cleared for new logs
-# 2026-03-13 20:39:45 - Fixed DuplicateEntryError: Added ignore_if_duplicate and refined lookup logic
 
 def map_at_status(at_status):
     """Maps Africa's Talking status to Fanaka Call Log Select options."""
@@ -48,25 +47,9 @@ def make_call(phone_number, reference_doctype=None, reference_name=None):
         if response.get("entries"):
             session_id = response["entries"][0].get("sessionId")
 
-        if session_id:
-            try:
-                doc = frappe.new_doc("Call Log")
-                doc.id = session_id
-                doc.custom_session_id = session_id
-                doc.call_type = "Outgoing"
-                doc.set("from", outbound_number)
-                doc.set("to", phone_number)
-                doc.status = "Ringing"
-                
-                # Only set references if they are actually provided
-                if reference_doctype and reference_name:
-                    doc.reference_doctype = reference_doctype
-                    doc.reference_name = reference_name
-            
-                doc.insert(ignore_permissions=True, ignore_if_duplicate=True)
-                frappe.db.commit()
-            except Exception as e:
-                frappe.log_error(f"Initial Log Creation Failed: {str(e)}", "AT Make Call")
+        # Database saving is currently ignored to prevent insertion/validation errors
+        # if session_id:
+        #     pass 
 
         return {
             "status": "success",
@@ -120,55 +103,13 @@ def voice_callback():
 def voice_event_callback():
     """Event callback for call status updates (Status Callback URL)."""
     try:
-        data = frappe.form_dict
-        session_id = data.get('sessionId')
-        at_status = data.get('status')
-
-        if session_id and at_status:
-            frappe_status = map_at_status(at_status)
-            
-            # Lookup the document name by the custom_session_id field
-            doc_name = frappe.db.get_value("Call Log", {"custom_session_id": session_id}, "name")
-            
-            # Fallback to direct name lookup
-            if not doc_name and frappe.db.exists("Call Log", session_id):
-                doc_name = session_id
-
-            if doc_name:
-                doc = frappe.get_doc("Call Log", doc_name)
-                doc.status = frappe_status
-                
-                if at_status == "Answered":
-                    doc.call_start_time = data.get('callStartTime')
-                
-                if data.get('durationInSeconds'):
-                    doc.call_duration = data.get('durationInSeconds')
-                
-                if data.get('hangupCause'):
-                    doc.hangup_cause = data.get('hangupCause')
-                
-                doc.save(ignore_permissions=True)
-            else:
-                # 2026-03-13: Use db_insert to bypass ERPNext telephony hooks (trigger_call_popup)
-                # which cause LinkValidationErrors on 'Reference Name' during guest callbacks.
-                new_log = frappe.new_doc("Call Log")
-                new_log.id = session_id
-                new_log.custom_session_id = session_id
-                new_log.status = frappe_status
-                new_log.call_type = data.get('direction', 'Inbound')
-                new_log.set("from", data.get('callerNumber'))
-                new_log.set("to", data.get('destinationNumber'))
-                
-                if data.get('durationInSeconds'):
-                    new_log.call_duration = data.get('durationInSeconds')
-                
-                if data.get('callStartTime'):
-                    new_log.call_start_time = data.get('callStartTime')
-
-                # Direct database insertion bypasses standard hooks and validation logic that fails for guests
-                new_log.db_insert()
-            
-            frappe.db.commit()
+        # 2026-03-13: Database saving is currently disabled. 
+        # We only acknowledge the event to keep Africa's Talking happy.
+        
+        # We can still log the data to the Error Log for debugging if needed, 
+        # but we avoid 'Call Log' document operations.
+        # data = frappe.form_dict
+        # frappe.log_error(str(data), "AT Voice Event Debug")
 
         frappe.response["type"] = "text/xml"
         frappe.response["message"] = '<?xml version="1.0" encoding="UTF-8"?><Response/>'
