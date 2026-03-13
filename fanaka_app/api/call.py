@@ -193,12 +193,9 @@ def voice_event_callback():
         if log_name:
             doc = frappe.get_doc("Call Log", log_name)
             doc.status = status
-            doc.record_url = record_url
+            doc.recording_url = record_url
             doc.call_duration = duration
-
-            if duration == 0:
-                note = (doc.note or "") + "\nZero duration - possible early hangup or network issue"
-                doc.note = note.strip()
+            doc.end_time = frappe.utils.now_datetime()
 
             doc.save(ignore_permissions=True)
             frappe.db.commit()
