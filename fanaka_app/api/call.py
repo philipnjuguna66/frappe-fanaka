@@ -1,6 +1,7 @@
 import frappe
 import africastalking
 from frappe import _
+import xml.etree.ElementTree as ET
 
 # 2026-03-12 15:05:10 - Fixed 500 Error: Optimized guest access and database lookups
 
@@ -63,32 +64,29 @@ def make_call(phone_number, reference_doctype=None, reference_name=None):
 
 
 def log_call(data):
-    pass
+    frappe.log_error(str(data), "AT Callback Data")
 
 
 @frappe.whitelist(allow_guest=True)
 def voice_callback():
     """Main routing callback for Africa's Talking Voice."""
     try:
-        # data = frappe.form_dict
-        data = frappe.request.form.to_dict() # More reliable for some WSGI configs
-        
-        log_call(data)
+        xml_data = frappe.request.data.decode('utf-8')
+        log_call(xml_data)
 
-        is_active = str(data.get("isActive", "0"))
-        direction = data.get("direction")
-        session_id = data.get("sessionId")
+        root = ET.fromstring(xml_data)
+        is_active = root.find('isActive').text
 
         if is_active == "1":
+            direction = root.find('direction').text
             if direction == "Inbound":
                 xml = """<?xml version="1.0" encoding="UTF-8"?>
                 <Response>
                     <Say voice="en-US-Standard-C" playBeep="false">Welcome to Fanaka Real Estate Ltd</Say>
                     <Dial phoneNumbers="+254714686511" record="true" maxDuration="10" sequential="true"/>
                 </Response>"""
-                #frappe.db.get_value("Call Log", {"id": session_id}, "user_phone_number") o[]
             elif direction == "Outbound":
-                user_phone =  "+254714686511"
+                user_phone = "+254714686511"
                 xml = f"""<?xml version="1.0" encoding="UTF-8"?>
                 <Response>
                     <Dial phoneNumbers="{user_phone}" record="true" maxDuration="10" sequential="true"/>
@@ -111,12 +109,31 @@ def voice_callback():
 def voice_event_callback():
     """Event callback for call status updates."""
     try:
-        data = frappe.request.form.to_dict()
-        log_call(data)
+        xml_data = frappe.request.data.decode('utf-8')
+        log_call(xml_data)
         
+        root = ET.fromstring(xml_data)
+        
+        session_id = root.find('sessionId').text
+        status = root.find('status').text
+
+        if session_id and status:
+            if frappe.db.exists("Call Log", session_id):
+                doc = frappe.get_doc("Call Log", session_id)
+                doc.status = status
+                if status == "Answered":
+                    doc.call_start_time = root.find('callStartTime').text
+                elif status == "Hangup":
+                    doc.hangup_cause = root.find('hangupCause').text
+                    doc.call_duration = root.find('durationInSeconds').text
+                
+                doc.save(ignore_permissions=True)
+                frappe.db.commit()
+
         frappe.response["type"] = "text/xml"
         frappe.response["message"] = '<?xml version="1.0" encoding="UTF-8"?><Response/>'
         
     except Exception:
+        frappe.log_error(frappe.get_traceback(), "Voice Event Callback Error")
         frappe.response["type"] = "text/xml"
         frappe.response["message"] = '<?xml version="1.0" encoding="UTF-8"?><Response/>'
