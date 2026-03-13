@@ -107,7 +107,7 @@ def make_call(phone_number, reference_doctype=None, reference_name=None):
 def voice_callback():
     try:
         data = frappe.form_dict or {}
-     
+        frappe.log_error(frappe.as_json(data), "AT Voice Callback - Data")
 
         session_id = data.get("sessionId", "").strip()
         is_active = int(data.get("isActive", 0))
@@ -116,10 +116,7 @@ def voice_callback():
         destination = data.get("destinationNumber", "")  # your virtual number
         recording_url = data.get("recordingUrl", "")  # recording URL if available
         agent_number = "+254714686511"
-        at_status = data.get("status", "").strip()
-        session_state = data.get("callSessionState", "").strip()
-        effective = session_state or at_status or "MISSING"
-        status = STATUS_MAP.get(effective, "UNKNOWN")
+        
 
         # ─── EARLY LOGGING FOR INBOUND ──────────────────────────────
         if direction == "Inbound" and session_id:
@@ -131,7 +128,7 @@ def voice_callback():
                 cl.from_ = caller
                 cl.to = destination      
                 cl.recording_url=recording_url
-                cl.status = status        # initial state
+                cl.status = STATUS_MAP.get(data.get("status", "").strip(), "Ringing")        # initial state
                 cl.medium = "Africa's Talking"
                 cl.start_time = frappe.utils.now_datetime()
                 cl.note = "Inbound call received - waiting for connect"
@@ -177,37 +174,26 @@ def voice_callback():
 def voice_event_callback():
     try:
         data = frappe.form_dict or {}
+        frappe.log_error(frappe.as_json(data), "AT Voice Event Callback - Data")
+
         session_id = data.get("sessionId", "").strip()
-        is_active = int(data.get("isActive", 0))
-        direction = data.get("direction", "").strip()
-        caller = data.get("callerNumber", "")
-        destination = data.get("destinationNumber", "")  # your virtual number
-        recording_url = data.get("recordingUrl", "")  # recording URL if available
-        agent_number = "+254714686511"
-        at_status = data.get("status", "").strip()
-        session_state = data.get("callSessionState", "").strip()
-        effective = session_state or at_status or "MISSING"
-        status = STATUS_MAP.get(effective, "UNKNOWN")
+        status = data.get("status", "").strip()
+        recording_url = data.get("recordingUrl", "").strip()
 
-        # ─── EARLY LOGGING FOR INBOUND ──────────────────────────────
-        if direction == "Inbound" and session_id:
-            existing = frappe.db.exists("Call Log", {"custom_session_id": session_id})
-            if not existing:
-                cl = frappe.new_doc("Call Log")
-                cl.custom_session_id = session_id
-                cl.id = session_id
-                cl.from_ = caller
-                cl.to = destination      
-                cl.recording_url=recording_url
-                cl.status = status        # initial state
-                cl.medium = "Africa's Talking"
-                cl.start_time = frappe.utils.now_datetime()
-                cl.note = "Inbound call received - waiting for connect"
-                cl.insert(ignore_permissions=True)
+        if session_id:
+            cl_name = frappe.db.get_value("Call Log", {"custom_session_id": session_id})
+            if cl_name:
+                cl = frappe.get_doc("Call Log", cl_name)
+                cl.status = STATUS_MAP.get(status, status)
+                if recording_url:
+                    cl.recording_url = recording_url
+                if status in ["Completed", "Aborted", "Failed", "Rejected"]:
+                    cl.end_time = frappe.utils.now_datetime()
+                cl.save(ignore_permissions=True)
                 frappe.db.commit()
-            
-            return xml_response("<Say>Event received</Say>")
 
-    except Exception as e:
-        frappe.log_error(traceback.format_exc(), "AT Event Callback Error")
-        return xml_response("<Say>System error</Say>")
+        return {"status": "success"}
+
+    except Exception:
+        frappe.log_error(traceback.format_exc(), "AT Voice Event Callback Crash")
+        return {"status": "error"}
