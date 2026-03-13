@@ -126,8 +126,8 @@ def voice_callback():
                 cl.id = session_id
                 cl.from_ = caller
                 cl.to = destination      
-                cl.recording_url=recording_url
-                cl.status = STATUS_MAP.get(data.get("status", "").strip(), "Ringing")        # initial state
+                cl.recording_url=        # your virtual number
+                cl.status = "Ringing"            # initial state
                 cl.medium = "Africa's Talking"
                 cl.start_time = frappe.utils.now_datetime()
                 cl.note = "Inbound call received - waiting for connect"
@@ -135,6 +135,7 @@ def voice_callback():
                 frappe.db.commit()
 
         if is_active != 1:
+            
             return xml_response("""
                 <Say voice="en-US-Wavenet-C">Thank you for calling. Goodbye.</Say>
                 <Hangup/>
@@ -167,7 +168,7 @@ def voice_callback():
 
 
 # ---------------------------------------------------------
-# FIXED VOICE EVENT CALLBACK – update Call Log
+# VOICE EVENT CALLBACK – update Call Log
 # ---------------------------------------------------------
 @frappe.whitelist(allow_guest=True)
 def voice_event_callback():
@@ -186,18 +187,14 @@ def voice_event_callback():
 
         duration = int(data.get("durationInSeconds", 0))
         direction = data.get("direction", "Inbound")
-        destination = data.get("destinationNumber", "") 
-        recording_url = data.get("recordingUrl", "")  # recording URL if available
-
 
         # Find existing log
-        log_name = frappe.db.exists("Call Log", {"custom_session_id": session_id})
+        log_name = frappe.db.get_value("Call Log", {"custom_session_id": session_id}, "name")
 
         if log_name:
             doc = frappe.get_doc("Call Log", log_name)
             doc.status = status
             doc.call_duration = duration
-            doc.recording_url = recording_url
 
             if duration == 0:
                 note = (doc.note or "") + "\nZero duration - possible early hangup or network issue"
