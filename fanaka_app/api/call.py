@@ -1,6 +1,7 @@
 import frappe
 import africastalking
 import traceback
+import re
 from frappe import _
 from werkzeug.wrappers import Response as WerkzeugResponse
 
@@ -17,6 +18,7 @@ STATUS_MAP = {
     "Ringing":          "RINGING",
     "Ongoing":          "IN_PROGRESS",
     "Machine":          "ANSWERING_MACHINE",
+    "Success":          "COMPLETED",  # map AT 'Success' to our COMPLETED
     "UNKNOWN":          "UNKNOWN"
 }
 
@@ -39,22 +41,32 @@ def xml_response(body: str):
     return response
 
 
+# Helper: Clean phone to strict E.164
+def clean_phone(phone):
+    if not phone:
+        return ""
+    phone = re.sub(r'[^0-9+]', '', str(phone).strip())
+    if phone.startswith('0'):
+        phone = '+254' + phone[1:]
+    elif not phone.startswith('+'):
+        phone = '+' + phone
+    return phone
+
+
 # ---------------------------------------------------------
 # INITIATE OUTBOUND CALL + create Call Log
 # ---------------------------------------------------------
 @frappe.whitelist(allow_guest=True)
 def make_call(phone_number, reference_doctype=None, reference_name=None):
     try:
-        # Normalize phone
-        if phone_number.startswith("0"):
-            phone_number = "+254" + phone_number[1:]
-        elif not phone_number.startswith("+"):
-            phone_number = "+" + phone_number
+        phone_number = clean_phone(phone_number)
+        if not phone_number:
+            return {"status": "error", "message": "Invalid phone number"}
 
         settings = frappe.get_single("Africa Talking Settings")
         username = settings.username
         api_key = settings.get_password("api_key")
-        outbound_number = settings.outbound_number
+        outbound_number = clean_phone(settings.outbound_number)
 
         if not all([username, api_key, outbound_number]):
             return {"status": "error", "message": "Missing Africa's Talking credentials"}
@@ -67,17 +79,14 @@ def make_call(phone_number, reference_doctype=None, reference_name=None):
             callTo=[phone_number]
         )
 
-        session_id = None
-        if response and response.get("entries"):
-            session_id = response["entries"][0].get("sessionId")
+        session_id = response.get("entries", [{}])[0].get("sessionId")
 
-        # ─── CREATE CALL LOG FOR OUTBOUND ──────────────────────────────
+        # Create outbound Call Log
         if session_id:
             cl = frappe.new_doc("Call Log")
             cl.custom_session_id = session_id
-            cl.id=session_id
-            cl.from_ = outbound_number           # your number
-            cl.to = phone_number                 # customer
+            cl.from_ = outbound_number
+            cl.to = phone_number
             cl.status = "Initiated"
             cl.medium = "Africa's Talking"
             cl.start_time = frappe.utils.now_datetime()
@@ -85,7 +94,6 @@ def make_call(phone_number, reference_doctype=None, reference_name=None):
             if reference_doctype and reference_name:
                 cl.reference_doctype = reference_doctype
                 cl.reference_name = reference_name
-
             cl.insert(ignore_permissions=True)
             frappe.db.commit()
 
@@ -101,33 +109,33 @@ def make_call(phone_number, reference_doctype=None, reference_name=None):
 
 
 # ---------------------------------------------------------
-# VOICE CALLBACK – inbound early logging + flow
+# VOICE CALLBACK – early logging + flow
 # ---------------------------------------------------------
 @frappe.whitelist(allow_guest=True)
 def voice_callback():
     try:
         data = frappe.form_dict or {}
-        frappe.log_error(frappe.as_json(data), "AT Voice Callback - Data")
+        frappe.log_error(frappe.as_json(data), "AT Voice Callback - Incoming Data")
 
         session_id = data.get("sessionId", "").strip()
         is_active = int(data.get("isActive", 0))
         direction = data.get("direction", "").strip()
-        caller = data.get("callerNumber", "")
-        destination = data.get("destinationNumber", "")  # your virtual number
-        recording_url = data.get("recordingUrl", "")  # recording URL if available
+        caller = clean_phone(data.get("callerNumber", ""))
+        destination = clean_phone(data.get("destinationNumber", ""))
+        recording_url = data.get("recordingUrl", "")
+
         agent_number = "+254714686511"
 
-        # ─── EARLY LOGGING FOR INBOUND ──────────────────────────────
+        # Early logging for inbound
         if direction == "Inbound" and session_id:
-            existing = frappe.db.exists("Call Log", {"custom_session_id": session_id})
-            if not existing:
+            existing_name = frappe.db.get_value("Call Log", {"custom_session_id": session_id}, "name")
+            if not existing_name:
                 cl = frappe.new_doc("Call Log")
                 cl.custom_session_id = session_id
-                cl.id = session_id
                 cl.from_ = caller
-                cl.to = destination      
-                cl.recording_url=recording_url
-                cl.status = STATUS_MAP.get(data.get("status", "").strip(), "Ringing")        # initial state
+                cl.to = destination  # your virtual number
+                cl.recording_url = recording_url  # usually empty here, but safe
+                cl.status = "Ringing"
                 cl.medium = "Africa's Talking"
                 cl.start_time = frappe.utils.now_datetime()
                 cl.note = "Inbound call received - waiting for connect"
@@ -140,15 +148,14 @@ def voice_callback():
                 <Hangup/>
             """)
 
-        # Call flow
+        # Call flow (simplified - no greeting for inbound as per your last change)
         if direction == "Inbound":
             body = f"""
                 <Dial phoneNumbers="{agent_number}" record="true" maxDuration="600" sequential="true"/>
             """
         elif direction == "Outbound":
-    
             body = f"""
-                <Dial phoneNumbers="{caller}" record="true" maxDuration="600" sequential="true"/>
+                <Dial phoneNumbers="{agent_number}" record="true" maxDuration="600" sequential="true"/>
             """
         else:
             body = f"""
@@ -159,7 +166,7 @@ def voice_callback():
         return xml_response(body)
 
     except Exception:
-        frappe.log_error(traceback.format_exc(), "AT Voice Callback Crash")
+        frappe.log_error(traceback.format_exc(), "AT Voice Callback - Crash")
         return xml_response("""
             <Say voice="en-US-Wavenet-C">Sorry, technical issue.</Say>
             <Hangup/>
@@ -167,17 +174,17 @@ def voice_callback():
 
 
 # ---------------------------------------------------------
-# VOICE EVENT CALLBACK – update Call Log
+# VOICE EVENT CALLBACK – update Call Log (including recording_url)
 # ---------------------------------------------------------
 @frappe.whitelist(allow_guest=True)
 def voice_event_callback():
     try:
         data = frappe.form_dict or {}
+        frappe.log_error(frappe.as_json(data), "AT Voice Event - Raw Payload")
+
         session_id = data.get("sessionId", "").strip()
         if not session_id:
             return xml_response("<Say>Invalid session</Say>")
-
-        frappe.log_error(frappe.as_json(data), "AT Voice Event - Raw")
 
         at_status = data.get("status", "").strip()
         session_state = data.get("callSessionState", "").strip()
@@ -186,28 +193,36 @@ def voice_event_callback():
 
         duration = int(data.get("durationInSeconds", 0))
         direction = data.get("direction", "Inbound")
-        destination = data.get("destinationNumber", "") 
-        recording_url = data.get("recordingUrl", "")  # recording URL if available
+        recording_url = data.get("recordingUrl", "")
 
-
-        # Find existing log
+        # Find and update (or create fallback)
         log_name = frappe.db.get_value("Call Log", {"custom_session_id": session_id}, "name")
 
         if log_name:
             doc = frappe.get_doc("Call Log", log_name)
-            doc.status = status
-            doc.call_duration = duration
-            doc.recording_url = recording_url
+        else:
+            # Fallback: create if missing (rare, but safe)
+            doc = frappe.new_doc("Call Log")
+            doc.custom_session_id = session_id
+            doc.from_ = clean_phone(data.get("callerNumber", ""))
+            doc.to = clean_phone(data.get("destinationNumber", ""))
+            doc.medium = "Africa's Talking"
+            doc.start_time = data.get("callStartTime", frappe.utils.now_datetime())
 
-            if duration == 0:
-                note = (doc.note or "") + "\nZero duration - possible early hangup or network issue"
-                doc.note = note.strip()
+        # Update fields
+        doc.status = status
+        doc.call_duration = duration
+        if recording_url:
+            doc.recording_url = recording_url  # this should now save!
 
-            doc.save(ignore_permissions=True)
-            frappe.db.commit()
+        if duration == 0:
+            doc.note = (doc.note or "") + "\nZero duration - possible early hangup or network issue"
 
-        return xml_response("<Say>Event received</Say>")
+        doc.save(ignore_permissions=True)
+        frappe.db.commit()
+
+        return xml_response("<Say>Event received and logged</Say>")
 
     except Exception as e:
-        frappe.log_error(traceback.format_exc(), "AT Event Callback Error")
+        frappe.log_error(traceback.format_exc(), "AT Event Callback - Crash")
         return xml_response("<Say>System error</Say>")
