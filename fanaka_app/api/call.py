@@ -2,6 +2,7 @@ import frappe
 import africastalking
 from frappe import _
 
+# 2026-03-13 20:39:45 - Fixed DuplicateEntryError: Added ignore_if_duplicate and refined lookup logic
 # 2026-03-13 20:35:10 - Fixed Status Mapping: Handled "Aborted" and "Hangup" to match DocType Select options
 # 2026-03-13 20:31:45 - Fixed ValidationError: Explicitly setting 'id' field for new_log naming
 # 2026-03-13 20:25:30 - Improved Lookup: Using custom_session_id for database queries instead of doc name
@@ -61,7 +62,7 @@ def make_call(phone_number, reference_doctype=None, reference_name=None):
                 doc.reference_doctype = reference_doctype
                 doc.reference_name = reference_name
             
-                doc.insert(ignore_permissions=True)
+                doc.insert(ignore_permissions=True, ignore_if_duplicate=True)
                 frappe.db.commit()
             except Exception as e:
                 frappe.log_error(f"Initial Log Creation Failed: {str(e)}", "AT Make Call")
@@ -123,11 +124,13 @@ def voice_event_callback():
         at_status = data.get('status')
 
         if session_id and at_status:
-            # Map AT status to Frappe Select options
             frappe_status = map_at_status(at_status)
             
-            # Lookup the document name by the custom_session_id field
+            # 2026-03-13: Check both doc name and custom_session_id to avoid DuplicateEntryError
             doc_name = frappe.db.get_value("Call Log", {"custom_session_id": session_id}, "name")
+            
+            if not doc_name and frappe.db.exists("Call Log", session_id):
+                doc_name = session_id
 
             if doc_name:
                 doc = frappe.get_doc("Call Log", doc_name)
@@ -144,7 +147,7 @@ def voice_event_callback():
                 
                 doc.save(ignore_permissions=True)
             else:
-                # 2026-03-13: Ensure 'id' is set and status is mapped for Inbound logs
+                # 2026-03-13: Added ignore_if_duplicate=True to handle race conditions
                 new_log = frappe.new_doc("Call Log")
                 new_log.id = session_id
                 new_log.custom_session_id = session_id
@@ -159,7 +162,7 @@ def voice_event_callback():
                 if data.get('callStartTime'):
                     new_log.call_start_time = data.get('callStartTime')
                 
-                new_log.insert(ignore_permissions=True)
+                new_log.insert(ignore_permissions=True, ignore_if_duplicate=True)
             
             frappe.db.commit()
 
