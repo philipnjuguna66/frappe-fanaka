@@ -8,16 +8,16 @@ from werkzeug.wrappers import Response as WerkzeugResponse
 # STATUS MAP
 # ---------------------------------------------------------
 STATUS_MAP = {
-    "Completed":        "COMPLETED",
-    "Aborted":          "ABORTED",
-    "Busy":             "BUSY",
-    "No Answer":        "NO_ANSWER",
-    "Failed":           "FAILED",
-    "Rejected":         "REJECTED",
-    "Ringing":          "RINGING",
-    "Ongoing":          "IN_PROGRESS",
-    "Machine":          "ANSWERING_MACHINE",
-    "UNKNOWN":          "UNKNOWN"
+    "Success":     "Completed",
+    "Completed":   "Completed",
+    "Aborted":     "Failed",
+    "Failed":      "Failed",
+    "Rejected":    "Failed",
+    "Busy":        "Busy",
+    "No Answer":   "No Answer",
+    "Ringing":     "Ringing",
+    "Ongoing":     "In Progress",
+    "Machine":     "In Progress",
 }
 
 
@@ -180,8 +180,8 @@ def voice_event_callback():
 
         at_status = data.get("status", "").strip()
         session_state = data.get("callSessionState", "").strip()
-        effective = session_state or at_status or "MISSING"
-        status = STATUS_MAP.get(effective, "UNKNOWN")
+        effective = session_state if session_state else at_status
+        status = STATUS_MAP.get(effective, "Failed")
 
         duration = int(data.get("durationInSeconds", 0))
         direction = data.get("direction", "Inbound")
