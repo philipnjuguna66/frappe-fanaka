@@ -114,7 +114,7 @@ def voice_callback():
         direction = data.get("direction", "").strip()
         caller = data.get("callerNumber", "")
         destination = data.get("destinationNumber", "")  # your virtual number
-
+        recording_url = data.get("recordingUrl", "")  # recording URL if available
         agent_number = "+254714686511"
 
         # ─── EARLY LOGGING FOR INBOUND ──────────────────────────────
@@ -125,7 +125,8 @@ def voice_callback():
                 cl.custom_session_id = session_id
                 cl.id = session_id
                 cl.from_ = caller
-                cl.to = destination              # your virtual number
+                cl.to = destination      
+                cl.recording_url=recording_url
                 cl.status = "Ringing"            # initial state
                 cl.medium = "Africa's Talking"
                 cl.start_time = frappe.utils.now_datetime()
