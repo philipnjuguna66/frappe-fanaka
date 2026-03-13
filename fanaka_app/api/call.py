@@ -124,7 +124,7 @@ def voice_callback():
                     Welcome to Fanaka Real Estate Ltd – your ideal real estate partner.
                     Please hold while we connect you to an agent.
                 </Say>
-                <Dial phoneNumbers="{agent_number}" record="true" maxDuration="600" sequential="true"/>
+                
             """
         elif direction == "Outbound":
             body = f"""
