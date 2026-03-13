@@ -127,7 +127,7 @@ def voice_callback():
                 cl.from_ = caller
                 cl.to = destination      
                 cl.recording_url=recording_url
-                cl.status = "Ringing"            # initial state
+                cl.status = STATUS_MAP.get(data.get("status", "").strip(), "Ringing")        # initial state
                 cl.medium = "Africa's Talking"
                 cl.start_time = frappe.utils.now_datetime()
                 cl.note = "Inbound call received - waiting for connect"
@@ -186,6 +186,9 @@ def voice_event_callback():
 
         duration = int(data.get("durationInSeconds", 0))
         direction = data.get("direction", "Inbound")
+        destination = data.get("destinationNumber", "") 
+        recording_url = data.get("recordingUrl", "")  # recording URL if available
+
 
         # Find existing log
         log_name = frappe.db.get_value("Call Log", {"custom_session_id": session_id}, "name")
@@ -194,6 +197,7 @@ def voice_event_callback():
             doc = frappe.get_doc("Call Log", log_name)
             doc.status = status
             doc.call_duration = duration
+            doc.recording_url = recording_url
 
             if duration == 0:
                 note = (doc.note or "") + "\nZero duration - possible early hangup or network issue"
