@@ -2,23 +2,8 @@ import frappe
 import africastalking
 from frappe import _
 
+# 2026-03-13 20:42:15 - Logic Sync: Refined voice_callback to match working PHP structure
 # 2026-03-13 20:58:15 - Logic Update: Disabled Call Log database persistence to focus on callback stability
-# 2026-03-13 20:53:10 - Fixed LinkValidationError: Bypassed after_insert hooks using db_insert for new logs
-
-def map_at_status(at_status):
-    """Maps Africa's Talking status to Fanaka Call Log Select options."""
-    mapping = {
-        "Aborted": "Cancelled",
-        "Hangup": "Completed",
-        "Completed": "Completed",
-        "Answered": "In Progress",
-        "Ringing": "Ringing",
-        "Dialing": "Ringing",
-        "Failed": "Failed",
-        "Busy": "Busy",
-        "NoAnswer": "No Answer"
-    }
-    return mapping.get(at_status, "Completed")
 
 @frappe.whitelist(allow_guest=True)
 def make_call(phone_number, reference_doctype=None, reference_name=None):
@@ -62,56 +47,76 @@ def make_call(phone_number, reference_doctype=None, reference_name=None):
 
 @frappe.whitelist(allow_guest=True)
 def voice_callback():
-    """Main routing callback for Africa's Talking Voice (Action URL)."""
+    """
+    Main routing callback for Africa's Talking Voice (Action URL).
+    Logic synced with working PHP implementation.
+    """
     try:
-        data = frappe.form_dict
+        # Use frappe.request.values to handle both POST and GET parameters safely
+        data = frappe.request.values
         is_active = data.get('isActive')
         direction = data.get('direction')
         
-        # 2026-03-13: Log the incoming callback data for debugging Dial behavior
-        # frappe.log_error(str(data), "AT Voice Callback Debug")
+        # PHP equivalent: Log::info('Inbound ', request()->all());
+        # frappe.log_error(f"Voice Callback: {direction}", str(data))
 
-        if is_active == "1":
-            # For Inbound calls, we want to play a greeting then bridge to an agent
-            if direction == "Inbound":
-                xml = """<?xml version="1.0" encoding="UTF-8"?>
-                <Response>
-                    <Say voice="en-US-Standard-C" playBeep="false">Welcome to Fanaka Real Estate Ltd. Connecting you to an agent.</Say>
-                    <Dial phoneNumbers="+254714686511" record="true" maxDuration="3600" sequential="true"/>
+        xml_content = ""
+
+        if str(is_active) == "1":
+            if direction == 'Inbound':
+                xml_content = """<Response>
+                    <Say voice="en-US-Standard-C" playBeep="false">Welcome to Fanaka Real Estate Ltd: Your Ideal Real Estate Partner</Say>
+                    <Dial phoneNumbers="+254714686511" record="true" maxDuration="10" sequential="true"/>
                 </Response>"""
             
-            # For Outbound calls initiated via API
-            # AT calls the customer first. When customer picks up, this URL is hit.
-            # We then Dial the agent/user to bridge them.
-            elif direction == "Outbound":
-                agent_phone = "+254714686511"
-                xml = f"""<?xml version="1.0" encoding="UTF-8"?>
-                <Response>
-                    <Dial phoneNumbers="{agent_phone}" record="true" maxDuration="3600" sequential="true"/>
+            elif direction == 'Outbound':
+                # In the PHP code, this fetched a specific user phone or defaulted
+                user_phone = "+254714686511"
+                xml_content = f"""<Response>
+                    <Dial phoneNumbers="{user_phone}" record="true" maxDuration="10" sequential="true"/>
                 </Response>"""
+            
             else:
-                xml = '<?xml version="1.0" encoding="UTF-8"?><Response><Say>Connection established.</Say></Response>'
+                xml_content = """<Response>
+                    <Say voice="en-US-Standard-C" playBeep="false">Welcome to Fanaka Real Estate Ltd: </Say>
+                </Response>"""
         else:
-            xml = '<?xml version="1.0" encoding="UTF-8"?><Response><Say>Call ended.</Say></Response>'
+            # isActive is 0 or not present
+            xml_content = """<Response>
+                <Say>Hello, thank you for calling. This call is now connected.</Say>
+            </Response>"""
 
+        # Ensure the response is wrapped in the standard XML header
+        full_xml = f'<?xml version="1.0" encoding="UTF-8"?>\n{xml_content}'
+
+        # Setting response headers correctly to avoid 500 errors
         frappe.response["type"] = "text/xml"
-        frappe.response["message"] = xml
+        frappe.response["display_content"] = full_xml
+        # Direct return of the string helps some Frappe versions identify the response body
+        return full_xml
 
     except Exception:
         frappe.log_error(frappe.get_traceback(), "Voice Callback Error")
+        # Return a neutral empty response to stop AT from retrying with errors
         frappe.response["type"] = "text/xml"
-        frappe.response["message"] = '<?xml version="1.0" encoding="UTF-8"?><Response/>'
+        return '<?xml version="1.0" encoding="UTF-8"?><Response/>'
 
 
 @frappe.whitelist(allow_guest=True)
 def voice_event_callback():
     """Event callback for call status updates (Status Callback URL)."""
     try:
-        # Acknowledge the event to AT
+        # PHP implementation simply acknowledged with a connected message
+        xml_response = """<?xml version="1.0" encoding="UTF-8"?>
+        <Response>
+            <Say>Hello, thank you for calling. This call is now connected.</Say>
+        </Response>"""
+        
         frappe.response["type"] = "text/xml"
-        frappe.response["message"] = '<?xml version="1.0" encoding="UTF-8"?><Response/>'
+        frappe.response["display_content"] = xml_response
+        return xml_response
         
     except Exception:
         frappe.log_error(frappe.get_traceback(), "Voice Event Callback Error")
         frappe.response["type"] = "text/xml"
-        frappe.response["message"] = '<?xml version="1.0" encoding="UTF-8"?><Response/>'
+        return '<?xml version="1.0" encoding="UTF-8"?><Response/>'
