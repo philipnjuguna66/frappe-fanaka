@@ -27,7 +27,7 @@ def create_lead():
         "lead_name": data.get("lead_name"),
         "phone": data.get("phone_number"),
         "location": data.get("location"),
-        "scheduled_at": scheduled_at,
+        "scheduled_at": get_datetime(data.get("scheduled_at")),
     })
 
     lead.insert(ignore_permissions=True)

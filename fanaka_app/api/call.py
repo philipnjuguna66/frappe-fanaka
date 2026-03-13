@@ -86,7 +86,7 @@ def voice_callback():
                     <Say voice="en-US-Standard-C" playBeep="false">Welcome to Fanaka Real Estate Ltd</Say>
                     <Dial phoneNumbers="+254714686511" record="true" maxDuration="10" sequential="true"/>
                 </Response>"""
-                #frappe.db.get_value("Call Log", {"id": session_id}, "user_phone_number") or
+                #frappe.db.get_value("Call Log", {"id": session_id}, "user_phone_number") o[]
             elif direction == "Outbound":
                 user_phone =  "+254714686511"
                 xml = f"""<?xml version="1.0" encoding="UTF-8"?>
