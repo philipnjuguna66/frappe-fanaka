@@ -218,7 +218,7 @@ def voice_event_callback():
         cl_name = frappe.db.get_value(
             "Call Log",
             {"custom_session_id": session_id},
-            "name"
+            "id"
         )
 
         if cl_name:
