@@ -90,7 +90,7 @@ Welcome to Fanaka Real Estate Ltd: Your Ideal Real Estate Partner
 </Say>
 <Dial phoneNumbers="+254714686511"
 record="true"
-maxDuration="10"
+maxDuration="600"
 sequential="true"/>
 </Response>
 """
@@ -109,7 +109,7 @@ sequential="true"/>
 <Response>
 <Dial phoneNumbers="{user_phone}"
 record="true"
-maxDuration="10"
+maxDuration="600"
 sequential="true"/>
 </Response>
 """
