@@ -166,34 +166,68 @@ def voice_callback():
             <Hangup/>
         """)
 
-
 # ---------------------------------------------------------
-# VOICE EVENT CALLBACK – update Call Log
+# FIXED VOICE EVENT CALLBACK – update Call Log
 # ---------------------------------------------------------
 @frappe.whitelist(allow_guest=True)
 def voice_event_callback():
     try:
         data = frappe.form_dict or {}
+        frappe.log_error(frappe.as_json(data), "AT Voice Event Callback - Data")
+
         session_id = data.get("sessionId", "").strip()
-        session_id = data.get("sessionId", "").strip()
-        is_active = int(data.get("isActive", 0))
-        direction = data.get("direction", "").strip()
-        caller = data.get("callerNumber", "")
-        destination = data.get("destinationNumber", "").strip()  # your virtual number
-        recording_url = data.get("recordingUrl", "") .strip()
-       
-        existing_name = frappe.db.exists("Call Log", {"custom_session_id": session_id})
-        doc = frappe.get_doc("Call Log",existing_name)
-        
-        doc.recording_url = recording_url
-        doc.status = STATUS_MAP.get(data.get("status", "UNKNOWN"), "UNKNOWN")
-        if is_active != 1:
-            doc.end_time = frappe.utils.now_datetime()
-        doc.save(ignore_permissions=True)
-        doc.submit(ignore_permissions=True)
+        if not session_id:
+            return xml_response("<Say>Invalid session</Say>")
+
+        # Get Africa's Talking status
+        at_status = data.get("status", "").strip()
+        session_state = data.get("callSessionState", "").strip()
+
+        # Prefer callSessionState when present
+        effective_status = session_state if session_state else at_status
+
+        # Map to ERPNext Call Log allowed values (this fixes the ValidationError)
+        erp_status_map = {
+            "Success": "Completed",
+            "Completed": "Completed",
+            "Aborted": "Failed",
+            "Failed": "Failed",
+            "Rejected": "Failed",
+            "Busy": "Busy",
+            "No Answer": "No Answer",
+            "Ringing": "Ringing",
+            "Ongoing": "In Progress",
+            "Machine": "In Progress",
+        }
+        status = erp_status_map.get(effective_status, "Failed")  # safe fallback
+
+        duration = int(data.get("durationInSeconds", 0))
+        recording_url = data.get("recordingUrl", "").strip()
+
+        # Find existing Call Log
+        cl_name = frappe.db.get_value(
+            "Call Log",
+            {"custom_session_id": session_id},
+            "name"
+        )
+
+        if cl_name:
+            cl = frappe.get_doc("Call Log", cl_name)
+            cl.status = status
+            cl.call_duration = duration
+            if recording_url:
+                cl.recording_url = recording_url
+            if duration == 0:
+                cl.note = (cl.note or "") + "\nZero duration - likely early hangup or network drop"
+            if status in ["Completed", "Failed", "Busy", "No Answer"]:
+                cl.end_time = frappe.utils.now_datetime()
+
+            cl.save(ignore_permissions=True)
+            frappe.db.commit()
 
         return xml_response("<Say>Event received</Say>")
 
     except Exception as e:
-        frappe.log_error(traceback.format_exc(), "AT Event Callback Error")
-        return xml_response("<Say>System error</Say>")
+        frappe.log_error(traceback.format_exc(), "AT Voice Event Callback Crash")
+        return xml_response("<Say>System error</Say>")    
+
