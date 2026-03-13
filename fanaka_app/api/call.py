@@ -59,37 +59,62 @@ def make_call(phone_number, reference_doctype=None, reference_name=None):
         }
 
 
+import frappe
+import traceback
+
+def xml_response(body: str):
+    frappe.local.response["type"] = "xml"
+    frappe.local.response["response"] = f'<?xml version="1.0" encoding="UTF-8"?>{body}'
+
+
 @frappe.whitelist(allow_guest=True)
 def voice_callback():
     try:
-        # Capture all incoming data
         data = frappe.form_dict or {}
 
-        # Log everything safely
+        # Safe logging
         frappe.log_error(frappe.as_json(data), "AT Voice Callback Incoming Data")
 
-        # Return simple XML immediately
-        xml = """<?xml version="1.0" encoding="UTF-8"?>
-<Response>
-<Say>Test response working</Say>
-</Response>"""
+        is_active = int(data.get("isActive", 0))
+        direction = data.get("direction")
 
-        frappe.local.response["type"] = "xml"
-        frappe.local.response["response"] = xml
+        if is_active == 1:
+            if direction == "Inbound":
+                body = """
+<Response>
+<Say voice="en-US-Standard-C" playBeep="false">
+Welcome to Fanaka Real Estate Ltd: Your Ideal Real Estate Partner
+</Say>
+<Dial phoneNumbers="+254714686511" record="true" maxDuration="600" sequential="true"/>
+</Response>
+"""
+                xml_response(body)
+                return
+
+            elif direction == "Outbound":
+                body = """
+<Response>
+<Dial phoneNumbers="+254714686511" record="true" maxDuration="600" sequential="true"/>
+</Response>
+"""
+                xml_response(body)
+                return
+
+        # Default fallback
+        body = """
+<Response>
+<Say>Hello, thank you for calling. This call is now connected.</Say>
+</Response>
+"""
+        xml_response(body)
 
     except Exception:
-        # Log full traceback
         frappe.log_error(traceback.format_exc(), "AT Voice Callback Crash")
-
-        # Safe fallback XML
-        xml = """<?xml version="1.0" encoding="UTF-8"?>
+        xml_response("""
 <Response>
 <Say>System error occurred</Say>
-</Response>"""
-        frappe.local.response["type"] = "xml"
-        frappe.local.response["response"] = xml
-
-        
+</Response>
+""")
 # ---------------------------------------------------------
 # VOICE EVENT CALLBACK
 # Africa's Talking sends call lifecycle events here
