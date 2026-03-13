@@ -2,9 +2,9 @@ import frappe
 import africastalking
 from frappe import _
 
-# 2026-03-13 20:45:12 - Fixed LinkValidationError: Ensured reference fields are cleared for new logs to avoid ERPNext telephony hooks failing
+# 2026-03-13 20:53:10 - Fixed LinkValidationError: Bypassed after_insert hooks using db_insert for new logs
+# 2026-03-13 20:45:12 - Fixed LinkValidationError: Ensured reference fields are cleared for new logs
 # 2026-03-13 20:39:45 - Fixed DuplicateEntryError: Added ignore_if_duplicate and refined lookup logic
-# 2026-03-13 20:35:10 - Fixed Status Mapping: Handled "Aborted" and "Hangup" to match DocType Select options
 
 def map_at_status(at_status):
     """Maps Africa's Talking status to Fanaka Call Log Select options."""
@@ -149,8 +149,8 @@ def voice_event_callback():
                 
                 doc.save(ignore_permissions=True)
             else:
-                # 2026-03-13: Fixed LinkValidationError by ensuring references are empty for Inbound/Untracked calls
-                # ERPNext telephony hooks fail if they find a reference name that isn't a valid DB link
+                # 2026-03-13: Use db_insert to bypass ERPNext telephony hooks (trigger_call_popup)
+                # which cause LinkValidationErrors on 'Reference Name' during guest callbacks.
                 new_log = frappe.new_doc("Call Log")
                 new_log.id = session_id
                 new_log.custom_session_id = session_id
@@ -159,18 +159,14 @@ def voice_event_callback():
                 new_log.set("from", data.get('callerNumber'))
                 new_log.set("to", data.get('destinationNumber'))
                 
-                # Explicitly clear these to prevent erpnext.telephony.doctype.call_log.call_log.after_insert from crashing
-                new_log.reference_doctype = None
-                new_log.reference_name = None
-                
                 if data.get('durationInSeconds'):
                     new_log.call_duration = data.get('durationInSeconds')
                 
                 if data.get('callStartTime'):
                     new_log.call_start_time = data.get('callStartTime')
-                
-                # Use ignore_if_duplicate to handle AT's multi-event bursts
-                new_log.insert(ignore_permissions=True, ignore_if_duplicate=True)
+
+                # Direct database insertion bypasses standard hooks and validation logic that fails for guests
+                new_log.db_insert()
             
             frappe.db.commit()
 
