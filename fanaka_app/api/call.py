@@ -9,6 +9,7 @@ from frappe import _
 @frappe.whitelist(allow_guest=True)
 def make_call(phone_number, reference_doctype=None, reference_name=None):
     """Initiates an outbound call via Africa's Talking."""
+
     try:
 
         # Normalize Kenyan numbers
@@ -41,6 +42,7 @@ def make_call(phone_number, reference_doctype=None, reference_name=None):
         }
 
     except Exception:
+
         frappe.log_error(frappe.get_traceback(), _("AT Make Call Failed"))
 
         return {
@@ -51,19 +53,16 @@ def make_call(phone_number, reference_doctype=None, reference_name=None):
 
 # ---------------------------------------------------------
 # VOICE ACTION CALLBACK
-# Africa's Talking hits this URL during call routing
+# Africa's Talking calls this URL to control the call
 # ---------------------------------------------------------
 @frappe.whitelist(allow_guest=True)
 def voice_callback():
-    """
-    Main routing callback for Africa's Talking Voice.
-    """
 
     try:
 
         data = frappe.request.values
 
-        # Log callback payload
+        # Log request for debugging
         frappe.logger().info({
             "AT Voice Callback": data
         })
@@ -71,13 +70,11 @@ def voice_callback():
         is_active = data.get("isActive")
         direction = data.get("direction")
 
-        xml = ""
-
         if str(is_active) == "1":
 
-            # -------------------------------------------------
+            # ---------------------------
             # INBOUND CALL
-            # -------------------------------------------------
+            # ---------------------------
             if direction == "Inbound":
 
                 xml = """
@@ -89,9 +86,9 @@ def voice_callback():
 </Response>
 """
 
-            # -------------------------------------------------
+            # ---------------------------
             # OUTBOUND CALL
-            # -------------------------------------------------
+            # ---------------------------
             elif direction == "Outbound":
 
                 xml = """
@@ -118,20 +115,20 @@ def voice_callback():
 </Response>
 """
 
-        frappe.respond_as_xml(xml)
+        frappe.local.response["type"] = "xml"
+        frappe.local.response["response"] = xml
 
     except Exception:
 
         frappe.log_error(frappe.get_traceback(), "Voice Callback Error")
 
-        frappe.respond_as_xml(
-            '<?xml version="1.0" encoding="UTF-8"?><Response/>'
-        )
+        frappe.local.response["type"] = "xml"
+        frappe.local.response["response"] = '<?xml version="1.0" encoding="UTF-8"?><Response/>'
 
 
 # ---------------------------------------------------------
-# EVENT CALLBACK
-# Africa's Talking sends call lifecycle events here
+# VOICE EVENT CALLBACK
+# Africa's Talking sends call status updates here
 # ---------------------------------------------------------
 @frappe.whitelist(allow_guest=True)
 def voice_event_callback():
@@ -140,7 +137,7 @@ def voice_event_callback():
 
         data = frappe.request.values
 
-        # Log call status updates
+        # Log events such as CallStarted, CallAnswered, CallCompleted
         frappe.logger().info({
             "AT Voice Event": data
         })
