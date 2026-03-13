@@ -2,9 +2,9 @@ import frappe
 import africastalking
 from frappe import _
 
+# 2026-03-13 20:31:45 - Fixed ValidationError: Explicitly setting 'id' field for new_log naming
 # 2026-03-13 20:25:30 - Improved Lookup: Using custom_session_id for database queries instead of doc name
 # 2026-03-13 20:22:15 - Final Fix: Removed unused ElementTree and secured form_dict extraction
-# 2026-03-13 20:18:10 - Fixed ParseError: Switched from XML parsing to form_dict for callbacks
 
 @frappe.whitelist(allow_guest=True)
 def make_call(phone_number, reference_doctype=None, reference_name=None):
@@ -35,8 +35,9 @@ def make_call(phone_number, reference_doctype=None, reference_name=None):
 
         if session_id:
             try:
-                # 2026-03-13: We set custom_session_id specifically for later lookup
+                # 2026-03-13: Setting custom_session_id and id for consistency
                 doc = frappe.new_doc("Call Log")
+                doc.id = session_id
                 doc.custom_session_id = session_id
                 doc.call_type = "Outgoing"
                 doc.set("from", outbound_number)
@@ -107,8 +108,7 @@ def voice_event_callback():
         status = data.get('status')
 
         if session_id and status:
-            # 2026-03-13: Lookup the document name by the custom_session_id field
-            # This handles cases where the DocName is a series (e.g., LOG-001)
+            # Lookup the document name by the custom_session_id field
             doc_name = frappe.db.get_value("Call Log", {"custom_session_id": session_id}, "name")
 
             if doc_name:
@@ -126,8 +126,9 @@ def voice_event_callback():
                 
                 doc.save(ignore_permissions=True)
             else:
-                # Create a new log if it doesn't exist (e.g. Inbound calls)
+                # 2026-03-13: Ensure 'id' is set to session_id to satisfy naming requirements
                 new_log = frappe.new_doc("Call Log")
+                new_log.id = session_id
                 new_log.custom_session_id = session_id
                 new_log.status = status
                 new_log.call_type = data.get('direction', 'Inbound')
@@ -136,6 +137,9 @@ def voice_event_callback():
                 
                 if data.get('durationInSeconds'):
                     new_log.call_duration = data.get('durationInSeconds')
+                
+                if data.get('callStartTime'):
+                    new_log.call_start_time = data.get('callStartTime')
                 
                 new_log.insert(ignore_permissions=True)
             
