@@ -3,6 +3,7 @@ import africastalking
 from frappe import _
 import xml.etree.ElementTree as ET
 
+# 2026-03-13 20:18:10 - Fixed ParseError: Switched from XML parsing to form_dict for callbacks
 # 2026-03-12 15:05:10 - Fixed 500 Error: Optimized guest access and database lookups
 
 @frappe.whitelist(allow_guest=True)
@@ -33,10 +34,10 @@ def make_call(phone_number, reference_doctype=None, reference_name=None):
             session_id = response["entries"][0].get("sessionId")
 
         if session_id:
-            # Create Initial Call Log using a dict to be safer with guest permissions
             try:
+                # 2026-03-13: Using ignore_permissions for guest outbound trigger tracking
                 doc = frappe.new_doc("Call Log")
-                doc.id = session_id
+                doc.name = session_id # Using sessionId as the Document Name for easier lookup
                 doc.custom_session_id = session_id
                 doc.call_type = "Outgoing"
                 doc.set("from", outbound_number)
@@ -63,22 +64,16 @@ def make_call(phone_number, reference_doctype=None, reference_name=None):
         }
 
 
-def log_call(data):
-    frappe.log_error(str(data), "AT Callback Data")
-
-
 @frappe.whitelist(allow_guest=True)
 def voice_callback():
-    """Main routing callback for Africa's Talking Voice."""
+    """Main routing callback for Africa's Talking Voice (Action URL)."""
     try:
-        xml_data = frappe.request.data.decode('utf-8')
-        log_call(xml_data)
-
-        root = ET.fromstring(xml_data)
-        is_active = root.find('isActive').text
+        # 2026-03-13: AT Voice callbacks are sent as POST parameters
+        data = frappe.form_dict
+        is_active = data.get('isActive')
+        direction = data.get('direction')
 
         if is_active == "1":
-            direction = root.find('direction').text
             if direction == "Inbound":
                 xml = """<?xml version="1.0" encoding="UTF-8"?>
                 <Response>
@@ -107,29 +102,45 @@ def voice_callback():
 
 @frappe.whitelist(allow_guest=True)
 def voice_event_callback():
-    """Event callback for call status updates."""
+    """Event callback for call status updates (Status Callback URL)."""
     try:
-        xml_data = frappe.request.data.decode('utf-8')
-        log_call(xml_data)
+        # 2026-03-13: Fix for ParseError - extracting data from form_dict
+        data = frappe.form_dict
         
-        root = ET.fromstring(xml_data)
-        
-        session_id = root.find('sessionId').text
-        status = root.find('status').text
+        session_id = data.get('sessionId')
+        status = data.get('status')
 
         if session_id and status:
             if frappe.db.exists("Call Log", session_id):
                 doc = frappe.get_doc("Call Log", session_id)
                 doc.status = status
+                
+                # Update specific fields based on status
                 if status == "Answered":
-                    doc.call_start_time = root.find('callStartTime').text
-                elif status == "Hangup":
-                    doc.hangup_cause = root.find('hangupCause').text
-                    doc.call_duration = root.find('durationInSeconds').text
+                    doc.call_start_time = data.get('callStartTime')
+                
+                # Aborted or Hangup usually contain duration and cause
+                if data.get('durationInSeconds'):
+                    doc.call_duration = data.get('durationInSeconds')
+                
+                if data.get('hangupCause'):
+                    doc.hangup_cause = data.get('hangupCause')
                 
                 doc.save(ignore_permissions=True)
                 frappe.db.commit()
+            else:
+                # 2026-03-13: Log inbound calls that don't have a log yet
+                if data.get('direction') == "Inbound":
+                    new_log = frappe.new_doc("Call Log")
+                    new_log.name = session_id
+                    new_log.status = status
+                    new_log.call_type = "Inbound"
+                    new_log.set("from", data.get('callerNumber'))
+                    new_log.set("to", data.get('destinationNumber'))
+                    new_log.insert(ignore_permissions=True)
+                    frappe.db.commit()
 
+        # Always respond with valid empty XML to AT
         frappe.response["type"] = "text/xml"
         frappe.response["message"] = '<?xml version="1.0" encoding="UTF-8"?><Response/>'
         
