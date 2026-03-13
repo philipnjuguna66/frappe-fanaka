@@ -189,7 +189,7 @@ def voice_event_callback():
 
         if log_name:
             doc = frappe.get_doc("Call Log", log_name)
-            doc.from_ = data.get("callerNumber", doc.from_)
+            doc.from_ = data.get("callerNumber")
             doc.medium= "Africa's Talking"
             doc.status = status
             
