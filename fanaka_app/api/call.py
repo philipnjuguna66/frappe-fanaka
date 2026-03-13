@@ -4,6 +4,23 @@ import traceback
 from frappe import _
 
 # ---------------------------------------------------------
+# STATUS MAP (used in event callback)
+# ---------------------------------------------------------
+STATUS_MAP = {
+    "Completed":        "COMPLETED",
+    "Aborted":          "ABORTED",
+    "Busy":             "BUSY",
+    "No Answer":        "NO_ANSWER",
+    "Failed":           "FAILED",
+    "Rejected":         "REJECTED",
+    "Ringing":          "RINGING",
+    "Ongoing":          "IN_PROGRESS",
+    "Machine":          "ANSWERING_MACHINE",
+    "UNKNOWN":          "UNKNOWN"
+}
+
+
+# ---------------------------------------------------------
 # UTILITY: Send valid XML response
 # ---------------------------------------------------------
 def xml_response(body: str):
@@ -14,22 +31,7 @@ def xml_response(body: str):
         f'<Response>\n{body.strip()}\n</Response>'
     )
 
-STATUS_MAP = {
-    # Common final / terminal states
-    "Completed":        "COMPLETED",         # fully connected & ended normally
-    "Aborted":          "ABORTED",           # dropped very early (network, user hung up immediately)
-    "Busy":             "BUSY",
-    "No Answer":        "NO_ANSWER",
-    "Failed":           "FAILED",            # network/carrier failure
-    "Rejected":         "REJECTED",          # callee rejected
-    # Mid-call / transitional (sometimes appear in events)
-    "Ringing":          "RINGING",
-    "Ongoing":          "IN_PROGRESS",
-    # Rare / AMD (answering machine detection) related if enabled
-    "Machine":          "ANSWERING_MACHINE",
-    # Fallback
-    "UNKNOWN":          "UNKNOWN"
-}
+
 # ---------------------------------------------------------
 # INITIATE OUTBOUND CALL
 # ---------------------------------------------------------
@@ -40,7 +42,7 @@ def make_call(phone_number, reference_doctype=None, reference_name=None):
     Returns session ID on success.
     """
     try:
-        # Normalize phone number to E.164 format (Kenya)
+        # Normalize phone number to E.164 format (Kenya-focused)
         if phone_number.startswith("0"):
             phone_number = "+254" + phone_number[1:]
         elif not phone_number.startswith("+"):
@@ -86,8 +88,8 @@ def make_call(phone_number, reference_doctype=None, reference_name=None):
 
 
 # ---------------------------------------------------------
-# VOICE CALLBACK (controls call flow)
-# Africa's Talking hits this endpoint to get call instructions
+# VOICE CALLBACK (controls call flow - main instructions)
+# Africa's Talking hits this for call control (inbound & outbound)
 # ---------------------------------------------------------
 @frappe.whitelist(allow_guest=True)
 def voice_callback():
@@ -100,18 +102,16 @@ def voice_callback():
         direction = data.get("direction", "").strip()
 
         if is_active != 1:
-            # Call has ended or not active → minimal response
             xml_response("""
                 <Say voice="en-US-Wavenet-C">Thank you for calling. Goodbye.</Say>
                 <Hangup/>
             """)
             return
 
-        # Common agent number (you can make this dynamic later via DB/settings)
+        # Agent number (later: make dynamic from settings or DB)
         agent_number = "+254714686511"
 
         if direction == "Inbound":
-            # Greeting for people calling your line
             body = f"""
                 <Say voice="en-US-Wavenet-C" playBeep="false">
                     Welcome to Fanaka Real Estate Ltd – your ideal real estate partner.
@@ -121,16 +121,15 @@ def voice_callback():
             """
 
         elif direction == "Outbound":
-            # Outbound call – straight to agent (no greeting needed usually)
             body = f"""
                 <Dial phoneNumbers="{agent_number}" record="true" maxDuration="600" sequential="true"/>
             """
 
         else:
-            # Unknown direction fallback
-            body = """
+            # Fallback for unknown direction
+            body = f"""
                 <Say voice="en-US-Wavenet-C">Connecting you now.</Say>
-                <Dial phoneNumbers="{agent_number}" record="true" maxDuration="600"/>
+                <Dial phoneNumbers="{agent_number}" record="true" maxDuration="600" sequential="true"/>
             """
 
         xml_response(body)
@@ -142,62 +141,57 @@ def voice_callback():
             <Hangup/>
         """)
 
-        
+
+# ---------------------------------------------------------
+# VOICE EVENTS / STATUS CALLBACK
+# Africa's Talking sends call status updates here
+# ---------------------------------------------------------
 @frappe.whitelist(allow_guest=True)
 def voice_event_callback():
-    """Minimal Africa's Talking voice event/status callback — no DB writes."""
+    """Receives call status events from Africa's Talking. No DB writes yet."""
     try:
         data = frappe.form_dict or {}
-        
-        # Keep raw log for debugging (you'll see these in Error Log)
+
+        # Log full raw payload (useful for debugging)
         frappe.log_error(frappe.as_json(data), "AT Voice Event - Raw Payload")
 
-        # ────────────────────────────────────────────────
-        # Extract the two most useful status fields
-        # ────────────────────────────────────────────────
-        at_status           = data.get("status", "").strip()                # main status
-        call_session_state  = data.get("callSessionState", "").strip()      # sometimes more precise final cause
+        # Extract key fields
+        at_status = data.get("status", "").strip()
+        session_state = data.get("callSessionState", "").strip()
 
-        # Prefer callSessionState when present (more detailed for final events)
-        effective_status = call_session_state or at_status or "MISSING"
+        # callSessionState is often the final/more accurate terminal state
+        effective_status = session_state if session_state else at_status
+        effective_status = effective_status or "MISSING"
 
-        # Map to internal friendly name
         internal_status = STATUS_MAP.get(effective_status, "UNKNOWN")
 
-        # Quick summary line — easy to grep / monitor
+        duration = data.get("durationInSeconds", "0")
+
         summary = (
             f"Call Event | "
             f"session: {data.get('sessionId', '—')} | "
             f"direction: {data.get('direction', '—')} | "
-            f"raw_status: {effective_status} → {internal_status} | "
-            f"duration: {data.get('durationInSeconds', '—')}s | "
+            f"raw: {at_status} / {session_state} → {internal_status} | "
+            f"duration: {duration}s | "
             f"from: {data.get('callerNumber', '—')} → {data.get('destinationNumber', '—')}"
         )
 
-        # Log the summary (visible in Error Log or site console)
         frappe.log_error(summary, "AT Voice Event - Summary")
 
-        # Optional: extra logging for specific cases you care about right now
-        if internal_status in ("ABORTED", "NO_ANSWER", "BUSY"):
+        # Highlight suspicious zero-second calls (very common for instant hangups)
+        if duration == "0" and internal_status in ("COMPLETED", "ABORTED"):
             frappe.log_error(
-                f"Missed/Short call detected: {summary}\nRaw: {frappe.as_json(data)}",
-                "AT Voice - Potential Missed Call"
+                f"Zero-second call: {summary}\nLikely: caller hung up instantly or early network drop\nRaw: {frappe.as_json(data)}",
+                "AT Voice - Zero-Second Call"
             )
 
-        # ────────────────────────────────────────────────
-        # Always respond quickly with 200 OK + minimal XML
-        # ────────────────────────────────────────────────
+        # Minimal valid XML response – Africa's Talking accepts empty or simple content here
         xml_response("""
-            <Response>
-                <Say>Event received.</Say>
-            </Response>
+            <Say voice="en-US-Wavenet-C">Event received.</Say>
         """)
 
     except Exception:
         frappe.log_error(traceback.format_exc(), "AT Voice Event Callback - Exception")
-        # Still return 200 — critical!
         xml_response("""
-            <Response>
-                <Say>System received event.</Say>
-            </Response>
+            <Say voice="en-US-Wavenet-C">System received event.</Say>
         """)
