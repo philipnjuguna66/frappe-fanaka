@@ -181,7 +181,7 @@ def voice_event_callback():
         at_status = data.get("status", "").strip()
         session_state = data.get("callSessionState", "").strip()
         effective = session_state if session_state else at_status
-        status = STATUS_MAP.get(effective, "Failed")
+        status = "Completed"
 
         duration = int(data.get("durationInSeconds", 0))
         direction = data.get("direction", "Inbound")
