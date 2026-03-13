@@ -2,9 +2,24 @@ import frappe
 import africastalking
 from frappe import _
 
+# 2026-03-13 20:35:10 - Fixed Status Mapping: Handled "Aborted" and "Hangup" to match DocType Select options
 # 2026-03-13 20:31:45 - Fixed ValidationError: Explicitly setting 'id' field for new_log naming
 # 2026-03-13 20:25:30 - Improved Lookup: Using custom_session_id for database queries instead of doc name
-# 2026-03-13 20:22:15 - Final Fix: Removed unused ElementTree and secured form_dict extraction
+
+def map_at_status(at_status):
+    """Maps Africa's Talking status to Fanaka Call Log Select options."""
+    mapping = {
+        "Aborted": "Cancelled",
+        "Hangup": "Completed",
+        "Completed": "Completed",
+        "Answered": "In Progress",
+        "Ringing": "Ringing",
+        "Dialing": "Ringing",
+        "Failed": "Failed",
+        "Busy": "Busy",
+        "NoAnswer": "No Answer"
+    }
+    return mapping.get(at_status, "Completed")
 
 @frappe.whitelist(allow_guest=True)
 def make_call(phone_number, reference_doctype=None, reference_name=None):
@@ -105,17 +120,20 @@ def voice_event_callback():
     try:
         data = frappe.form_dict
         session_id = data.get('sessionId')
-        status = data.get('status')
+        at_status = data.get('status')
 
-        if session_id and status:
+        if session_id and at_status:
+            # Map AT status to Frappe Select options
+            frappe_status = map_at_status(at_status)
+            
             # Lookup the document name by the custom_session_id field
             doc_name = frappe.db.get_value("Call Log", {"custom_session_id": session_id}, "name")
 
             if doc_name:
                 doc = frappe.get_doc("Call Log", doc_name)
-                doc.status = status
+                doc.status = frappe_status
                 
-                if status == "Answered":
+                if at_status == "Answered":
                     doc.call_start_time = data.get('callStartTime')
                 
                 if data.get('durationInSeconds'):
@@ -126,11 +144,11 @@ def voice_event_callback():
                 
                 doc.save(ignore_permissions=True)
             else:
-                # 2026-03-13: Ensure 'id' is set to session_id to satisfy naming requirements
+                # 2026-03-13: Ensure 'id' is set and status is mapped for Inbound logs
                 new_log = frappe.new_doc("Call Log")
                 new_log.id = session_id
                 new_log.custom_session_id = session_id
-                new_log.status = status
+                new_log.status = frappe_status
                 new_log.call_type = data.get('direction', 'Inbound')
                 new_log.set("from", data.get('callerNumber'))
                 new_log.set("to", data.get('destinationNumber'))
