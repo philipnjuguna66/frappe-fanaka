@@ -5,7 +5,7 @@ from frappe import _
 from werkzeug.wrappers import Response as WerkzeugResponse
 
 # ---------------------------------------------------------
-# STATUS MAP (used in event callback)
+# STATUS MAP
 # ---------------------------------------------------------
 STATUS_MAP = {
     "Completed":        "COMPLETED",
@@ -22,10 +22,9 @@ STATUS_MAP = {
 
 
 # ---------------------------------------------------------
-# UTILITY: Return pure raw XML (critical for Africa's Talking)
+# UTILITY: Raw XML response
 # ---------------------------------------------------------
 def xml_response(body: str):
-    """Return pure raw XML – bypasses Frappe JSON wrapper completely."""
     xml_content = (
         '<?xml version="1.0" encoding="UTF-8"?>\n'
         f'<Response>\n{body.strip()}\n</Response>'
@@ -37,39 +36,32 @@ def xml_response(body: str):
         mimetype='text/xml; charset=utf-8'
     )
     response.headers['Content-Length'] = str(len(xml_content))
-
     return response
 
 
 # ---------------------------------------------------------
-# INITIATE OUTBOUND CALL
+# INITIATE OUTBOUND CALL + create Call Log
 # ---------------------------------------------------------
 @frappe.whitelist(allow_guest=True)
 def make_call(phone_number, reference_doctype=None, reference_name=None):
-    """
-    Initiates an outbound call via Africa's Talking Voice API.
-    Returns session ID on success (JSON response – this one is not XML).
-    """
     try:
-        # Normalize phone number to E.164 format (Kenya-focused)
+        # Normalize phone
         if phone_number.startswith("0"):
             phone_number = "+254" + phone_number[1:]
         elif not phone_number.startswith("+"):
             phone_number = "+" + phone_number
 
-        # Load settings
         settings = frappe.get_single("Africa Talking Settings")
         username = settings.username
         api_key = settings.get_password("api_key")
         outbound_number = settings.outbound_number
 
         if not all([username, api_key, outbound_number]):
-            return {"status": "error", "message": "Missing Africa Talking credentials"}
+            return {"status": "error", "message": "Missing Africa's Talking credentials"}
 
         africastalking.initialize(username, api_key)
         voice = africastalking.Voice
 
-        # Make the call
         response = voice.call(
             callFrom=outbound_number,
             callTo=[phone_number]
@@ -79,6 +71,23 @@ def make_call(phone_number, reference_doctype=None, reference_name=None):
         if response and response.get("entries"):
             session_id = response["entries"][0].get("sessionId")
 
+        # ─── CREATE CALL LOG FOR OUTBOUND ──────────────────────────────
+        if session_id:
+            cl = frappe.new_doc("Call Log")
+            cl.custom_session_id = session_id
+            cl.from_ = outbound_number           # your number
+            cl.to = phone_number                 # customer
+            cl.status = "Initiated"
+            cl.medium = "Africa's Talking"
+            cl.start_time = frappe.utils.now_datetime()
+            cl.note = "Outbound call initiated"
+            if reference_doctype and reference_name:
+                cl.reference_doctype = reference_doctype
+                cl.reference_name = reference_name
+
+            cl.insert(ignore_permissions=True)
+            frappe.db.commit()
+
         return {
             "status": "success",
             "session_id": session_id,
@@ -86,31 +95,41 @@ def make_call(phone_number, reference_doctype=None, reference_name=None):
         }
 
     except Exception as e:
-        frappe.log_error(
-            f"AT Make Call Failed\n{traceback.format_exc()}\nPhone: {phone_number}",
-            "Africa's Talking - Outbound Call Error"
-        )
-        return {
-            "status": "error",
-            "message": f"Call initiation failed: {str(e)}"
-        }
+        frappe.log_error(traceback.format_exc(), "AT Make Call Failed")
+        return {"status": "error", "message": str(e)}
 
 
 # ---------------------------------------------------------
-# VOICE CALLBACK (controls call flow – returns XML)
-# Africa's Talking hits this endpoint to get call instructions
+# VOICE CALLBACK – inbound early logging + flow
 # ---------------------------------------------------------
 @frappe.whitelist(allow_guest=True)
 def voice_callback():
-    """Handles call routing logic for both inbound and outbound calls."""
     try:
         data = frappe.form_dict or {}
-        frappe.log_error(frappe.as_json(data), "AT Voice Callback - Incoming Data")
+        frappe.log_error(frappe.as_json(data), "AT Voice Callback - Data")
 
+        session_id = data.get("sessionId", "").strip()
         is_active = int(data.get("isActive", 0))
         direction = data.get("direction", "").strip()
+        caller = data.get("callerNumber", "")
+        destination = data.get("destinationNumber", "")  # your virtual number
 
         agent_number = "+254714686511"
+
+        # ─── EARLY LOGGING FOR INBOUND ──────────────────────────────
+        if direction == "Inbound" and session_id:
+            existing = frappe.db.exists("Call Log", {"custom_session_id": session_id})
+            if not existing:
+                cl = frappe.new_doc("Call Log")
+                cl.custom_session_id = session_id
+                cl.from_ = caller
+                cl.to = destination              # your virtual number
+                cl.status = "Ringing"            # initial state
+                cl.medium = "Africa's Talking"
+                cl.start_time = frappe.utils.now_datetime()
+                cl.note = "Inbound call received - waiting for connect"
+                cl.insert(ignore_permissions=True)
+                frappe.db.commit()
 
         if is_active != 1:
             return xml_response("""
@@ -118,13 +137,14 @@ def voice_callback():
                 <Hangup/>
             """)
 
+        # Call flow
         if direction == "Inbound":
             body = f"""
                 <Say voice="en-US-Wavenet-C" playBeep="false">
                     Welcome to Fanaka Real Estate Ltd – your ideal real estate partner.
                     Please hold while we connect you to an agent.
                 </Say>
-                
+                <Dial phoneNumbers="{agent_number}" record="true" maxDuration="600" sequential="true"/>
             """
         elif direction == "Outbound":
             body = f"""
@@ -139,63 +159,51 @@ def voice_callback():
         return xml_response(body)
 
     except Exception:
-        frappe.log_error(traceback.format_exc(), "AT Voice Callback - Crash")
+        frappe.log_error(traceback.format_exc(), "AT Voice Callback Crash")
         return xml_response("""
-            <Say voice="en-US-Wavenet-C">Sorry, we are experiencing technical difficulties.</Say>
+            <Say voice="en-US-Wavenet-C">Sorry, technical issue.</Say>
             <Hangup/>
         """)
 
 
 # ---------------------------------------------------------
-# VOICE EVENTS / STATUS CALLBACK (returns minimal XML)
-# Africa's Talking sends call status updates here
+# VOICE EVENT CALLBACK – update Call Log
 # ---------------------------------------------------------
 @frappe.whitelist(allow_guest=True)
 def voice_event_callback():
-    """Receives call status events from Africa's Talking. No DB writes yet."""
     try:
         data = frappe.form_dict or {}
+        session_id = data.get("sessionId", "").strip()
+        if not session_id:
+            return xml_response("<Say>Invalid session</Say>")
 
-        # Log full raw payload (useful for debugging)
-        frappe.log_error(frappe.as_json(data), "AT Voice Event - Raw Payload")
+        frappe.log_error(frappe.as_json(data), "AT Voice Event - Raw")
 
-        # Extract key fields
         at_status = data.get("status", "").strip()
         session_state = data.get("callSessionState", "").strip()
+        effective = session_state or at_status or "MISSING"
+        status = STATUS_MAP.get(effective, "UNKNOWN")
 
-        # Prefer callSessionState for final status
-        effective_status = session_state if session_state else at_status
-        effective_status = effective_status or "MISSING"
+        duration = int(data.get("durationInSeconds", 0))
+        direction = data.get("direction", "Inbound")
 
-        internal_status = STATUS_MAP.get(effective_status, "UNKNOWN")
+        # Find existing log
+        log_name = frappe.db.get_value("Call Log", {"custom_session_id": session_id}, "name")
 
-        duration = data.get("durationInSeconds", "0")
+        if log_name:
+            doc = frappe.get_doc("Call Log", log_name)
+            doc.status = status
+            doc.call_duration = duration
 
-        summary = (
-            f"Call Event | "
-            f"session: {data.get('sessionId', '—')} | "
-            f"direction: {data.get('direction', '—')} | "
-            f"raw: {at_status} / {session_state} → {internal_status} | "
-            f"duration: {duration}s | "
-            f"from: {data.get('callerNumber', '—')} → {data.get('destinationNumber', '—')}"
-        )
+            if duration == 0:
+                note = (doc.note or "") + "\nZero duration - possible early hangup or network issue"
+                doc.note = note.strip()
 
-        frappe.log_error(summary, "AT Voice Event - Summary")
+            doc.save(ignore_permissions=True)
+            frappe.db.commit()
 
-        # Highlight zero-second calls
-        if duration == "0" and internal_status in ("COMPLETED", "ABORTED"):
-            frappe.log_error(
-                f"Zero-second call: {summary}\nLikely: caller hung up instantly or early network drop\nRaw: {frappe.as_json(data)}",
-                "AT Voice - Zero-Second Call"
-            )
+        return xml_response("<Say>Event received</Say>")
 
-        # Minimal response – Africa's Talking accepts almost anything here
-        return xml_response("""
-            <Say voice="en-US-Wavenet-C">Event received.</Say>
-        """)
-
-    except Exception:
-        frappe.log_error(traceback.format_exc(), "AT Voice Event Callback - Exception")
-        return xml_response("""
-            <Say voice="en-US-Wavenet-C">System received event.</Say>
-        """)
+    except Exception as e:
+        frappe.log_error(traceback.format_exc(), "AT Event Callback Error")
+        return xml_response("<Say>System error</Say>")
