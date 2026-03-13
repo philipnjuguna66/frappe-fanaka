@@ -181,7 +181,10 @@ def voice_event_callback():
         caller = data.get("callerNumber", "")
         destination = data.get("destinationNumber", "").strip()  # your virtual number
         recording_url = data.get("recordingUrl", "") .strip()
-        doc = frappe.get_doc("Call Log", {"custom_session_id": session_id})
+       
+        existing_name = frappe.db.exists("Call Log", {"custom_session_id": session_id})
+        doc = frappe.get_doc("Call Log",existing_name)
+        
         doc.recording_url = recording_url
         doc.status = STATUS_MAP.get(data.get("status", "UNKNOWN"), "UNKNOWN")
         if is_active != 1:
