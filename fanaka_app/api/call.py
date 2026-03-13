@@ -113,8 +113,8 @@ def voice_callback():
         is_active = int(data.get("isActive", 0))
         direction = data.get("direction", "").strip()
         caller = data.get("callerNumber", "")
-        destination = data.get("destinationNumber", "")  # your virtual number
-        recording_url = data.get("recordingUrl", "")  # recording URL if available
+        destination = data.get("destinationNumber", "").strip()  # your virtual number
+        recording_url = data.get("recordingUrl", "") .strip() # recording URL if available
         agent_number = "+254714686511"
 
         # ─── EARLY LOGGING FOR INBOUND ──────────────────────────────
@@ -175,33 +175,19 @@ def voice_event_callback():
     try:
         data = frappe.form_dict or {}
         session_id = data.get("sessionId", "").strip()
-        if not session_id:
-            return xml_response("<Say>Invalid session</Say>")
-
-        frappe.log_error(frappe.as_json(data), "AT Voice Event - Raw")
-
-        at_status = data.get("status", "").strip()
-        session_state = data.get("callSessionState", "").strip()
-        effective = session_state or at_status or "MISSING"
-        status = STATUS_MAP.get(effective, "UNKNOWN")
-
-        duration = int(data.get("durationInSeconds", 0))
-        direction = data.get("direction", "Inbound")
-
-        # Find existing log
-        log_name = frappe.db.get_value("Call Log", {"custom_session_id": session_id}, "name")
-
-        if log_name:
-            doc = frappe.get_doc("Call Log", log_name)
-            doc.status = status
-            doc.call_duration = duration
-
-            if duration == 0:
-                note = (doc.note or "") + "\nZero duration - possible early hangup or network issue"
-                doc.note = note.strip()
-
-            doc.save(ignore_permissions=True)
-            frappe.db.commit()
+        session_id = data.get("sessionId", "").strip()
+        is_active = int(data.get("isActive", 0))
+        direction = data.get("direction", "").strip()
+        caller = data.get("callerNumber", "")
+        destination = data.get("destinationNumber", "").strip()  # your virtual number
+        recording_url = data.get("recordingUrl", "") .strip()
+        doc = frappe.get_doc("Call Log", {"custom_session_id": session_id})
+        doc.recording_url = recording_url
+        doc.status = STATUS_MAP.get(data.get("status", "UNKNOWN"), "UNKNOWN")
+        if is_active != 1:
+            doc.end_time = frappe.utils.now_datetime()
+        doc.save(ignore_permissions=True)
+        doc.submit(ignore_permissions=True)
 
         return xml_response("<Say>Event received</Say>")
 
