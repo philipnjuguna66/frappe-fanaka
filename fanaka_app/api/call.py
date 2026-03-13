@@ -189,7 +189,7 @@ def voice_event_callback():
 
         if log_name:
             doc = frappe.get_doc("Call Log", log_name)
-            doc.from_ = data.get("callerNumber")
+    
             doc.medium= "Africa's Talking"
             doc.status = status
             
@@ -199,6 +199,7 @@ def voice_event_callback():
 
             doc.save(ignore_permissions=True)
             frappe.db.commit()
+            frappe.db.set_value("Call Log", log_name, "from", data.get("callerNumber").strip())  # ensure status is updated
 
         return xml_response("<Say>Event received</Say>")
 
