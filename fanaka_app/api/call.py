@@ -1,6 +1,7 @@
 import frappe
 import africastalking
 from frappe import _
+import traceback
 
 
 # ---------------------------------------------------------
@@ -58,103 +59,37 @@ def make_call(phone_number, reference_doctype=None, reference_name=None):
         }
 
 
-# ---------------------------------------------------------
-# VOICE ACTION CALLBACK
-# Africa's Talking calls this URL during call routing
-# ---------------------------------------------------------
 @frappe.whitelist(allow_guest=True)
 def voice_callback():
-
     try:
+        # Capture all incoming data
+        data = frappe.form_dict or {}
 
-        data = frappe.form_dict
+        # Log everything safely
+        frappe.log_error(frappe.as_json(data), "AT Voice Callback Incoming Data")
 
-        frappe.logger().info({
-            "AT Voice Callback": data
-        })
-
-        is_active = int(data.get("isActive", 0))
-        direction = data.get("direction")
-
-        if is_active == 1:
-
-            # -------------------------------------------------
-            # INBOUND CALL
-            # -------------------------------------------------
-            if direction == "Inbound":
-
-                body = """
+        # Return simple XML immediately
+        xml = """<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-<Say voice="en-US-Standard-C" playBeep="false">
-Welcome to Fanaka Real Estate Ltd: Your Ideal Real Estate Partner
-</Say>
-<Dial phoneNumbers="+254714686511"
-record="true"
-maxDuration="600"
-sequential="true"/>
-</Response>
-"""
+<Say>Test response working</Say>
+</Response>"""
 
-                xml_response(body)
-                return
-
-            # -------------------------------------------------
-            # OUTBOUND CALL
-            # -------------------------------------------------
-            elif direction == "Outbound":
-
-                user_phone = "+254714686511"
-
-                body = f"""
-<Response>
-<Dial phoneNumbers="{user_phone}"
-record="true"
-maxDuration="600"
-sequential="true"/>
-</Response>
-"""
-
-                xml_response(body)
-                return
-
-            # -------------------------------------------------
-            # OTHER CASE
-            # -------------------------------------------------
-            else:
-
-                body = """
-<Response>
-<Say voice="en-US-Standard-C" playBeep="false">
-Welcome to Fanaka Real Estate Ltd
-</Say>
-</Response>
-"""
-
-                xml_response(body)
-                return
-
-        # -------------------------------------------------
-        # CALL NOT ACTIVE
-        # -------------------------------------------------
-        body = """
-<Response>
-<Say>Hello, thank you for calling. This call is now connected.</Say>
-</Response>
-"""
-
-        xml_response(body)
+        frappe.local.response["type"] = "xml"
+        frappe.local.response["response"] = xml
 
     except Exception:
+        # Log full traceback
+        frappe.log_error(traceback.format_exc(), "AT Voice Callback Crash")
 
-        frappe.log_error(frappe.get_traceback(), "Voice Callback Error")
-
-        xml_response("""
+        # Safe fallback XML
+        xml = """<?xml version="1.0" encoding="UTF-8"?>
 <Response>
 <Say>System error occurred</Say>
-</Response>
-""")
+</Response>"""
+        frappe.local.response["type"] = "xml"
+        frappe.local.response["response"] = xml
 
-
+        
 # ---------------------------------------------------------
 # VOICE EVENT CALLBACK
 # Africa's Talking sends call lifecycle events here
