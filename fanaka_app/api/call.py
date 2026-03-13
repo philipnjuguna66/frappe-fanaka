@@ -19,17 +19,24 @@ STATUS_MAP = {
     "UNKNOWN":          "UNKNOWN"
 }
 
-
-# ---------------------------------------------------------
-# UTILITY: Send valid XML response
-# ---------------------------------------------------------
+# Utility function – improved version
 def xml_response(body: str):
-    """Set Frappe response to valid XML with proper headers."""
-    frappe.local.response["type"] = "xml"
-    frappe.local.response["response"] = (
+    """Manually build and return a valid XML response with correct headers."""
+    xml_content = (
         '<?xml version="1.0" encoding="UTF-8"?>\n'
         f'<Response>\n{body.strip()}\n</Response>'
     )
+
+    # Set headers directly (this bypasses Frappe's response_type_map)
+    frappe.local.response.headers = {
+        "Content-Type": "text/xml; charset=utf-8",
+        # Optional: add if Africa's Talking is picky about content length
+        # "Content-Length": str(len(xml_content)),
+    }
+
+    # Set the raw content (Frappe will send this as-is)
+    frappe.local.response.http_status_code = 200
+    return xml_content   # ← return the string directly
 
 
 # ---------------------------------------------------------
@@ -102,7 +109,7 @@ def voice_callback():
         direction = data.get("direction", "").strip()
 
         if is_active != 1:
-            xml_response("""
+            return xml_response("""
                 <Say voice="en-US-Wavenet-C">Thank you for calling. Goodbye.</Say>
                 <Hangup/>
             """)
@@ -132,11 +139,11 @@ def voice_callback():
                 <Dial phoneNumbers="{agent_number}" record="true" maxDuration="600" sequential="true"/>
             """
 
-        xml_response(body)
+        return xml_response(body)
 
     except Exception:
         frappe.log_error(traceback.format_exc(), "AT Voice Callback - Crash")
-        xml_response("""
+        return xml_response("""
             <Say voice="en-US-Wavenet-C">Sorry, we are experiencing technical difficulties.</Say>
             <Hangup/>
         """)
@@ -186,12 +193,12 @@ def voice_event_callback():
             )
 
         # Minimal valid XML response – Africa's Talking accepts empty or simple content here
-        xml_response("""
+        return xml_response("""
             <Say voice="en-US-Wavenet-C">Event received.</Say>
         """)
 
     except Exception:
         frappe.log_error(traceback.format_exc(), "AT Voice Event Callback - Exception")
-        xml_response("""
+        return xml_response("""
             <Say voice="en-US-Wavenet-C">System received event.</Say>
         """)
