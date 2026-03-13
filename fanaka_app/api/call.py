@@ -4,15 +4,23 @@ from frappe import _
 
 
 # ---------------------------------------------------------
+# Helper: Return XML Response
+# ---------------------------------------------------------
+def xml_response(body: str):
+    xml = f'<?xml version="1.0" encoding="UTF-8"?>{body}'
+    frappe.local.response["type"] = "xml"
+    frappe.local.response["response"] = xml
+
+
+# ---------------------------------------------------------
 # INITIATE OUTBOUND CALL
 # ---------------------------------------------------------
 @frappe.whitelist(allow_guest=True)
 def make_call(phone_number, reference_doctype=None, reference_name=None):
-    """Initiates an outbound call via Africa's Talking."""
+    """Initiates an outbound call via Africa's Talking"""
 
     try:
 
-        # Normalize Kenyan numbers
         if phone_number.startswith("0"):
             phone_number = "+254" + phone_number[1:]
         elif not phone_number.startswith("+"):
@@ -20,15 +28,15 @@ def make_call(phone_number, reference_doctype=None, reference_name=None):
 
         settings = frappe.get_single("Africa Talking Settings")
 
-        username = settings.username
-        api_key = settings.get_password("api_key")
-        outbound_number = settings.outbound_number
+        africastalking.initialize(
+            settings.username,
+            settings.get_password("api_key")
+        )
 
-        africastalking.initialize(username, api_key)
         voice = africastalking.Voice
 
         response = voice.call(
-            callFrom=outbound_number,
+            callFrom=settings.outbound_number,
             callTo=[phone_number]
         )
 
@@ -42,7 +50,6 @@ def make_call(phone_number, reference_doctype=None, reference_name=None):
         }
 
     except Exception:
-
         frappe.log_error(frappe.get_traceback(), _("AT Make Call Failed"))
 
         return {
@@ -53,99 +60,130 @@ def make_call(phone_number, reference_doctype=None, reference_name=None):
 
 # ---------------------------------------------------------
 # VOICE ACTION CALLBACK
-# Africa's Talking calls this URL to control the call
+# Africa's Talking calls this URL during call routing
 # ---------------------------------------------------------
 @frappe.whitelist(allow_guest=True)
 def voice_callback():
 
     try:
 
-        data = frappe.request.values
+        data = frappe.form_dict
 
-        # Log request for debugging
         frappe.logger().info({
             "AT Voice Callback": data
         })
 
-        is_active = data.get("isActive")
+        is_active = int(data.get("isActive", 0))
         direction = data.get("direction")
 
-        if str(is_active) == "1":
+        if is_active == 1:
 
-            # ---------------------------
+            # -------------------------------------------------
             # INBOUND CALL
-            # ---------------------------
+            # -------------------------------------------------
             if direction == "Inbound":
 
-                xml = """
+                body = """
 <Response>
-    <Say>Welcome to Fanaka Real Estate. Please hold while we connect your call.</Say>
-    <Dial record="true" sequential="true" maxDuration="600">
-        <Number>+254714686511</Number>
-    </Dial>
+<Say voice="en-US-Standard-C" playBeep="false">
+Welcome to Fanaka Real Estate Ltd: Your Ideal Real Estate Partner
+</Say>
+<Dial phoneNumbers="+254714686511"
+record="true"
+maxDuration="10"
+sequential="true"/>
 </Response>
 """
 
-            # ---------------------------
+                xml_response(body)
+                return
+
+            # -------------------------------------------------
             # OUTBOUND CALL
-            # ---------------------------
+            # -------------------------------------------------
             elif direction == "Outbound":
 
-                xml = """
+                user_phone = "+254714686511"
+
+                body = f"""
 <Response>
-    <Dial record="true" sequential="true" maxDuration="600">
-        <Number>+254714686511</Number>
-    </Dial>
+<Dial phoneNumbers="{user_phone}"
+record="true"
+maxDuration="10"
+sequential="true"/>
 </Response>
 """
 
+                xml_response(body)
+                return
+
+            # -------------------------------------------------
+            # OTHER CASE
+            # -------------------------------------------------
             else:
 
-                xml = """
+                body = """
 <Response>
-    <Say>Welcome to Fanaka Real Estate.</Say>
+<Say voice="en-US-Standard-C" playBeep="false">
+Welcome to Fanaka Real Estate Ltd
+</Say>
 </Response>
 """
 
-        else:
+                xml_response(body)
+                return
 
-            xml = """
+        # -------------------------------------------------
+        # CALL NOT ACTIVE
+        # -------------------------------------------------
+        body = """
 <Response>
-    <Say>Thank you for calling Fanaka Real Estate.</Say>
+<Say>Hello, thank you for calling. This call is now connected.</Say>
 </Response>
 """
 
-        frappe.local.response["type"] = "xml"
-        frappe.local.response["response"] = xml
+        xml_response(body)
 
     except Exception:
 
         frappe.log_error(frappe.get_traceback(), "Voice Callback Error")
 
-        frappe.local.response["type"] = "xml"
-        frappe.local.response["response"] = '<?xml version="1.0" encoding="UTF-8"?><Response/>'
+        xml_response("""
+<Response>
+<Say>System error occurred</Say>
+</Response>
+""")
 
 
 # ---------------------------------------------------------
 # VOICE EVENT CALLBACK
-# Africa's Talking sends call status updates here
+# Africa's Talking sends call lifecycle events here
 # ---------------------------------------------------------
 @frappe.whitelist(allow_guest=True)
 def voice_event_callback():
 
     try:
 
-        data = frappe.request.values
+        data = frappe.form_dict
 
-        # Log events such as CallStarted, CallAnswered, CallCompleted
         frappe.logger().info({
             "AT Voice Event": data
         })
 
-        return "OK"
+        body = """
+<Response>
+<Say>Hello, thank you for calling. This call is now connected.</Say>
+</Response>
+"""
+
+        xml_response(body)
 
     except Exception:
 
         frappe.log_error(frappe.get_traceback(), "Voice Event Callback Error")
 
-        return "ERROR"
+        xml_response("""
+<Response>
+<Say>System error occurred</Say>
+</Response>
+""")
