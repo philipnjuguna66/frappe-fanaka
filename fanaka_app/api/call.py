@@ -107,8 +107,7 @@ def make_call(phone_number, reference_doctype=None, reference_name=None):
 def voice_callback():
     try:
         data = frappe.form_dict or {}
-        frappe.log_error(frappe.as_json(data), "AT Voice Callback - Data")
-
+    
         session_id = data.get("sessionId", "").strip()
         is_active = int(data.get("isActive", 0))
         direction = data.get("direction", "").strip()
@@ -176,8 +175,6 @@ def voice_event_callback():
         if not session_id:
             return xml_response("<Say>Invalid session</Say>")
 
-        frappe.log_error(frappe.as_json(data), "AT Voice Event - Raw")
-
         at_status = data.get("status", "").strip()
         session_state = data.get("callSessionState", "").strip()
         effective = session_state if session_state else at_status
@@ -192,7 +189,10 @@ def voice_event_callback():
 
         if log_name:
             doc = frappe.get_doc("Call Log", log_name)
+            doc.from = data.get("callerNumber", doc.from)
+            doc.medium= "Africa's Talking"
             doc.status = status
+            
             doc.recording_url = record_url
             doc.call_duration = duration
             doc.end_time = frappe.utils.now_datetime()
