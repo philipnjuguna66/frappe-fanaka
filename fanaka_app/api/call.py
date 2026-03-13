@@ -146,9 +146,10 @@ def voice_callback():
                     Welcome to Fanaka Real Estate Ltd – your ideal real estate partner.
                     Please hold while we connect you to an agent.
                 </Say>
-            
+                <Dial phoneNumbers="{agent_number}" record="true" maxDuration="600" sequential="true"/>
             """
         elif direction == "Outbound":
+            agent_number = caller  # For outbound, caller is the agent's number
             body = f"""
                 <Dial phoneNumbers="{agent_number}" record="true" maxDuration="600" sequential="true"/>
             """
