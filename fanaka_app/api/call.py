@@ -2,13 +2,15 @@ import frappe
 import africastalking
 from frappe import _
 
-# 2026-03-13 20:42:15 - Logic Sync: Refined voice_callback to match working PHP structure
-# 2026-03-13 20:58:15 - Logic Update: Disabled Call Log database persistence to focus on callback stability
 
+# ---------------------------------------------------------
+# INITIATE OUTBOUND CALL
+# ---------------------------------------------------------
 @frappe.whitelist(allow_guest=True)
 def make_call(phone_number, reference_doctype=None, reference_name=None):
     """Initiates an outbound call via Africa's Talking."""
     try:
+
         # Normalize Kenyan numbers
         if phone_number.startswith("0"):
             phone_number = "+254" + phone_number[1:]
@@ -16,6 +18,7 @@ def make_call(phone_number, reference_doctype=None, reference_name=None):
             phone_number = "+" + phone_number
 
         settings = frappe.get_single("Africa Talking Settings")
+
         username = settings.username
         api_key = settings.get_password("api_key")
         outbound_number = settings.outbound_number
@@ -37,86 +40,115 @@ def make_call(phone_number, reference_doctype=None, reference_name=None):
             "session_id": session_id
         }
 
-    except Exception as e:
+    except Exception:
         frappe.log_error(frappe.get_traceback(), _("AT Make Call Failed"))
+
         return {
             "status": "error",
-            "message": str(e)
+            "message": "Call initiation failed"
         }
 
 
+# ---------------------------------------------------------
+# VOICE ACTION CALLBACK
+# Africa's Talking hits this URL during call routing
+# ---------------------------------------------------------
 @frappe.whitelist(allow_guest=True)
 def voice_callback():
     """
-    Main routing callback for Africa's Talking Voice (Action URL).
-    Logic synced with working PHP implementation.
+    Main routing callback for Africa's Talking Voice.
     """
-    try:
-        # Use frappe.request.values to handle both POST and GET parameters safely
-        data = frappe.request.values
-        is_active = data.get('isActive')
-        direction = data.get('direction')
-        
-        # PHP equivalent: Log::info('Inbound ', request()->all());
-        # frappe.log_error(f"Voice Callback: {direction}", str(data))
 
-        xml_content = ""
+    try:
+
+        data = frappe.request.values
+
+        # Log callback payload
+        frappe.logger().info({
+            "AT Voice Callback": data
+        })
+
+        is_active = data.get("isActive")
+        direction = data.get("direction")
+
+        xml = ""
 
         if str(is_active) == "1":
-            if direction == 'Inbound':
-                xml_content = """<Response>
-                    <Say voice="en-US-Standard-C" playBeep="false">Welcome to Fanaka Real Estate Ltd: Your Ideal Real Estate Partner</Say>
-                    <Dial phoneNumbers="+254714686511" record="true" maxDuration="10" sequential="true"/>
-                </Response>"""
-            
-            elif direction == 'Outbound':
-                # In the PHP code, this fetched a specific user phone or defaulted
-                user_phone = "+254714686511"
-                xml_content = f"""<Response>
-                    <Dial phoneNumbers="{user_phone}" record="true" maxDuration="10" sequential="true"/>
-                </Response>"""
-            
+
+            # -------------------------------------------------
+            # INBOUND CALL
+            # -------------------------------------------------
+            if direction == "Inbound":
+
+                xml = """
+<Response>
+    <Say>Welcome to Fanaka Real Estate. Please hold while we connect your call.</Say>
+    <Dial record="true" sequential="true" maxDuration="600">
+        <Number>+254714686511</Number>
+    </Dial>
+</Response>
+"""
+
+            # -------------------------------------------------
+            # OUTBOUND CALL
+            # -------------------------------------------------
+            elif direction == "Outbound":
+
+                xml = """
+<Response>
+    <Dial record="true" sequential="true" maxDuration="600">
+        <Number>+254714686511</Number>
+    </Dial>
+</Response>
+"""
+
             else:
-                xml_content = """<Response>
-                    <Say voice="en-US-Standard-C" playBeep="false">Welcome to Fanaka Real Estate Ltd: </Say>
-                </Response>"""
+
+                xml = """
+<Response>
+    <Say>Welcome to Fanaka Real Estate.</Say>
+</Response>
+"""
+
         else:
-            # isActive is 0 or not present
-            xml_content = """<Response>
-                <Say>Hello, thank you for calling. This call is now connected.</Say>
-            </Response>"""
 
-        # Ensure the response is wrapped in the standard XML header
-        full_xml = f'<?xml version="1.0" encoding="UTF-8"?>\n{xml_content}'
+            xml = """
+<Response>
+    <Say>Thank you for calling Fanaka Real Estate.</Say>
+</Response>
+"""
 
-        # Setting response headers correctly to avoid 500 errors
-        frappe.response["type"] = "text/xml"
-        frappe.response["display_content"] = full_xml
-        # Direct return of the string helps some Frappe versions identify the response body
-        return full_xml
+        frappe.respond_as_xml(xml)
 
     except Exception:
+
         frappe.log_error(frappe.get_traceback(), "Voice Callback Error")
-        # Return a neutral empty response to stop AT from retrying with errors
-        frappe.response["type"] = "text/xml"
-        return '<?xml version="1.0" encoding="UTF-8"?><Response/>'
+
+        frappe.respond_as_xml(
+            '<?xml version="1.0" encoding="UTF-8"?><Response/>'
+        )
 
 
+# ---------------------------------------------------------
+# EVENT CALLBACK
+# Africa's Talking sends call lifecycle events here
+# ---------------------------------------------------------
 @frappe.whitelist(allow_guest=True)
 def voice_event_callback():
-    """Event callback for call status updates (Status Callback URL)."""
+
     try:
-        # PHP implementation simply acknowledged with a connected message
-        xml_response = """<?xml version="1.0" encoding="UTF-8"?>
-        <Response>
-            <Say>Hello, thank you for calling. This call is now connected.</Say>
-        </Response>"""
-        
-        frappe.response["type"] = "text/xml"
-        frappe.response["display_content"] = xml_response
-        return xml_response
-        
+
+        data = frappe.request.values
+
+        # Log call status updates
+        frappe.logger().info({
+            "AT Voice Event": data
+        })
+
+        return "OK"
+
     except Exception:
+
         frappe.log_error(frappe.get_traceback(), "Voice Event Callback Error")
-        frappe.response["type"] = "text/xml"
-        return '<?xml version="1.0" encoding="UTF-8"?><Response/>'
+
+        return "ERROR"
