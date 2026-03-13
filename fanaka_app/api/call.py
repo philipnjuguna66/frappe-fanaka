@@ -75,6 +75,7 @@ def make_call(phone_number, reference_doctype=None, reference_name=None):
         if session_id:
             cl = frappe.new_doc("Call Log")
             cl.custom_session_id = session_id
+            cl.id=session_id
             cl.from_ = outbound_number           # your number
             cl.to = phone_number                 # customer
             cl.status = "Initiated"
@@ -122,6 +123,7 @@ def voice_callback():
             if not existing:
                 cl = frappe.new_doc("Call Log")
                 cl.custom_session_id = session_id
+                cl.id = session_id
                 cl.from_ = caller
                 cl.to = destination              # your virtual number
                 cl.status = "Ringing"            # initial state
@@ -144,7 +146,7 @@ def voice_callback():
                     Welcome to Fanaka Real Estate Ltd – your ideal real estate partner.
                     Please hold while we connect you to an agent.
                 </Say>
-                <Dial phoneNumbers="{agent_number}" record="true" maxDuration="600" sequential="true"/>
+            
             """
         elif direction == "Outbound":
             body = f"""
