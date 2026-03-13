@@ -2,10 +2,9 @@ import frappe
 import africastalking
 from frappe import _
 
+# 2026-03-13 20:45:12 - Fixed LinkValidationError: Ensured reference fields are cleared for new logs to avoid ERPNext telephony hooks failing
 # 2026-03-13 20:39:45 - Fixed DuplicateEntryError: Added ignore_if_duplicate and refined lookup logic
 # 2026-03-13 20:35:10 - Fixed Status Mapping: Handled "Aborted" and "Hangup" to match DocType Select options
-# 2026-03-13 20:31:45 - Fixed ValidationError: Explicitly setting 'id' field for new_log naming
-# 2026-03-13 20:25:30 - Improved Lookup: Using custom_session_id for database queries instead of doc name
 
 def map_at_status(at_status):
     """Maps Africa's Talking status to Fanaka Call Log Select options."""
@@ -51,7 +50,6 @@ def make_call(phone_number, reference_doctype=None, reference_name=None):
 
         if session_id:
             try:
-                # 2026-03-13: Setting custom_session_id and id for consistency
                 doc = frappe.new_doc("Call Log")
                 doc.id = session_id
                 doc.custom_session_id = session_id
@@ -59,8 +57,11 @@ def make_call(phone_number, reference_doctype=None, reference_name=None):
                 doc.set("from", outbound_number)
                 doc.set("to", phone_number)
                 doc.status = "Ringing"
-                doc.reference_doctype = reference_doctype
-                doc.reference_name = reference_name
+                
+                # Only set references if they are actually provided
+                if reference_doctype and reference_name:
+                    doc.reference_doctype = reference_doctype
+                    doc.reference_name = reference_name
             
                 doc.insert(ignore_permissions=True, ignore_if_duplicate=True)
                 frappe.db.commit()
@@ -126,9 +127,10 @@ def voice_event_callback():
         if session_id and at_status:
             frappe_status = map_at_status(at_status)
             
-            # 2026-03-13: Check both doc name and custom_session_id to avoid DuplicateEntryError
+            # Lookup the document name by the custom_session_id field
             doc_name = frappe.db.get_value("Call Log", {"custom_session_id": session_id}, "name")
             
+            # Fallback to direct name lookup
             if not doc_name and frappe.db.exists("Call Log", session_id):
                 doc_name = session_id
 
@@ -147,7 +149,8 @@ def voice_event_callback():
                 
                 doc.save(ignore_permissions=True)
             else:
-                # 2026-03-13: Added ignore_if_duplicate=True to handle race conditions
+                # 2026-03-13: Fixed LinkValidationError by ensuring references are empty for Inbound/Untracked calls
+                # ERPNext telephony hooks fail if they find a reference name that isn't a valid DB link
                 new_log = frappe.new_doc("Call Log")
                 new_log.id = session_id
                 new_log.custom_session_id = session_id
@@ -156,12 +159,17 @@ def voice_event_callback():
                 new_log.set("from", data.get('callerNumber'))
                 new_log.set("to", data.get('destinationNumber'))
                 
+                # Explicitly clear these to prevent erpnext.telephony.doctype.call_log.call_log.after_insert from crashing
+                new_log.reference_doctype = None
+                new_log.reference_name = None
+                
                 if data.get('durationInSeconds'):
                     new_log.call_duration = data.get('durationInSeconds')
                 
                 if data.get('callStartTime'):
                     new_log.call_start_time = data.get('callStartTime')
                 
+                # Use ignore_if_duplicate to handle AT's multi-event bursts
                 new_log.insert(ignore_permissions=True, ignore_if_duplicate=True)
             
             frappe.db.commit()
