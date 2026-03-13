@@ -63,53 +63,7 @@ def make_call(phone_number, reference_doctype=None, reference_name=None):
 
 
 def log_call(data):
-    """Updates or creates a Call Log based on AT webhook data."""
-    try:
-        session_id = data.get("sessionId")
-        if not session_id:
-            return
-
-        status_map = {
-            "NotAnswered": "No Answer",
-            "Completed": "Completed",
-            "Busy": "Busy",
-            "Failed": "Failed",
-            "Ringing": "Ringing"
-        }
-
-        status = status_map.get(data.get("status"), data.get("status", "Ringing"))
-        
-        recording_url = data.get("recordingUrl")
-        recording_html = f'<audio controls src="{recording_url}" style="width: 100%; height: 35px;"></audio>' if recording_url else ""
-
-        # Using frappe.db.get_value with a simple filter is the safest for guest SQL access
-        existing_log = frappe.db.get_value("Call Log", {"id": session_id}, "name")
-
-        values = {
-            "from": data.get("callerNumber"),
-            "to": data.get("destinationNumber"),
-            "duration": data.get("durationInSeconds") or 0,
-            "status": status,
-            "recording_url": recording_url,
-           #"call_session_state": data.get("callSessionState"),
-            "amount": data.get("amount") or 0,
-            "currency_code": data.get("currencyCode")
-        }
-
-        if existing_log:
-            frappe.db.set_value("Call Log", existing_log, values, update_modified=True)
-        else:
-            doc = frappe.new_doc("Call Log")
-            doc.id = session_id
-            doc.custom_session_id = session_id
-            doc.call_type = "Incoming" if data.get("direction") == "Inbound" else "Outgoing"
-            doc.update(values)
-            doc.insert(ignore_permissions=True)
-        
-        frappe.db.commit()
-
-    except Exception as e:
-        frappe.log_error(f"Log Call Failed: {str(e)}", "AT Webhook Update")
+    pass
 
 
 @frappe.whitelist(allow_guest=True)
