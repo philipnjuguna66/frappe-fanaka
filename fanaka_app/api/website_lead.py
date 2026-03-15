@@ -1,6 +1,7 @@
 import frappe
 from frappe.utils import get_datetime
 import re
+
 from frappe.email.doctype.notification.notification import Notification
 
 @frappe.whitelist(allow_guest=True)
@@ -62,6 +63,11 @@ def normalize_phone(number):
 
 # fanaka_app/api/website_lead.py
 
+# fanaka_app/api/website_lead.py
+
+import frappe
+from frappe import _
+from frappe.core.doctype.sms_settings.sms_settings import send_sms
 
 
 @frappe.whitelist()
@@ -69,14 +75,14 @@ def resend_lead_notification_sms(lead_name):
     try:
         lead = frappe.get_doc("Website Lead", lead_name)
 
-        # Find all active SMS Notifications for Website Lead
+        # Find active SMS Notifications for Website Lead
         notifications = frappe.get_all(
             "Notification",
             filters={
                 "document_type": "Website Lead",
                 "channel": "SMS",
                 "enabled": 1,
-                "event": ["in", ["New", "Save", "Submit"]]   # adjust events as needed
+                "event": ["in", ["New", "Save", "Submit"]]   # adjust as needed
             },
             fields=["name"]
         )
@@ -93,47 +99,54 @@ def resend_lead_notification_sms(lead_name):
         for notif in notifications:
             notification = frappe.get_doc("Notification", notif.name)
 
-            # Use the custom_additional_sms_numbers from THIS notification
+            # Get numbers from this notification's custom field
             raw_input = notification.get("custom_additional_sms_numbers") or ""
             if not raw_input.strip():
-                continue  # skip if this notification has no additional numbers
+                continue
 
             valid_phones = []
             for raw in [n.strip() for n in raw_input.split(",") if n.strip()]:
-                cleaned = normalize_phone(raw)  # reuse your normalize function
+                cleaned = normalize_phone(raw)  # your normalize function
                 if cleaned:
                     valid_phones.append(cleaned)
 
             if not valid_phones:
                 continue
 
+            # Prepare context for Jinja rendering
+            context = {"doc": lead, "frappe": frappe}
+
+            # Render message correctly
             try:
-                # Build context like the original notification would
-                context = {"doc": lead}
+                template = notification.get_template()  # ← this is the correct method
+                message = template.render(context)
+            except Exception as render_err:
+                errors.append(f"Failed to render message for {notification.name}: {str(render_err)}")
+                continue
 
-                # Render the message using the notification's template
-                message = notification.render_template(notification.message, context)
-
+            try:
                 send_sms(
                     receiver_list=valid_phones,
                     msg=message
                 )
-
                 sent_count += 1
-
-            except Exception as e:
-                errors.append(f"Notification {notification.name}: {str(e)}")
-                frappe.log_error(frappe.get_traceback(), f"Resend failed for Notification {notification.name}")
+            except Exception as send_err:
+                errors.append(f"SMS send failed for {notification.name}: {str(send_err)}")
+                frappe.log_error(frappe.get_traceback(), f"Resend failed - {notification.name}")
 
         if sent_count == 0:
             return {
                 "status": "error",
-                "message": "No SMS was sent (check numbers or notification config)"
+                "message": "No SMS was sent (check numbers, template, or gateway)"
             }
+
+        msg = f"SMS resent via {sent_count} notification(s)"
+        if errors:
+            msg += f"\nErrors: {'; '.join(errors)}"
 
         return {
             "status": "success",
-            "message": f"SMS resent via {sent_count} notification(s)"
+            "message": msg
         }
 
     except Exception as e:
