@@ -1,39 +1,79 @@
+# fanaka_app/notification/sms.py
+
 import frappe
 import re
 from frappe.core.doctype.sms_settings.sms_settings import send_sms
 
-def normalize_number(number):
-    number = re.sub(r"\D", "", number)  # remove everything except digits
 
-    # Kenya normalization
-    if number.startswith("0"):
-        number = "254" + number[1:]
-    elif number.startswith("7") and len(number) == 9:
-        number = "254" + number
+def normalize_phone(number):
+    """Return 2547xxxxxxxx or None"""
+    if not number:
+        return None
+    digits = re.sub(r'\D', '', str(number).strip())
+    if digits.startswith('0'):
+        digits = '254' + digits[1:]
+    elif digits.startswith(('7', '1')) and len(digits) == 9:
+        digits = '254' + digits
+    elif digits.startswith('254') and len(digits) == 12:
+        pass
+    else:
+        digits = digits.lstrip('+')
+        if not (digits.startswith('254') and len(digits) == 12):
+            return None
+    return digits if len(digits) == 12 and digits.startswith('254') else None
 
-    return number
 
-def handle_sms_cc(doc, method=None):
-
-    if doc.channel != "SMS":
+def send_notification_sms(doc, method):
+    """
+    Hook: send SMS from Notification using custom_additional_sms_numbers
+    Safe – doesn't crash document save
+    """
+    if doc.doctype != "Notification":
         return
 
-    raw_numbers = doc.custom_additional_sms_numbers.split(",")
-    print(doc.custom_additional_sms_numbers)
+    if not doc.message:
+        frappe.log_error("Notification has no message", "SMS Notification - Empty Message")
+        return
+    raw_input = doc.get("custom_additional_sms_numbers") or ""
+    if not raw_input.strip():
+        return  # nothing to do
 
-    numbers = []
-    for n in raw_numbers:
-        print(doc.custom_additional_sms_numbers)
-        cleaned = normalize_number(n.strip())
+    raw_numbers = [n.strip() for n in raw_input.split(",") if n.strip()]
 
-        # STRICT VALIDATION
-        if cleaned.startswith("254") and len(cleaned) == 12:
-            numbers.append(cleaned)
-            print(cleaned)
+    valid_phones = []
+    invalid = []
 
-    frappe.msgprint(f"Final Numbers: {numbers}")  # DEBUG
+    for raw in raw_numbers:
+        cleaned = normalize_phone(raw)
+        if cleaned:
+            valid_phones.append(cleaned)
+        else:
+            invalid.append(raw)
 
-    if not numbers:
-        frappe.throw("No valid numbers after cleaning.")
+    if invalid:
+        frappe.log_error(
+            f"Skipped invalid numbers in Notification {doc.name}: {', '.join(invalid)}",
+            "SMS Notification - Invalid Numbers"
+        )
 
-    send_sms(numbers, doc.message or "")
+    if not valid_phones:
+        return
+
+    try:
+        send_sms(
+            receiver_list=valid_phones,
+            msg=doc.message,
+            # sender_name="Fanaka"   # if configured in SMS Settings
+        )
+
+        frappe.log_error(
+            f"SMS sent from Notification {doc.name} to {len(valid_phones)} numbers: {', '.join(valid_phones)}",
+            "SMS Notification - Success"
+        )
+
+    except Exception as e:
+        frappe.log_error(
+            f"SMS failed for Notification {doc.name}\n{frappe.get_traceback()}",
+            "SMS Notification - Failed"
+        )
+        # Optional: add a custom field "sms_status" = "Failed" and save again (carefully)
