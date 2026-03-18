@@ -5,7 +5,28 @@ frappe.pages['unpaid-requisitions'].on_page_load = function(wrapper) {
         title: __('Unpaid Requisitions'),
         single_column: true
     });
+    setup_realtime_listeners(wrapper);
 
+    function setup_realtime_listeners(wrapper) {
+        // Listen for M-Pesa success events
+        frappe.realtime.on('payment_success', (data) => {
+            frappe.show_alert({
+                message: __('{0}: Payment successful. TransID: {1}', [data.requisitionId, data.transaction_id]),
+                indicator: 'green'
+            });
+            wrapper.refresh();
+        });
+
+        // Listen for M-Pesa error events
+        frappe.realtime.on('payment_error', (data) => {
+            frappe.msgprint({
+                title: __('M-Pesa Payment Failed'),
+                message: __('{0}: {1}', [data.requisitionId, data.message]),
+                indicator: 'red'
+            });
+            wrapper.refresh();
+        });
+    }
     // 1. Setup Header Tabs
     let tabs = [
         { 

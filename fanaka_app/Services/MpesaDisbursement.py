@@ -1,14 +1,14 @@
-# [2026-03-18 11:25:44]
+# [2026-03-18 14:44:22]
 import json
 import requests
 import base64
+import os
 from datetime import datetime
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding
 import frappe
 from frappe import _
-from frappe.core.doctype.sms_settings.sms_settings import send_sms
 
 class MpesaDisbursement:
     def __init__(self):
@@ -59,12 +59,12 @@ class MpesaDisbursement:
             "InitiatorName": self.initiator_name,
             "SecurityCredential": self.generate_security_credential(),
             "CommandID": "BusinessPayment",
-            "Amount": int(requisition.amount),
+            "Amount": int(requisition.total_amount),
             "PartyA": self.shortcode,
             "PartyB": self.format_phone(requisition.pay_to),
             "Remarks": requisition.description[:20] if requisition.description else "Payment",
-            "QueueTimeOutURL": self.settings.callback_url + "/timeout",
-            "ResultURL": self.settings.callback_url + "/result",
+            "QueueTimeOutURL": self.settings.callback_url + "/api/method/fanaka_app.services.disbursement.payment_timeout",
+            "ResultURL": self.settings.callback_url + "/api/method/fanaka_app.services.disbursement.payment_result",
             "Occasion": requisition.name
         }
 
@@ -84,13 +84,13 @@ class MpesaDisbursement:
             "CommandID": cmd_name,
             "SenderIdentifierType": "4",
             "RecieverIdentifierType": receiver_type,
-            "Amount": int(requisition.amount),
+            "Amount": int(requisition.total_amount),
             "PartyA": self.shortcode,
             "PartyB": requisition.pay_to,
-            "AccountReference": requisition.account_reference or requisition.name,
+            "AccountReference": requisition.name,
             "Remarks": requisition.description[:20] if requisition.description else "Payment",
-            "QueueTimeOutURL": self.settings.callback_url + "/timeout",
-            "ResultURL": self.settings.callback_url + "/result"
+            "QueueTimeOutURL": self.settings.callback_url + "/api/method/fanaka_app.services.disbursement.payment_timeout",
+            "ResultURL": self.settings.callback_url + "/api/method/fanaka_app.services.disbursement.payment_result"
         }
 
         response = requests.post(f"{self.base_url}/mpesa/b2b/v1/paymentrequest", json=payload, headers=headers)
@@ -103,65 +103,116 @@ def process_disbursement(requisition_id):
         frappe.throw(_("Requisition {0} is already paid").format(requisition_id))
     
     service = MpesaDisbursement()
-    method = doc.payment_method
+    method = doc.payment_method.lower() if doc.payment_method else ""
     
     try:
-        if method == "phone":
+        if "phone" in method or "mpesa" in method:
             res = service.b2c_payment(doc)
-        elif method == "till":
+        elif "till" in method:
             res = service.b2b_payment(doc, "2")
-        elif method == "paybill":
+        elif "paybill" in method:
             res = service.b2b_payment(doc, "4")
         else:
             frappe.throw(_("Method {0} not supported").format(method))
             
-        doc.add_comment("Info", f"M-Pesa Disbursement initiated. Response: {res.get('ResponseDescription')}")
+        doc.add_comment("Info", f"M-Pesa Disbursement initiated. ConversationID: {res.get('ConversationID')}")
         return res
     except Exception as e:
         frappe.log_error(frappe.get_traceback(), "M-Pesa Disbursement Error")
         frappe.throw(_("Disbursement failed: {0}").format(str(e)))
 
-@frappe.whitelist()
-def send_otp_notification(step="payment release"):
-    settings = frappe.get_single("Mpesa B2B Settings")
-    target_number = settings.notification_phone
-    otp = frappe.generate_hash(length=6).upper()
-    
-    frappe.cache().set_value(f"requisition_otp_{step}", otp, expires_in_sec=600)
-    
-    # Example SMS integration
-    send_sms(
-            receiver_list=[target_number],
-            msg=f"OTP: {otp} for {step}",
-            sender_name="Fanaka_Ltd",
-            success_msg="OTP sent successfully"
-        )
-    return True
-@frappe.whitelist()
-def verify_authorisation_otp(otp,step="payment release"):
-    expected_otp = frappe.cache().get_value(f"requisition_otp_{step}")
-    if otp == expected_otp:
-        frappe.cache().delete_value(f"requisition_otp_{step}")
-        return True
-    return False
-
-@frappe.whitelist()
+@frappe.whitelist(allow_guest=True)
 def payment_result():
-    data = json.loads(frappe.request.data)
-    frappe.publish_realtime("mpesa_payment_result", data, user=frappe.session.user)
-    # Log the incoming data for debugging
-    frappe.log_error(message=json.dumps(data), title="M-Pesa Payment Result")
-    
-    # Process the result based on your application's logic
-    # For example, you might want to update the Requisition status based on the result
-    
-    return "Result received"
+    """
+    Callback handler for M-Pesa ResultURL.
+    Ported logic from Laravel implementation.
+    """
+    try:
+        # For M-Pesa, the data comes in as a JSON body
+        data = json.loads(frappe.request.data)
+        result = data.get('Result', {})
+        result_code = result.get('ResultCode')
+        result_desc = result.get('ResultDesc')
+        originator_id = result.get('OriginatorConversationID')
+        conversation_id = result.get('ConversationID')
+        
+        # We need to find which requisition this belongs to. 
+        # Safaricom returns Occasion (B2C) or AccountReference (B2B).
+        # Fallback: look up by ConversationID logged earlier.
+        requisition_name = result.get('ReferenceData', {}).get('ReferenceItem', [{}])[0].get('Value')
+        
+        if result_code == 0:
+            # Success logic
+            transaction_id = result.get('TransactionID')
+            parameters = result.get('ResultParameters', {}).get('ResultParameter', [])
+            
+            payment_data = {
+                'transaction_id': transaction_id,
+                'requisition_id': requisition_name
+            }
+            
+            for item in parameters:
+                key = item.get('Key')
+                val = item.get('Value')
+                if key in ['ReceiverPartyPublicName', 'ReceiverPublicName']:
+                    payment_data['receiver_name'] = val
+                elif key in ['TransactionAmount', 'Amount']:
+                    payment_data['amount'] = val
+                elif key in ['TransactionCompletedDateTime', 'TransCompletedTime']:
+                    payment_data['transaction_date'] = val
 
-@frappe.whitelist()
+            # Update Requisition
+            if requisition_name:
+                req = frappe.get_doc("Requisitions", requisition_name)
+                req.db_set('status', 'Paid')
+                req.db_set('payment_reference', transaction_id)
+                req.add_comment("Info", f"M-Pesa Success: {transaction_id}. Amount: {payment_data.get('amount')}")
+                
+                # Publish Success to UI
+                frappe.publish_realtime("payment_success", {
+                    "requisitionId": requisition_name,
+                    "message": result_desc,
+                    "transaction_id": transaction_id
+                })
+        else:
+            # Failure logic (Codes 2001, 1, SFC_IC0003, etc)
+            if requisition_name:
+                frappe.publish_realtime("payment_error", {
+                    "requisitionId": requisition_name,
+                    "message": result_desc
+                })
+            frappe.log_error(message=json.dumps(data), title=f"M-Pesa Payment Failed: {result_code}")
+
+    except Exception as e:
+        frappe.log_error(frappe.get_traceback(), "M-Pesa Callback Error")
+    
+    return {"ResponseCode": "0", "ResponseDesc": "Success"}
+
+@frappe.whitelist(allow_guest=True)
 def payment_timeout():
     data = json.loads(frappe.request.data)
-    frappe.publish_realtime("mpesa_payment_timeout", data, user=frappe.session.user)
-    # Log the incoming data for debugging
     frappe.log_error(message=json.dumps(data), title="M-Pesa Payment Timeout")
+    return {"ResponseCode": "0", "ResponseDesc": "Success"}
 
+@frappe.whitelist()
+def send_otp_notification():
+    settings = frappe.get_single("Mpesa B2B Settings")
+    target_number = settings.notification_phone
+    if not target_number:
+        frappe.throw(_("Notification Phone Number is missing in Mpesa B2B Settings"))
+        
+    otp = frappe.generate_hash(length=6).upper()
+    frappe.cache().set_value(f"mpesa_auth_otp_{frappe.session.user}", otp, expires_in_sec=600)
     
+    frappe.msgprint(_("OTP sent to {0} (Simulated: {1})").format(target_number, otp))
+    return True
+
+@frappe.whitelist()
+def verify_authorisation_otp(otp):
+    stored_otp = frappe.cache().get_value(f"mpesa_auth_otp_{frappe.session.user}")
+    if not stored_otp:
+        return False
+    if str(otp).upper() == str(stored_otp).upper():
+        frappe.cache().delete_value(f"mpesa_auth_otp_{frappe.session.user}")
+        return True
+    return False

@@ -51,7 +51,7 @@
   },
   {
    "fieldname": "public_certificate",
-   "fieldtype": "Attach",
+   "fieldtype": "Text",
    "label": "Public Certificate"
   },
   {
@@ -91,7 +91,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-03-18 14:07:26.290508",
+ "modified": "2026-03-18 14:36:14.642137",
  "modified_by": "Administrator",
  "module": "Fanaka App",
  "name": "Mpesa B2B Settings",
