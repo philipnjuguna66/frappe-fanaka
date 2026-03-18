@@ -63,8 +63,8 @@ class MpesaDisbursement:
             "PartyA": self.shortcode,
             "PartyB": self.format_phone(requisition.pay_to),
             "Remarks": requisition.description[:20] if requisition.description else "Payment",
-            "QueueTimeOutURL": self.settings.callback_url + "/api/method/fanaka_app.services.disbursement.payment_timeout",
-            "ResultURL": self.settings.callback_url + "/api/method/fanaka_app.services.disbursement.payment_result",
+            "QueueTimeOutURL": self.settings.callback_url_timeout,
+            "ResultURL": self.settings.callback_url_result,
             "Occasion": requisition.name
         }
 
