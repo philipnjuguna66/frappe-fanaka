@@ -99,7 +99,7 @@ class MpesaDisbursement:
 @frappe.whitelist()
 def process_disbursement(requisition_id):
     doc = frappe.get_doc("Requisitions", requisition_id)
-    if doc.payment_status == "Paid":
+    if doc.status == "Paid":
         frappe.throw(_("Requisition {0} is already paid").format(requisition_id))
     
     service = MpesaDisbursement()

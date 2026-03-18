@@ -5,12 +5,13 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "shortcode",
+  "environment",
   "consumer_key",
   "public_certificate",
   "notification_phone",
   "callback_url_result",
   "column_break_omwf",
+  "shortcode",
   "consumer_secret",
   "initiator_name",
   "initiator_password",
@@ -77,13 +78,20 @@
    "fieldtype": "Data",
    "label": "Callback Url Result",
    "reqd": 1
+  },
+  {
+   "fieldname": "environment",
+   "fieldtype": "Select",
+   "label": "Environment",
+   "options": "sandbox\nlive",
+   "reqd": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-03-18 12:59:28.974263",
+ "modified": "2026-03-18 14:07:26.290508",
  "modified_by": "Administrator",
  "module": "Fanaka App",
  "name": "Mpesa B2B Settings",
