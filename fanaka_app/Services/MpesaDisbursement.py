@@ -1,4 +1,3 @@
-# [2026-03-18 14:44:22]
 import json
 import requests
 import base64
@@ -12,9 +11,8 @@ from frappe import _
 
 class MpesaDisbursement:
     def __init__(self):
-        # Updated to use 'Mpesa B2B Settings' as requested
         self.settings = frappe.get_single("Mpesa B2B Settings")
-        self.env = self.settings.environment # 'live' or 'sandbox'
+        self.env = self.settings.environment
         self.base_url = "https://api.safaricom.co.ke" if self.env == 'live' else "https://sandbox.safaricom.co.ke"
         
         self.consumer_key = self.settings.consumer_key
@@ -22,7 +20,7 @@ class MpesaDisbursement:
         self.shortcode = self.settings.shortcode
         self.initiator_name = self.settings.initiator_name
         self.initiator_password = self.settings.get_password("initiator_password")
-        
+
     def get_access_token(self):
         url = f"{self.base_url}/oauth/v1/generate?grant_type=client_credentials"
         response = requests.get(url, auth=(self.consumer_key, self.consumer_secret))
@@ -63,8 +61,8 @@ class MpesaDisbursement:
             "PartyA": self.shortcode,
             "PartyB": self.format_phone(requisition.pay_to),
             "Remarks": requisition.description[:20] if requisition.description else "Payment",
-            "QueueTimeOutURL": self.settings.callback_url_timeout +"?requisition_id={requisition.name}",
-            "ResultURL": self.settings.callback_url_result +"?requisition_id={requisition.name}",
+            "QueueTimeOutURL": f"{self.settings.callback_url_timeout}?requisition_id={requisition.name}",
+            "ResultURL": f"{self.settings.callback_url_result}?requisition_id={requisition.name}",
             "Occasion": requisition.name
         }
 
@@ -89,12 +87,13 @@ class MpesaDisbursement:
             "PartyB": requisition.pay_to,
             "AccountReference": requisition.name,
             "Remarks": requisition.description[:20] if requisition.description else "Payment",
-            "QueueTimeOutURL": self.settings.callback_url_timeout +"?requisition_id={requisition.name}",
-            "ResultURL": self.settings.callback_url_result +"?requisition_id={requisition.name}",
+            "QueueTimeOutURL": f"{self.settings.callback_url_timeout}?requisition_id={requisition.name}",
+            "ResultURL": f"{self.settings.callback_url_result}?requisition_id={requisition.name}",
         }
 
         response = requests.post(f"{self.base_url}/mpesa/b2b/v1/paymentrequest", json=payload, headers=headers)
         return response.json()
+
 
 @frappe.whitelist()
 def process_disbursement(requisition_id):
@@ -121,35 +120,37 @@ def process_disbursement(requisition_id):
         frappe.log_error(frappe.get_traceback(), "M-Pesa Disbursement Error")
         frappe.throw(_("Disbursement failed: {0}").format(str(e)))
 
+
 @frappe.whitelist(allow_guest=True)
 def payment_result():
-    """
-    Callback handler for M-Pesa ResultURL.
-    Ported logic from Laravel implementation.
-    """
+    """Callback handler – works for BOTH B2C (phone) and B2B (Till/PayBill)"""
     try:
-        # For M-Pesa, the data comes in as a JSON body
         data = json.loads(frappe.request.data)
         result = data.get('Result', {})
         result_code = result.get('ResultCode')
         result_desc = result.get('ResultDesc')
-        originator_id = result.get('OriginatorConversationID')
-        conversation_id = result.get('ConversationID')
         
-        # We need to find which requisition this belongs to. 
-        # Safaricom returns Occasion (B2C) or AccountReference (B2B).
-        # Fallback: look up by ConversationID logged earlier.
-        requisition_name = result.get('ReferenceData', {}).get('ReferenceItem', [{}])[0].get('Value')
-        
+        # Robust requisition lookup (B2C uses Occasion, B2B uses AccountReference)
+        requisition_name = None
+        if result.get('Occasion'):
+            requisition_name = result.get('Occasion')
+        elif result.get('AccountReference'):
+            requisition_name = result.get('AccountReference')
+        else:
+            # Official Daraja fallback
+            ref_items = result.get('ReferenceData', {}).get('ReferenceItem', [])
+            if isinstance(ref_items, dict):
+                ref_items = [ref_items]
+            for item in ref_items:
+                if item.get('Key') in ['Occasion', 'AccountReference', 'BillReferenceNumber']:
+                    requisition_name = item.get('Value')
+                    break
+
         if result_code == 0:
-            # Success logic
             transaction_id = result.get('TransactionID')
             parameters = result.get('ResultParameters', {}).get('ResultParameter', [])
             
-            payment_data = {
-                'transaction_id': transaction_id,
-                'requisition_id': requisition_name
-            }
+            payment_data = {'transaction_id': transaction_id, 'requisition_id': requisition_name}
             
             for item in parameters:
                 key = item.get('Key')
@@ -161,21 +162,18 @@ def payment_result():
                 elif key in ['TransactionCompletedDateTime', 'TransCompletedTime']:
                     payment_data['transaction_date'] = val
 
-            # Update Requisition
             if requisition_name:
                 req = frappe.get_doc("Requisitions", requisition_name)
                 req.db_set('status', 'Paid')
                 req.db_set('payment_reference', transaction_id)
                 req.add_comment("Info", f"M-Pesa Success: {transaction_id}. Amount: {payment_data.get('amount')}")
                 
-                # Publish Success to UI
                 frappe.publish_realtime("payment_success", {
                     "requisitionId": requisition_name,
                     "message": result_desc,
                     "transaction_id": transaction_id
                 })
         else:
-            # Failure logic (Codes 2001, 1, SFC_IC0003, etc)
             if requisition_name:
                 frappe.publish_realtime("payment_error", {
                     "requisitionId": requisition_name,
@@ -188,11 +186,13 @@ def payment_result():
     
     return {"ResponseCode": "0", "ResponseDesc": "Success"}
 
+
 @frappe.whitelist(allow_guest=True)
 def payment_timeout():
     data = json.loads(frappe.request.data)
     frappe.log_error(message=json.dumps(data), title="M-Pesa Payment Timeout")
     return {"ResponseCode": "0", "ResponseDesc": "Success"}
+
 
 @frappe.whitelist()
 def send_otp_notification():
@@ -206,6 +206,7 @@ def send_otp_notification():
     
     frappe.msgprint(_("OTP sent to {0} (Simulated: {1})").format(target_number, otp))
     return True
+
 
 @frappe.whitelist()
 def verify_authorisation_otp(otp):

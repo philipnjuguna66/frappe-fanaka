@@ -1,4 +1,4 @@
-// [2026-03-18 12:58:45]
+// [2026-03-18] – Fully updated & compatible with fixed MpesaDisbursement.py
 frappe.pages['unpaid-requisitions'].on_page_load = function(wrapper) {
     var page = frappe.ui.make_app_page({
         parent: wrapper,
@@ -27,6 +27,7 @@ frappe.pages['unpaid-requisitions'].on_page_load = function(wrapper) {
             wrapper.refresh();
         });
     }
+
     // 1. Setup Header Tabs
     let tabs = [
         { 
@@ -187,7 +188,6 @@ frappe.pages['unpaid-requisitions'].on_page_load = function(wrapper) {
 
     // 3. OTP Verification Logic with 5-minute timer
     function request_otp_verification(on_success) {
-        // First call to send OTP
         frappe.call({
             method: "fanaka_app.services.MpesaDisbursement.send_otp_notification", 
             callback: function(r) {
