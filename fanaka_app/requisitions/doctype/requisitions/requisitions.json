@@ -27,6 +27,15 @@
   "cost_center",
   "reference",
   "reference_date",
+  "section_break_lhrd",
+  "initiated_at",
+  "authorised_by",
+  "released_at",
+  "rejected_at",
+  "column_break_sxsc",
+  "initiated_by",
+  "authorised_at",
+  "released_by",
   "section_break_umuf",
   "journal_entry",
   "amended_from"
@@ -204,6 +213,60 @@
    "options": "pending\napproved\nrejected\npaid\nsubmitted",
    "read_only": 1,
    "search_index": 1
+  },
+  {
+   "fieldname": "section_break_lhrd",
+   "fieldtype": "Section Break"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "initiated_at",
+   "fieldtype": "Datetime",
+   "label": "Initiated At"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "authorised_by",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Authorised By",
+   "options": "User"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "released_at",
+   "fieldtype": "Datetime",
+   "label": "Released At"
+  },
+  {
+   "fieldname": "column_break_sxsc",
+   "fieldtype": "Column Break"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "initiated_by",
+   "fieldtype": "Link",
+   "label": "Initiated By",
+   "options": "User"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "authorised_at",
+   "fieldtype": "Datetime",
+   "label": "Authorised At"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "released_by",
+   "fieldtype": "Link",
+   "label": "released_by",
+   "options": "User"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "rejected_at",
+   "fieldtype": "Datetime",
+   "label": "Rejected At"
   }
  ],
  "grid_page_length": 50,
@@ -215,7 +278,7 @@
    "link_fieldname": "voucher_no"
   }
  ],
- "modified": "2026-03-12 10:53:47.788718",
+ "modified": "2026-03-18 12:35:42.563310",
  "modified_by": "Administrator",
  "module": "Requisitions",
  "name": "Requisitions",

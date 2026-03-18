@@ -1,0 +1,108 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-03-18 11:35:40.129177",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "shortcode",
+  "consumer_key",
+  "public_certificate",
+  "notification_phone",
+  "callback_url_result",
+  "column_break_omwf",
+  "consumer_secret",
+  "initiator_name",
+  "initiator_password",
+  "callback_url"
+ ],
+ "fields": [
+  {
+   "fieldname": "consumer_key",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Consumer Key",
+   "reqd": 1
+  },
+  {
+   "fieldname": "shortcode",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Shortcode",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_omwf",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "initiator_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Initiator Name",
+   "reqd": 1
+  },
+  {
+   "fieldname": "initiator_password",
+   "fieldtype": "Password",
+   "label": "Initiator Password",
+   "reqd": 1
+  },
+  {
+   "fieldname": "public_certificate",
+   "fieldtype": "Attach",
+   "label": "Public Certificate"
+  },
+  {
+   "fieldname": "notification_phone",
+   "fieldtype": "Phone",
+   "label": "Notification Phone",
+   "reqd": 1
+  },
+  {
+   "fieldname": "consumer_secret",
+   "fieldtype": "Password",
+   "in_list_view": 1,
+   "label": "Consumer Secret",
+   "reqd": 1
+  },
+  {
+   "fieldname": "callback_url",
+   "fieldtype": "Data",
+   "label": "Callback Url Timeout",
+   "reqd": 1
+  },
+  {
+   "fieldname": "callback_url_result",
+   "fieldtype": "Data",
+   "label": "Callback Url Result",
+   "reqd": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "issingle": 1,
+ "links": [],
+ "modified": "2026-03-18 12:59:28.974263",
+ "modified_by": "Administrator",
+ "module": "Fanaka App",
+ "name": "Mpesa B2B Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

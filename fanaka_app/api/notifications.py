@@ -72,7 +72,7 @@ def send_notification_sms(doc, method):
         send_sms(
             receiver_list=valid_phones,
             msg=doc.message,
-            sender_name="Fanaka_Ltd"
+            sender_name="Fanaka_Ltd",
             success_msg="SMS sent successfully"
         )
 

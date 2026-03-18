@@ -1,0 +1,29 @@
+{
+ "content": null,
+ "creation": "2026-03-18 11:52:20.887784",
+ "docstatus": 0,
+ "doctype": "Page",
+ "idx": 0,
+ "modified": "2026-03-18 11:52:20.887784",
+ "modified_by": "Administrator",
+ "module": "Fanaka App",
+ "name": "unpaid-requisitions",
+ "owner": "Administrator",
+ "page_name": "unpaid-requisitions",
+ "roles": [
+  {
+   "role": "System Manager"
+  },
+  {
+   "role": "Accounts Manager"
+  },
+  {
+   "role": "Accounts User"
+  }
+ ],
+ "script": null,
+ "standard": "Yes",
+ "style": null,
+ "system_page": 1,
+ "title": "Unpaid Requisitions"
+}
