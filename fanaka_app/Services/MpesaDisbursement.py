@@ -89,8 +89,8 @@ class MpesaDisbursement:
             "PartyB": requisition.pay_to,
             "AccountReference": requisition.name,
             "Remarks": requisition.description[:20] if requisition.description else "Payment",
-            "QueueTimeOutURL": self.settings.callback_url + "/api/method/fanaka_app.services.disbursement.payment_timeout",
-            "ResultURL": self.settings.callback_url + "/api/method/fanaka_app.services.disbursement.payment_result"
+            "QueueTimeOutURL": self.settings.callback_url_timeout +"?requisition_id={requisition.name}",
+            "ResultURL": self.settings.callback_url_result +"?requisition_id={requisition.name}",
         }
 
         response = requests.post(f"{self.base_url}/mpesa/b2b/v1/paymentrequest", json=payload, headers=headers)

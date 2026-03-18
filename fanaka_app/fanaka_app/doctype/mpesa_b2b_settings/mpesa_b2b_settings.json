@@ -15,7 +15,7 @@
   "consumer_secret",
   "initiator_name",
   "initiator_password",
-  "callback_url"
+  "callback_url_timeout"
  ],
  "fields": [
   {
@@ -68,12 +68,6 @@
    "reqd": 1
   },
   {
-   "fieldname": "callback_url",
-   "fieldtype": "Data",
-   "label": "Callback Url Timeout",
-   "reqd": 1
-  },
-  {
    "fieldname": "callback_url_result",
    "fieldtype": "Data",
    "label": "Callback Url Result",
@@ -85,13 +79,19 @@
    "label": "Environment",
    "options": "sandbox\nlive",
    "reqd": 1
+  },
+  {
+   "fieldname": "callback_url_timeout",
+   "fieldtype": "Data",
+   "label": "Callback Url Timeout",
+   "reqd": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-03-18 14:36:14.642137",
+ "modified": "2026-03-18 14:58:34.572993",
  "modified_by": "Administrator",
  "module": "Fanaka App",
  "name": "Mpesa B2B Settings",
