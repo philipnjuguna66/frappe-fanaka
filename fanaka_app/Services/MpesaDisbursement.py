@@ -63,8 +63,8 @@ class MpesaDisbursement:
             "PartyA": self.shortcode,
             "PartyB": self.format_phone(requisition.pay_to),
             "Remarks": requisition.description[:20] if requisition.description else "Payment",
-            "QueueTimeOutURL": self.settings.callback_url_timeout,
-            "ResultURL": self.settings.callback_url_result,
+            "QueueTimeOutURL": self.settings.callback_url_timeout +"?requisition_id={requisition.name}",
+            "ResultURL": self.settings.callback_url_result +"?requisition_id={requisition.name}",
             "Occasion": requisition.name
         }
 
