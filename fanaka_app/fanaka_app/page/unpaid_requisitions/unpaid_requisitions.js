@@ -162,7 +162,7 @@ frappe.pages['unpaid-requisitions'].on_page_load = function(wrapper) {
                 frappe.confirm(__('Release payments for {0} items?', [selected.length]), () => {
                     selected.forEach(name => {
                         frappe.call({
-                            method: 'fanaka_app.services.MpesaDisbursement.process_disbursement',
+                            method: 'fanaka_app.api.MpesaDisbursement.process_disbursement',
                             args: { requisition_id: name }
                         });
                     });
@@ -189,7 +189,7 @@ frappe.pages['unpaid-requisitions'].on_page_load = function(wrapper) {
     // 3. OTP Verification Logic with 5-minute timer
     function request_otp_verification(on_success) {
         frappe.call({
-            method: "fanaka_app.services.MpesaDisbursement.send_otp_notification", 
+            method: "fanaka_app.api.MpesaDisbursement.send_otp_notification", 
             callback: function(r) {
                 if (r.exc) return;
 
@@ -215,7 +215,7 @@ frappe.pages['unpaid-requisitions'].on_page_load = function(wrapper) {
                         d.get_primary_btn().prop('disabled', true);
                         
                         frappe.call({
-                            method: "fanaka_app.services.MpesaDisbursement.verify_authorisation_otp",
+                            method: "fanaka_app.api.MpesaDisbursement.verify_authorisation_otp",
                             args: { otp: values.otp },
                             callback: function(res) {
                                 if (res.message === true) {
