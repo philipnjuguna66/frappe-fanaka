@@ -53,7 +53,8 @@
    "fieldtype": "Int",
    "in_list_view": 1,
    "label": "Sale Id",
-   "reqd": 1
+   "reqd": 1,
+   "unique": 1
   },
   {
    "fieldname": "customer",
@@ -174,7 +175,7 @@
    "table_fieldname": "customer"
   }
  ],
- "modified": "2026-03-11 10:57:21.042777",
+ "modified": "2026-03-18 15:17:38.144132",
  "modified_by": "Administrator",
  "module": "Fanaka App",
  "name": "Signed Completion Agreement",
