@@ -210,6 +210,7 @@ frappe.pages['unpaid-requisitions'].on_page_load = function(wrapper) {
                             </div>`
                         }
                     ],
+					
                     primary_action_label: __('Verify & Authorise'),
                     primary_action(values) {
                         d.get_primary_btn().prop('disabled', true);
