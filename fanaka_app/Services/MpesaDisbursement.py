@@ -123,28 +123,31 @@ def process_disbursement(requisition_id):
 
 @frappe.whitelist(allow_guest=True)
 def payment_result():
-    """Callback handler – works for BOTH B2C (phone) and B2B (Till/PayBill)"""
+    """Callback handler – NOW PRIORITIZES ?requisition_id= FROM URL"""
     try:
         data = json.loads(frappe.request.data)
         result = data.get('Result', {})
         result_code = result.get('ResultCode')
         result_desc = result.get('ResultDesc')
         
-        # Robust requisition lookup (B2C uses Occasion, B2B uses AccountReference)
-        requisition_name = None
-        if result.get('Occasion'):
-            requisition_name = result.get('Occasion')
-        elif result.get('AccountReference'):
-            requisition_name = result.get('AccountReference')
-        else:
-            # Official Daraja fallback
-            ref_items = result.get('ReferenceData', {}).get('ReferenceItem', [])
-            if isinstance(ref_items, dict):
-                ref_items = [ref_items]
-            for item in ref_items:
-                if item.get('Key') in ['Occasion', 'AccountReference', 'BillReferenceNumber']:
-                    requisition_name = item.get('Value')
-                    break
+        # === NEW: First try to get requisition_id from URL query parameter ===
+        requisition_name = frappe.form_dict.get('requisition_id')
+        
+        # If not in URL, fallback to body parsing (B2C Occasion / B2B AccountReference)
+        if not requisition_name:
+            if result.get('Occasion'):
+                requisition_name = result.get('Occasion')
+            elif result.get('AccountReference'):
+                requisition_name = result.get('AccountReference')
+            else:
+                # Official Daraja fallback
+                ref_items = result.get('ReferenceData', {}).get('ReferenceItem', [])
+                if isinstance(ref_items, dict):
+                    ref_items = [ref_items]
+                for item in ref_items:
+                    if item.get('Key') in ['Occasion', 'AccountReference', 'BillReferenceNumber']:
+                        requisition_name = item.get('Value')
+                        break
 
         if result_code == 0:
             transaction_id = result.get('TransactionID')
@@ -189,8 +192,22 @@ def payment_result():
 
 @frappe.whitelist(allow_guest=True)
 def payment_timeout():
-    data = json.loads(frappe.request.data)
-    frappe.log_error(message=json.dumps(data), title="M-Pesa Payment Timeout")
+    """Timeout callback – also uses ?requisition_id= from URL for better logging"""
+    try:
+        data = json.loads(frappe.request.data)
+        
+        # === NEW: Use requisition_id from URL if available ===
+        requisition_name = frappe.form_dict.get('requisition_id')
+        
+        title = f"M-Pesa Payment Timeout"
+        if requisition_name:
+            title += f" - {requisition_name}"
+        
+        frappe.log_error(message=json.dumps(data), title=title)
+        
+    except Exception as e:
+        frappe.log_error(frappe.get_traceback(), "M-Pesa Timeout Callback Error")
+    
     return {"ResponseCode": "0", "ResponseDesc": "Success"}
 
 
