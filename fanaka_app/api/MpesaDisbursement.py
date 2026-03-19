@@ -216,10 +216,6 @@ def payment_result():
 
         req = frappe.get_doc("Requisitions", requisition_name)
 
-        # Prevent duplicate updates
-        if req.status == "Paid":
-            return {"ResponseCode": "0", "ResponseDesc": "Already processed"}
-
         # SUCCESS
         if result_code == "0":
 
@@ -234,8 +230,6 @@ def payment_result():
                 "Info",
                 f"[{timestamp}] M-Pesa SUCCESS. TransID: {transaction_id}. {result_desc}"
             )
-
-            update_mpesa_balance(result)
 
             frappe.publish_realtime(
                 "payment_success",
