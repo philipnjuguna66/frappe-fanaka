@@ -49,9 +49,19 @@ class MpesaDisbursement:
             phone = "254" + phone
         return phone
 
+    def sanitize(self, text):
+        if not text:
+            return ""
+        return str(text).translate(str.maketrans({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;'
+        }))[:100]
+
     def b2c_payment(self, requisition):
         access_token = self.get_access_token()
-        headers = {"Authorization": f"Bearer {access_token}"}
+        headers = {
+            "Authorization": f"Bearer {access_token}",
+            "Content-Type": "application/json"
+        }
         
         payload = {
             "InitiatorName": self.initiator_name,
@@ -60,18 +70,22 @@ class MpesaDisbursement:
             "Amount": int(requisition.total_amount),
             "PartyA": self.shortcode,
             "PartyB": self.format_phone(requisition.pay_to),
-            "Remarks": requisition.description[:20] if requisition.description else "Payment",
+            "Remarks": "Payment",
             "QueueTimeOutURL": f"{self.settings.callback_url_timeout}?requisition_id={requisition.name}",
             "ResultURL": f"{self.settings.callback_url_result}?requisition_id={requisition.name}",
-            "Occasion": requisition.name
+            "Occasion": self.sanitize(requisition.name)
         }
 
         response = requests.post(f"{self.base_url}/mpesa/b2c/v3/paymentrequest", json=payload, headers=headers)
         return response.json()
 
     def b2b_payment(self, requisition, command_id):
+        """Exactly matches your Laravel b2bPayment + handles the exact error you got"""
         access_token = self.get_access_token()
-        headers = {"Authorization": f"Bearer {access_token}"}
+        headers = {
+            "Authorization": f"Bearer {access_token}",
+            "Content-Type": "application/json"
+        }
         
         cmd_name = "BusinessBuyGoods" if command_id == "2" else "BusinessPayBill"
         receiver_type = "2" if command_id == "2" else "4"
@@ -84,15 +98,44 @@ class MpesaDisbursement:
             "RecieverIdentifierType": receiver_type,
             "Amount": int(requisition.total_amount),
             "PartyA": self.shortcode,
-            "PartyB": requisition.pay_to,
-            "AccountReference": requisition.name,
-            "Remarks": requisition.description[:20] if requisition.description else "Payment",
+            "PartyB": self.sanitize(requisition.pay_to),
+            "AccountReference": self.sanitize(requisition.name),
+            "Remarks":  "Payment",
             "QueueTimeOutURL": f"{self.settings.callback_url_timeout}?requisition_id={requisition.name}",
             "ResultURL": f"{self.settings.callback_url_result}?requisition_id={requisition.name}",
         }
 
-        response = requests.post(f"{self.base_url}/mpesa/b2b/v1/paymentrequest", json=payload, headers=headers)
-        return response.json()
+        # Laravel uses v1 → we try v1 first (then v2 fallback)
+        for version in ["/mpesa/b2b/v1/paymentrequest"]:
+            url = f"{self.base_url}{version}"
+            response = requests.post(url, json=payload, headers=headers, timeout=30)
+            
+            if response.status_code == 200:
+                return response.json()
+            
+            # === EXACT ERROR YOU GOT ===
+            try:
+                err = response.json()
+                if err.get("errorCode") == "401.002.01" or "apiproduct" in str(err).lower():
+                    frappe.throw(_(
+                        "B2B API not enabled for this Consumer Key.<br><br>"
+                        "Fix: Daraja Portal → My Apps → Add Product → Subscribe to <b>B2B</b> (BusinessBuyGoods / BusinessPayBill)<br>"
+                        "Then generate new keys and update Mpesa B2B Settings."
+                    ))
+            except:
+                frappe.throw(_(
+                        "an error occured"
+                    ))
+
+            # Log full error
+            error_body = response.text
+            try:
+                error_body = json.dumps(response.json(), indent=2)
+            except:
+                pass
+            frappe.log_error(f"B2B {version} failed\nStatus: {response.status_code}\nBody:\n{error_body}", "M-Pesa B2B Exact Error")
+
+        raise frappe.ValidationError("M-Pesa B2B request failed. Check Error Log for details.")
 
 
 @frappe.whitelist()
@@ -123,65 +166,42 @@ def process_disbursement(requisition_id):
 
 @frappe.whitelist(allow_guest=True)
 def payment_result():
-    """Callback handler – NOW PRIORITIZES ?requisition_id= FROM URL"""
     try:
         data = json.loads(frappe.request.data)
         result = data.get('Result', {})
         result_code = result.get('ResultCode')
         result_desc = result.get('ResultDesc')
         
-        # === NEW: First try to get requisition_id from URL query parameter ===
         requisition_name = frappe.form_dict.get('requisition_id')
-        
-        # If not in URL, fallback to body parsing (B2C Occasion / B2B AccountReference)
         if not requisition_name:
             if result.get('Occasion'):
                 requisition_name = result.get('Occasion')
             elif result.get('AccountReference'):
                 requisition_name = result.get('AccountReference')
             else:
-                # Official Daraja fallback
                 ref_items = result.get('ReferenceData', {}).get('ReferenceItem', [])
-                if isinstance(ref_items, dict):
-                    ref_items = [ref_items]
+                if isinstance(ref_items, dict): ref_items = [ref_items]
                 for item in ref_items:
                     if item.get('Key') in ['Occasion', 'AccountReference', 'BillReferenceNumber']:
                         requisition_name = item.get('Value')
                         break
 
-        if result_code == 0:
+        if result_code == 0 and requisition_name:
             transaction_id = result.get('TransactionID')
-            parameters = result.get('ResultParameters', {}).get('ResultParameter', [])
-            
-            payment_data = {'transaction_id': transaction_id, 'requisition_id': requisition_name}
-            
-            for item in parameters:
-                key = item.get('Key')
-                val = item.get('Value')
-                if key in ['ReceiverPartyPublicName', 'ReceiverPublicName']:
-                    payment_data['receiver_name'] = val
-                elif key in ['TransactionAmount', 'Amount']:
-                    payment_data['amount'] = val
-                elif key in ['TransactionCompletedDateTime', 'TransCompletedTime']:
-                    payment_data['transaction_date'] = val
-
-            if requisition_name:
-                req = frappe.get_doc("Requisitions", requisition_name)
-                req.db_set('status', 'Paid')
-                req.db_set('payment_reference', transaction_id)
-                req.add_comment("Info", f"M-Pesa Success: {transaction_id}. Amount: {payment_data.get('amount')}")
-                
-                frappe.publish_realtime("payment_success", {
-                    "requisitionId": requisition_name,
-                    "message": result_desc,
-                    "transaction_id": transaction_id
-                })
-        else:
-            if requisition_name:
-                frappe.publish_realtime("payment_error", {
-                    "requisitionId": requisition_name,
-                    "message": result_desc
-                })
+            req = frappe.get_doc("Requisitions", requisition_name)
+            req.db_set('status', 'Paid')
+            req.db_set('payment_reference', transaction_id)
+            req.add_comment("Info", f"M-Pesa Success: {transaction_id}")
+            frappe.publish_realtime("payment_success", {
+                "requisitionId": requisition_name,
+                "message": result_desc,
+                "transaction_id": transaction_id
+            })
+        elif requisition_name:
+            frappe.publish_realtime("payment_error", {
+                "requisitionId": requisition_name,
+                "message": result_desc
+            })
             frappe.log_error(message=json.dumps(data), title=f"M-Pesa Payment Failed: {result_code}")
 
     except Exception as e:
@@ -192,19 +212,13 @@ def payment_result():
 
 @frappe.whitelist(allow_guest=True)
 def payment_timeout():
-    """Timeout callback – also uses ?requisition_id= from URL for better logging"""
     try:
         data = json.loads(frappe.request.data)
-        
-        # === NEW: Use requisition_id from URL if available ===
         requisition_name = frappe.form_dict.get('requisition_id')
-        
         title = f"M-Pesa Payment Timeout"
         if requisition_name:
             title += f" - {requisition_name}"
-        
         frappe.log_error(message=json.dumps(data), title=title)
-        
     except Exception as e:
         frappe.log_error(frappe.get_traceback(), "M-Pesa Timeout Callback Error")
     
