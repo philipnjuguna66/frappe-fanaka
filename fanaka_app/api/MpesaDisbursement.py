@@ -170,7 +170,10 @@ def process_disbursement(requisition_id):
 @frappe.whitelist(allow_guest=True)
 def payment_result():
     try:
+        
         data = json.loads(frappe.request.data)
+        frappe.log_error(frappe.request.data, "M-Pesa Balance Callback Error Mpesa Data")
+        frappe.log_error(frappe.form_dict, "M-Pesa Balance Callback Error Query string")
         result = data.get('Result', {})
         result_code = result.get('ResultCode')
         result_desc = result.get('ResultDesc')
