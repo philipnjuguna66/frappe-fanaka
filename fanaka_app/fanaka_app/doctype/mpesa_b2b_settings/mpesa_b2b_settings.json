@@ -7,15 +7,18 @@
  "field_order": [
   "environment",
   "consumer_key",
-  "public_certificate",
   "notification_phone",
   "callback_url_result",
+  "utility_working_balance",
+  "working_account_balance",
   "column_break_omwf",
   "shortcode",
   "consumer_secret",
   "initiator_name",
   "initiator_password",
-  "callback_url_timeout"
+  "callback_url_timeout",
+  "section_break_xxoe",
+  "public_certificate"
  ],
  "fields": [
   {
@@ -85,13 +88,27 @@
    "fieldtype": "Data",
    "label": "Callback Url Timeout",
    "reqd": 1
+  },
+  {
+   "fieldname": "utility_working_balance",
+   "fieldtype": "Float",
+   "label": "Utility Working Balance"
+  },
+  {
+   "fieldname": "working_account_balance",
+   "fieldtype": "Float",
+   "label": "Working Account Balance"
+  },
+  {
+   "fieldname": "section_break_xxoe",
+   "fieldtype": "Section Break"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-03-18 14:58:34.572993",
+ "modified": "2026-03-19 15:04:09.198334",
  "modified_by": "Administrator",
  "module": "Fanaka App",
  "name": "Mpesa B2B Settings",

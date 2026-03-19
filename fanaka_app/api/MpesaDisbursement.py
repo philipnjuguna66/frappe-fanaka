@@ -254,3 +254,89 @@ def verify_authorisation_otp(otp):
         frappe.cache().delete_value(f"mpesa_auth_otp_{frappe.session.user}")
         return True
     return False
+
+@frappe.whitelist()
+def get_mpesa_balance():
+    """Fetch real M-Pesa balance (Working + Utility Account)"""
+    try:
+        service = MpesaDisbursement()
+        access_token = service.get_access_token()
+        headers = {
+            "Authorization": f"Bearer {access_token}",
+            "Content-Type": "application/json"
+        }
+        
+        payload = {
+            "Initiator": service.initiator_name,
+            "SecurityCredential": service.generate_security_credential(),
+            "CommandID": "AccountBalance",
+            "PartyA": service.shortcode,
+            "IdentifierType": "4",
+            "Remarks": "Balance",
+            "QueueTimeOutURL": service.settings.callback_url_timeout,
+            "ResultURL": f"{frappe.utils.get_url()}/api/method/fanaka_app.api.MpesaDisbursement.balance_callback"
+        }
+
+        response = requests.post(f"{service.base_url}/mpesa/accountbalance/v1/query", json=payload, headers=headers)
+        return response.json()
+    except Exception as e:
+        frappe.log_error(frappe.get_traceback(), "M-Pesa Balance Error")
+        return {"error": str(e)}
+
+@frappe.whitelist(allow_guest=True)
+def balance_callback():
+    try:
+        data = json.loads(frappe.request.data)
+        result = data.get('Result', {})
+        result_code = result.get('ResultCode')
+        
+        if result_code == 0:
+            # Extract parameters from the ResultParameters list
+            params = result.get('ResultParameters', {}).get('ResultParameter', [])
+            balance_string = ""
+            
+            for p in params:
+                if p.get('Key') == 'AccountBalance':
+                    balance_string = p.get('Value')
+                    break
+            
+            if balance_string:
+                # Format: Account1|KES|Balance|Available|...&Account2|...
+                accounts_data = balance_string.split('&')
+                
+                working_balance = 0.0
+                utility_balance = 0.0
+                
+                for account_entry in accounts_data:
+                    parts = account_entry.split('|')
+                    # Expected indices based on Safaricom spec: 
+                    # 0: Account Name, 2: Current Balance (or Available)
+                    if len(parts) >= 3:
+                        acc_name = parts[0].strip()
+                        # Remove commas and convert to float
+                        try:
+                            balance_val = float(parts[2].replace(',', ''))
+                        except ValueError:
+                            balance_val = 0.0
+                            
+                        if "Working Account" in acc_name:
+                            working_balance = balance_val
+                        elif "Utility Account" in acc_name:
+                            utility_balance = balance_val
+
+                # Save to Single Doc: Mpesa B2B Settings
+                settings = frappe.get_doc("Mpesa B2B Settings")
+                settings.db_set('utility_working_balance', working_balance)
+                settings.db_set('working_account_balance', utility_balance)
+                #settings.db_set('last_balance_update', frappe.utils.now_datetime())
+                
+                # Optional: Notify the UI if someone is waiting
+                frappe.publish_realtime("mpesa_balance_updated", {
+                    "working": working_balance,
+                    "utility": utility_balance
+                })
+
+    except Exception as e:
+        frappe.log_error(frappe.get_traceback(), "M-Pesa Balance Callback Error")
+    
+    return {"ResponseCode": "0", "ResponseDesc": "Success"}        
