@@ -54,7 +54,7 @@ const headerHtml = `
 
     function renderDatabaseBalances() {
         frappe.call({
-            method: 'fanaka_app.api.get_stored_mpesa_balance',
+            method: 'fanaka_app.api.MpesaDisbursement.get_stored_mpesa_balance',
             callback: function(r) {
                 if(r.message) {
                     $('#working-balance').text(r.message.working_balance);
