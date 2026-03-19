@@ -9,6 +9,7 @@ from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding
 import frappe
 from frappe import _
+from frappe.core.doctype.sms_settings.sms_settings import send_sms
 
 class MpesaDisbursement:
     def __init__(self):
@@ -288,7 +289,12 @@ def send_otp_notification():
     otp = frappe.generate_hash(length=6).upper()
     frappe.cache().set_value(f"mpesa_auth_otp_{frappe.session.user}", otp, expires_in_sec=600)
     
-    frappe.msgprint(_("OTP sent to {0} (Simulated: {1})").format(target_number, otp))
+    send_sms(
+            receiver_list=[target_number],
+            msg=f"Your M-Pesa B2B API OTP is: {otp}. It expires in 5 minutes.",
+            sender_name="Fanaka_Ltd",
+            success_msg="SMS sent successfully"
+        )
     return True
 
 
