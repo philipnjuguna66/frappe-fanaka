@@ -268,7 +268,6 @@ frappe.pages['unpaid-requisitions'].on_page_load = function(wrapper) {
                             perform_bulk_update(selected_names, {
                                 'authorised_at': frappe.datetime.now_datetime(),
                                 'authorised_by': frappe.session.user,
-                                'status': 'Authorised'
                             }, __('Bulk Authorisation Successful'));
                         } else {
                             frappe.msgprint({title: __('Invalid OTP'), message: __('Incorrect or expired OTP.'), indicator: 'red'});
