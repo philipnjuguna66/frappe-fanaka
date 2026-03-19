@@ -33,9 +33,10 @@ frappe.pages['unpaid-requisitions'].on_page_load = function(wrapper) {
             .list-container td:first-child { border-top-left-radius: 8px; border-bottom-left-radius: 8px; }
             .list-container td:last-child { border-top-right-radius: 8px; border-bottom-right-radius: 8px; }
             
-            .otp-timer { font-weight: bold; color: var(--red-500); font-size: 1.1em; }
-            .resend-link { cursor: pointer; color: var(--primary); text-decoration: underline; font-size: 12px; }
-            .resend-link.disabled { color: #8d99a6; cursor: not-allowed; text-decoration: none; }
+            .otp-timer { font-weight: bold; color: #d63031; font-size: 1.2em; }
+            .resend-link { cursor: pointer; color: #0984e3; text-decoration: underline; font-size: 13px; font-weight: 600; }
+            .resend-link.disabled { color: #b2bec3; cursor: not-allowed; text-decoration: none; pointer-events: none; }
+            .timer-container { background: #f1f2f6; padding: 10px; border-radius: 4px; margin-bottom: 15px; }
         </style>
     `;
     $('head').append(styles);
@@ -61,8 +62,6 @@ frappe.pages['unpaid-requisitions'].on_page_load = function(wrapper) {
     `;
     
     page.main.append(headerHtml);
-
-    // Load initial balances
     renderDatabaseBalances();
     
     $('#refresh-mpesa-btn').on('click', function() {
@@ -95,7 +94,7 @@ frappe.pages['unpaid-requisitions'].on_page_load = function(wrapper) {
 
     // ====================== TABS ======================
     let tabs = [
-        { label: __('Authorise'), id: 'authorise', filter: { 'initiated_at': ['!=', null], 'authorised_at': ['=', null], 'status': ['!=', 'Rejected'] } },
+        { label: __('Authorise'), id: 'authorise', filter: { 'initiated_at': ['!=', null], 'authorised_at': ['=', null], 'status': ['not in', ['Rejected', 'Paid']] } },
         { label: __('Release Funds'), id: 'release', filter: { 'authorised_at': ['!=', null], 'status': ['!=', 'Paid'] } },
         { label: __('Paid'), id: 'paid', filter: { 'status': ['=', 'Paid'] } },
         { label: __('Rejected'), id: 'rejected', filter: { 'status': ['=', 'Rejected'] } }
@@ -125,7 +124,7 @@ frappe.pages['unpaid-requisitions'].on_page_load = function(wrapper) {
             <thead>
                 <tr style="color: #8d99a6; font-size: 11px; text-transform: uppercase; letter-spacing: 1px;">
                     <th style="width: 45px; text-align: center;"><input type="checkbox" class="master-checker"></th>
-                    <th>${__('Requisition Details')}</th>
+                    <th>${__('Requisition')}</th>
                     <th>${__('Amount')}</th>
                     <th>${__('Method')}</th>
                     <th>${__('Payee')}</th>
@@ -158,7 +157,7 @@ frappe.pages['unpaid-requisitions'].on_page_load = function(wrapper) {
                                 <div class="text-muted" style="font-size: 11px; max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${data.description || 'No description'}</div>
                             </td>
                             <td><span style="font-weight: 700; color: #2d3436;">${frappe.format(data.total_amount, {fieldtype: 'Currency'})}</span></td>
-                            <td><span class="badge" style="background-color: #f1f2f6; color: #2f3542; font-weight: 600; text-transform: capitalize;">${data.payment_method || 'N/A'}</span></td>
+                            <td><span class="badge" style="background-color: #f1f2f6; color: #2f3542; font-weight: 600;">${data.payment_method || 'N/A'}</span></td>
                             <td class="text-muted" style="font-size: 12px;">${data.pay_to || '-'}</td>
                             <td class="text-right action-area"></td>
                         </tr>`).appendTo(table.find('tbody'));
@@ -171,9 +170,7 @@ frappe.pages['unpaid-requisitions'].on_page_load = function(wrapper) {
                     });
                     setup_bulk_actions(context_id);
                 } else {
-                    table.find('tbody').append(`<tr><td colspan="6" class="text-center text-muted" style="padding: 80px; background: #fff; border-radius: 8px;">
-                        <i class="fa fa-folder-open-o" style="font-size: 24px; display: block; margin-bottom: 10px;"></i>
-                        ${__('All caught up! No requisitions here.')}</td></tr>`);
+                    table.find('tbody').append(`<tr><td colspan="6" class="text-center text-muted" style="padding: 80px; background: #fff; border-radius: 8px;">${__('No records found')}</td></tr>`);
                 }
             }
         });
@@ -188,8 +185,7 @@ frappe.pages['unpaid-requisitions'].on_page_load = function(wrapper) {
         if (context_id === 'authorise') {
             page.set_primary_action(__('Bulk Authorise'), () => {
                 let selected = get_selected_names();
-                if (!selected.length) return frappe.msgprint(__('Please select requisitions to authorise'));
-                
+                if (!selected.length) return frappe.msgprint(__('Please select requisitions'));
                 initiate_authorisation_workflow(selected);
             });
 
@@ -202,16 +198,15 @@ frappe.pages['unpaid-requisitions'].on_page_load = function(wrapper) {
         } else if (context_id === 'release') {
             page.set_primary_action(__('Bulk Release'), () => {
                 let selected = get_selected_names();
-                if (!selected.length) return frappe.msgprint(__('Select items to release funds'));
-                
-                frappe.confirm(__('Release M-Pesa payments for {0} items?', [selected.length]), () => {
+                if (!selected.length) return frappe.msgprint(__('Select items to release'));
+                frappe.confirm(__('Release payments for {0} items?', [selected.length]), () => {
                     selected.forEach(name => {
                         frappe.call({
                             method: 'fanaka_app.api.MpesaDisbursement.process_disbursement',
                             args: { requisition_id: name }
                         });
                     });
-                    frappe.show_alert({message: __('Disbursement sequence triggered'), indicator: 'green'});
+                    frappe.show_alert({message: __('M-Pesa processing started'), indicator: 'green'});
                     setTimeout(() => wrapper.refresh(), 2000);
                 });
             });
@@ -220,12 +215,13 @@ frappe.pages['unpaid-requisitions'].on_page_load = function(wrapper) {
 
     // ====================== OTP WORKFLOW ======================
     function initiate_authorisation_workflow(selected_names) {
-        // 1. Send OTP via backend
         frappe.call({
-            method: 'fanaka_app.api.MpesaDisbursement.send_otp_notification', // Assumes this API exists to send SMS/Email
+            method: 'fanaka_app.api.MpesaDisbursement.send_otp_notification',
             callback: (r) => {
-                if(!r.exc) {
+                if(r.message === true) {
                     show_otp_modal(selected_names);
+                } else {
+                    frappe.msgprint(__('Failed to send OTP. Please try again.'));
                 }
             }
         });
@@ -233,24 +229,32 @@ frappe.pages['unpaid-requisitions'].on_page_load = function(wrapper) {
 
     function show_otp_modal(selected_names) {
         let d = new frappe.ui.Dialog({
-            title: __('Verify Authorisation'),
+            title: __('Authorisation Verification'),
             fields: [
                 {
-                    html: `<div class="text-center" style="margin-bottom: 15px;">
-                        <p>${__('An OTP has been sent to your registered device.')}</p>
-                        <div class="otp-timer-wrapper">Time remaining: <span id="timer-val" class="otp-timer">05:00</span></div>
-                    </div>`
+                    fieldtype: 'HTML',
+                    fieldname: 'timer_html',
+                    options: `
+                        <div class="text-center timer-container">
+                            <p style="margin-bottom: 5px; color: #636e72;">${__('A 6-digit code has been sent to your phone.')}</p>
+                            <div id="timer-val" class="otp-timer">05:00</div>
+                        </div>
+                    `
                 },
                 {
                     label: __('Enter OTP Code'),
                     fieldname: 'otp_code',
-                    fieldtype: 'Int',
+                    fieldtype: 'Data', // 'Data' is safer for Dialog controls to avoid .replace errors
                     reqd: 1
                 },
                 {
-                    html: `<div class="text-center" style="margin-top: 10px;">
-                        <span id="resend-otp-btn" class="resend-link disabled">${__('Resend OTP')}</span>
-                    </div>`
+                    fieldtype: 'HTML',
+                    fieldname: 'resend_html',
+                    options: `
+                        <div class="text-center">
+                            <span id="resend-otp-link" class="resend-link disabled">${__('Resend OTP Code')}</span>
+                        </div>
+                    `
                 }
             ],
             primary_action_label: __('Confirm & Authorise'),
@@ -263,10 +267,11 @@ frappe.pages['unpaid-requisitions'].on_page_load = function(wrapper) {
                             d.hide();
                             perform_bulk_update(selected_names, {
                                 'authorised_at': frappe.datetime.now_datetime(),
-                                'authorised_by': frappe.session.user
+                                'authorised_by': frappe.session.user,
+                                'status': 'Authorised'
                             }, __('Bulk Authorisation Successful'));
                         } else {
-                            frappe.msgprint({title: __('Invalid OTP'), message: __('The code entered is incorrect or expired.'), indicator: 'red'});
+                            frappe.msgprint({title: __('Invalid OTP'), message: __('Incorrect or expired OTP.'), indicator: 'red'});
                         }
                     }
                 });
@@ -276,12 +281,12 @@ frappe.pages['unpaid-requisitions'].on_page_load = function(wrapper) {
         d.show();
 
         // Timer Logic
-        let timeLeft = 300; // 5 Minutes
+        let timeLeft = 300; 
         let timerInterval = setInterval(() => {
             if (timeLeft <= 0) {
                 clearInterval(timerInterval);
-                $('#timer-val').text('Expired');
-                $('#resend-otp-btn').removeClass('disabled').on('click', () => {
+                $('#timer-val').text('Expired').css('color', '#fab1a0');
+                $('#resend-otp-link').removeClass('disabled').on('click', () => {
                     d.hide();
                     initiate_authorisation_workflow(selected_names);
                 });
@@ -304,8 +309,21 @@ frappe.pages['unpaid-requisitions'].on_page_load = function(wrapper) {
     }
 
     function perform_bulk_update(names, values, success_msg) {
+        const timestamp = frappe.datetime.now_datetime();
         let promises = names.map(name => {
             return new Promise((resolve) => {
+                // Add timestamped comment to history log
+                frappe.call({
+                    method: 'frappe.desk.form.utils.add_comment',
+                    args: {
+                        reference_doctype: 'Requisitions',
+                        reference_name: name,
+                        content: `[${timestamp}] Bulk action: ${values.status || 'Updated'} by ${frappe.session.user}`,
+                        comment_email: frappe.session.user,
+                        comment_by: frappe.session.user
+                    }
+                });
+
                 frappe.call({
                     method: 'frappe.client.set_value',
                     args: {
@@ -326,11 +344,11 @@ frappe.pages['unpaid-requisitions'].on_page_load = function(wrapper) {
     }
 
     function handle_undo(names) {
-        frappe.confirm(__('Move {0} items back to draft/initiated status?', [names.length]), () => {
+        frappe.confirm(__('Reset {0} items to pending initiation?', [names.length]), () => {
             perform_bulk_update(names, {
                 'authorised_at': null,
                 'authorised_by': null,
-                'status': 'Pending Authorisation'
+                'status': 'Pending Initiation'
             }, __('Requisitions reset successfully'));
         });
     }
