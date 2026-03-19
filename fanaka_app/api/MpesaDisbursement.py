@@ -2,6 +2,7 @@ import json
 import requests
 import base64
 import os
+import re
 from datetime import datetime
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes, serialization
@@ -167,20 +168,40 @@ def process_disbursement(requisition_id):
         frappe.throw(_("Disbursement failed: {0}").format(str(e)))
 
 
+def parse_mpesa_amount(amount_str):
+    """Helper to extract BasicAmount from Safaricom's complex string format"""
+    if not amount_str: return 0.0
+    match = re.search(r"BasicAmount=([\d.]+)", str(amount_str))
+    if match:
+        return float(match.group(1))
+    return 0.0
+
 @frappe.whitelist(allow_guest=True)
 def payment_result():
+    """
+    Handles M-Pesa B2B/B2C callbacks.
+    URL: /api/method/fanaka_app.services.payment_result
+    """
+    timestamp = frappe.utils.now_datetime()
     try:
-        
+        # Load raw data and log for debugging
         data = json.loads(frappe.request.data)
-        frappe.log_error(frappe.request.data, "M-Pesa Balance Callback Error Mpesa Data")
-        frappe.log_error(frappe.form_dict, "M-Pesa Balance Callback Error Query string")
+        frappe.log_error(
+            message=f"Timestamp: {timestamp}\nData: {json.dumps(data, indent=2)}\nForm Dict: {json.dumps(frappe.form_dict, indent=2)}",
+            title=f"M-Pesa Callback Received"
+        )
+        
         result = data.get('Result', {})
         result_code = result.get('ResultCode')
         result_desc = result.get('ResultDesc')
+        transaction_id = result.get('TransactionID')
         
+        # 1. Identify Requisition Name
         requisition_name = frappe.form_dict.get('requisition_id')
-        released_by = frappe.form_dict.get('released_by')
+        released_by = frappe.form_dict.get('released_by') or "System"
+        
         if not requisition_name:
+            # Fallback to internal Result data
             if result.get('Occasion'):
                 requisition_name = result.get('Occasion')
             elif result.get('AccountReference'):
@@ -193,30 +214,51 @@ def payment_result():
                         requisition_name = item.get('Value')
                         break
 
-        if result_code == 0 and requisition_name:
-            transaction_id = result.get('TransactionID')
-            req = frappe.get_doc("Requisitions", requisition_name)
-            req.db_set('status', 'Paid')
-            req.db_set('released_at', frappe.datetime.now_datetime())
-            req.db_set('released_by', released_by)
-            req.db_set('payment_reference', transaction_id)
-            req.add_comment("Info", f"M-Pesa Success: {transaction_id}")
-            frappe.publish_realtime("payment_success", {
-                "requisitionId": requisition_name,
-                "message": result_desc,
-                "transaction_id": transaction_id
-            })
+        # 2. Handle Success (ResultCode 0)
+        if str(result_code) == "0":
+            # Update Requisition
+            if requisition_name and frappe.db.exists("Requisitions", requisition_name):
+                req = frappe.get_doc("Requisitions", requisition_name)
+                req.db_set('status', 'Paid')
+                req.db_set('released_at', timestamp)
+                req.db_set('released_by', released_by)
+                req.db_set('payment_reference', transaction_id)
+                req.add_comment("Info", f"{timestamp}: M-Pesa Success. TransID: {transaction_id}")
+                
+                frappe.publish_realtime("payment_success", {
+                    "requisitionId": requisition_name,
+                    "message": result_desc,
+                    "transaction_id": transaction_id
+                })
+
+            # 3. Dynamic Balance Update from ResultParameters
+            params = result.get('ResultParameters', {}).get('ResultParameter', [])
+            if isinstance(params, dict): params = [params]
+            
+            working_bal = None
+            for p in params:
+                # B2B returns DebitAccountCurrentBalance
+                if p.get('Key') == 'DebitAccountCurrentBalance':
+                    working_bal = parse_mpesa_amount(p.get('Value'))
+                    break
+            
+            if working_bal is not None:
+                settings = frappe.get_doc("Mpesa B2B Settings")
+                settings.db_set('working_balance', working_bal)
+                settings.db_set('last_balance_update', timestamp)
+                
+        # 4. Handle Failure
         elif requisition_name:
             frappe.publish_realtime("payment_error", {
                 "requisitionId": requisition_name,
                 "message": result_desc
             })
-            frappe.log_error(message=json.dumps(data), title=f"M-Pesa Payment Failed: {result_code}")
 
-    except Exception as e:
-        frappe.log_error(frappe.get_traceback(), "M-Pesa Callback Error")
+    except Exception:
+        frappe.log_error(frappe.get_traceback(), f"M-Pesa Callback Error - {timestamp}")
     
     return {"ResponseCode": "0", "ResponseDesc": "Success"}
+
 
 
 @frappe.whitelist(allow_guest=True)
