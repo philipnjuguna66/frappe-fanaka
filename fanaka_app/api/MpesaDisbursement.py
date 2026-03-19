@@ -197,7 +197,9 @@ def payment_result():
         # Requisition ID and Released By are extracted from the query string (frappe.form_dict)
         requisition_name = frappe.form_dict.get('requisition_id')
         released_by = frappe.form_dict.get('released_by') or "System"
-
+        
+        frappe.log_error(f"M-Pesa Requisition - {requisition_name} initiated by {released_by} total amount: ", "M-Pesa Payment Result")
+       
         req = frappe.get_doc("Requisitions", requisition_name)
 
         frappe.log_error(f"M-Pesa Requisition - {req.name} initiated by {released_by} total amount: {req.total_amount}", "M-Pesa Payment Result")
