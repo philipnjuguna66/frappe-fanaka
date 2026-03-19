@@ -231,8 +231,8 @@ def payment_result():
                 if p.get('Key') in ['DebitAccountCurrentBalance', 'InitiatorAccountCurrentBalance']:
                     new_bal = parse_mpesa_amount(p.get('Value'))
                     settings = frappe.get_doc("Mpesa B2B Settings")
-                    settings.db_set('working_balance', new_bal)
-                    settings.db_set('last_balance_update', timestamp)
+                    settings.db_set('working_account_balance', new_bal)
+                    #settings.db_set('last_balance_update', timestamp)
                     break
         
         # Handle Failure
