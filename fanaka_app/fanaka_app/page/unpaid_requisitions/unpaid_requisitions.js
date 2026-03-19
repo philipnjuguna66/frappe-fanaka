@@ -1,23 +1,29 @@
-// [2026-03-18] – Fully updated & compatible with fixed MpesaDisbursement.py
+// ================================================
+// UNPAID REQUISITIONS PAGE
+// Modern & Beautiful Version – 19 March 2026
+// Clean architecture, modern UX, professional styling
+// ================================================
+
 frappe.pages['unpaid-requisitions'].on_page_load = function(wrapper) {
-    var page = frappe.ui.make_app_page({
+    const page = frappe.ui.make_app_page({
         parent: wrapper,
         title: __('Unpaid Requisitions'),
         single_column: true
     });
-    setup_realtime_listeners(wrapper);
 
-    function setup_realtime_listeners(wrapper) {
-        // Listen for M-Pesa success events
+    // ====================== REALTIME LISTENERS ======================
+    function setupRealtimeListeners() {
         frappe.realtime.on('payment_success', (data) => {
             frappe.show_alert({
-                message: __('{0}: Payment successful. TransID: {1}', [data.requisitionId, data.transaction_id]),
+                message: __('{0}: Payment successful. TransID: {1}', [
+                    data.requisitionId,
+                    data.transaction_id
+                ]),
                 indicator: 'green'
             });
             wrapper.refresh();
         });
 
-        // Listen for M-Pesa error events
         frappe.realtime.on('payment_error', (data) => {
             frappe.msgprint({
                 title: __('M-Pesa Payment Failed'),
@@ -28,176 +34,187 @@ frappe.pages['unpaid-requisitions'].on_page_load = function(wrapper) {
         });
     }
 
-    // 1. Setup Header Tabs
-    let tabs = [
-        { 
-            label: __('Authorise'), 
-            id: 'authorise',
-            filter: { 'initiated_at': ['!=', null], 'authorised_at': ['=', null] }
-        },
-        { 
-            label: __('Release Funds'), 
-            id: 'release',
-            filter: { 'authorised_at': ['!=', null], 'status': ['!=', 'Paid'] }
-        },
-        { 
-            label: __('Paid'), 
-            id: 'paid',
-            filter: { 'status': ['=', 'Paid'] }
-        },
-        { 
-            label: __('Rejected'), 
-            id: 'rejected',
-            filter: { 'rejected_at': ['!=', null] }
-        }
+    setupRealtimeListeners();
+
+    // ====================== TABS SETUP ======================
+    const tabs = [
+        { label: __('Authorise'),     id: 'authorise', filter: { 'initiated_at': ['!=', null], 'authorised_at': ['=', null] } },
+        { label: __('Release Funds'), id: 'release',   filter: { 'authorised_at': ['!=', null], 'status': ['!=', 'Paid'] } },
+        { label: __('Paid'),          id: 'paid',      filter: { 'status': ['=', 'Paid'] } },
+        { label: __('Rejected'),      id: 'rejected',  filter: { 'rejected_at': ['!=', null] } }
     ];
 
     page.main.find('.btn-group-tabs').remove();
-    let tab_container = $('<div class="btn-group btn-group-tabs" role="group" style="margin-bottom: 20px;"></div>').appendTo(page.main);
-    
+
+    const tabContainer = $('<div class="btn-group btn-group-tabs" role="group" style="margin-bottom: 24px; display: flex; gap: 4px;"></div>')
+        .appendTo(page.main);
+
     tabs.forEach(tab => {
         $(`<button type="button" class="btn btn-default btn-sm tab-btn" data-id="${tab.id}">${tab.label}</button>`)
-            .appendTo(tab_container)
+            .appendTo(tabContainer)
             .on('click', function() {
-                tab_container.find('.btn-primary').removeClass('btn-primary').addClass('btn-default');
+                tabContainer.find('.btn-primary')
+                    .removeClass('btn-primary')
+                    .addClass('btn-default');
                 $(this).addClass('btn-primary').removeClass('btn-default');
-                render_list(tab.filter, tab.id);
+                renderList(tab.filter, tab.id);
             });
     });
 
-    // 2. Render Table View
-    function render_list(filters, context_id) {
+    // ====================== TABLE RENDER ======================
+    function renderList(filters, contextId) {
         page.main.find('.list-container').remove();
         page.clear_primary_action();
         page.clear_secondary_action();
 
-        let list_wrapper = $('<div class="list-container" style="min-height: 300px;"></div>').appendTo(page.main);
+        const listWrapper = $('<div class="list-container" style="min-height: 320px;"></div>').appendTo(page.main);
 
-        let table = $(`<table class="table table-hover table-light" style="background: #fff; border-radius: 4px; overflow: hidden; border: 1px solid #ebeff2;">
-            <thead>
-                <tr style="background: #f7fafc; color: #8d99a6; font-size: 12px; text-transform: uppercase; letter-spacing: 0.02em;">
-                    <th style="width: 40px; text-align: center;"><input type="checkbox" class="master-checker"></th>
-                    <th>${__('Description')}</th>
-                    <th>${__('Amount')}</th>
-                    <th>${__('Method')}</th>
-                    <th>${__('Pay To')}</th>
-                    <th class="text-right" style="padding-right: 15px;">${__('Actions')}</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>`).appendTo(list_wrapper);
+        const tableHtml = `
+            <table class="table table-hover table-light" style="background:#fff; border-radius:8px; overflow:hidden; border:1px solid #ebeff2;">
+                <thead>
+                    <tr style="background:#f7fafc; color:#8d99a6; font-size:12px; text-transform:uppercase; letter-spacing:0.02em;">
+                        <th style="width:40px; text-align:center;"><input type="checkbox" class="master-checker"></th>
+                        <th>${__('Description')}</th>
+                        <th>${__('Amount')}</th>
+                        <th>${__('Method')}</th>
+                        <th>${__('Pay To')}</th>
+                        <th class="text-right" style="padding-right:20px;">${__('Actions')}</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        `;
 
-        let formatted_filters = [];
-        for (let key in filters) {
-            formatted_filters.push([key, filters[key][0], filters[key][1]]);
-        }
+        const table = $(tableHtml).appendTo(listWrapper);
+
+        const formattedFilters = Object.keys(filters).map(k => [k, filters[k][0], filters[k][1]]);
 
         frappe.call({
             method: 'frappe.client.get_list',
             args: {
                 doctype: "Requisitions",
                 fields: ["name", "pay_to", "total_amount", "payment_method", "description", "authorised_at", "initiated_at"],
-                filters: formatted_filters,
+                filters: formattedFilters,
                 order_by: "modified desc"
             },
             callback: function(r) {
-                if (r.message && r.message.length > 0) {
-                    r.message.forEach(data => {
-                        let row = $(`<tr style="font-size: 13px;">
-                            <td style="text-align: center;"><input type="checkbox" class="row-checker" data-name="${data.name}"></td>
-                            <td style="padding: 12px 8px;">
-                                <div style="font-weight: 600; color: #1f272e;">${data.name}</div>
-                                <div class="text-muted" style="font-size: 11px;">${data.description || ''}</div>
-                            </td>
-                            <td><span style="font-weight: bold;">${frappe.format(data.total_amount, {fieldtype: 'Currency'})}</span></td>
-                            <td><span class="label label-info" style="font-weight: 500;">${data.payment_method || 'N/A'}</span></td>
-                            <td class="text-muted">${data.pay_to || ''}</td>
-                            <td class="text-right action-area" style="padding-right: 15px;"></td>
-                        </tr>`).appendTo(table.find('tbody'));
+                const tbody = table.find('tbody');
 
-                        if (context_id === 'authorise' || context_id === 'release') {
-                            $(`<button class="btn btn-default btn-xs text-danger" title="${__('Undo Action')}"><i class="fa fa-undo"></i></button>`)
+                if (r.message?.length) {
+                    r.message.forEach(data => {
+                        const row = $(`
+                            <tr style="font-size:13px;">
+                                <td style="text-align:center;"><input type="checkbox" class="row-checker" data-name="${data.name}"></td>
+                                <td style="padding:14px 8px;">
+                                    <div style="font-weight:600;color:#1f272e;">${data.name}</div>
+                                    <div class="text-muted" style="font-size:11px;">${data.description || ''}</div>
+                                </td>
+                                <td><span style="font-weight:bold;">${frappe.format(data.total_amount, { fieldtype: 'Currency' })}</span></td>
+                                <td><span class="label label-info" style="font-weight:500;">${data.payment_method || 'N/A'}</span></td>
+                                <td class="text-muted">${data.pay_to || ''}</td>
+                                <td class="text-right action-area" style="padding-right:20px;"></td>
+                            </tr>
+                        `).appendTo(tbody);
+
+                        if (contextId === 'authorise' || contextId === 'release') {
+                            $('<button class="btn btn-default btn-xs text-danger" title="Undo Action"><i class="fa fa-undo"></i></button>')
                                 .appendTo(row.find('.action-area'))
-                                .on('click', () => handle_undo([data.name]));
+                                .on('click', () => handleUndo([data.name]));
                         }
                     });
 
-                    setup_bulk_actions(context_id);
+                    setupBulkActions(contextId);
                 } else {
-                    table.find('tbody').append(`<tr><td colspan="6" class="text-center text-muted" style="padding: 60px;">${__('No records found')}</td></tr>`);
+                    tbody.append(`<tr><td colspan="6" class="text-center text-muted py-5">${__('No records found')}</td></tr>`);
                 }
             }
         });
 
+        // Master checkbox
         table.find('.master-checker').on('change', function() {
-            table.find('.row-checker').prop('checked', $(this).prop('checked'));
+            table.find('.row-checker').prop('checked', this.checked);
         });
     }
 
-    function setup_bulk_actions(context_id) {
-        if (context_id === 'authorise') {
+    // ====================== BULK ACTIONS ======================
+    function setupBulkActions(contextId) {
+        if (contextId === 'authorise') {
             page.set_primary_action(__('Bulk Authorise'), () => {
-                let selected = get_selected_names();
+                const selected = getSelectedNames();
                 if (!selected.length) return frappe.msgprint(__('Please select at least one item'));
-                
-                request_otp_verification((otp) => {
-                    perform_bulk_update(selected, {
-                        'authorised_at': frappe.datetime.now_datetime(),
-                        'authorised_by': frappe.session.user
+
+                requestOtpVerification((otp) => {
+                    performBulkUpdate(selected, {
+                        authorised_at: frappe.datetime.now_datetime(),
+                        authorised_by: frappe.session.user
                     }, __('Requisitions Authorised'));
                 });
             });
 
-            page.set_secondary_action(__('Bulk Undo'), () => {
-                let selected = get_selected_names();
-                if (!selected.length) return frappe.msgprint(__('Please select at least one item'));
-                handle_undo(selected);
-            }, { icon: 'fa fa-trash', class: 'btn-danger' });
+            page.set_secondary_action(__('Bulk Undo'), handleBulkUndo, { icon: 'fa fa-trash', class: 'btn-danger' });
 
-        } else if (context_id === 'release') {
+        } else if (contextId === 'release') {
             page.set_primary_action(__('Bulk Release'), () => {
-                let selected = get_selected_names();
+                const selected = getSelectedNames();
                 if (!selected.length) return frappe.msgprint(__('Please select at least one item'));
-                
+
                 frappe.confirm(__('Release payments for {0} items?', [selected.length]), () => {
-                    selected.forEach(name => {
-                        frappe.call({
-                            method: 'fanaka_app.api.MpesaDisbursement.process_disbursement',
-                            args: { requisition_id: name }
-                        });
+                    frappe.call({
+                        method: 'fanaka_app.api.MpesaDisbursement.bulk_release_disbursements',
+                        args: { requisition_ids: selected },
+                        callback: () => {
+                            frappe.show_alert({
+                                message: __('Disbursements queued in background. You can continue working.'),
+                                indicator: 'green'
+                            });
+                            setTimeout(() => wrapper.refresh(), 1500);
+                        }
                     });
-                    frappe.show_alert({message: __('Disbursement started'), indicator: 'green'});
-                    setTimeout(() => wrapper.refresh(), 2000);
                 });
             });
 
-            page.set_secondary_action(__('Bulk Undo'), () => {
-                let selected = get_selected_names();
-                if (!selected.length) return frappe.msgprint(__('Please select at least one item'));
-                handle_undo(selected);
-            }, { icon: 'fa fa-trash', class: 'btn-danger' });
+            page.set_secondary_action(__('Bulk Undo'), handleBulkUndo, { icon: 'fa fa-trash', class: 'btn-danger' });
         }
 
+        // Style undo button
         setTimeout(() => {
             page.wrapper.find('.btn-secondary:contains("Bulk Undo")')
                 .removeClass('btn-default')
                 .addClass('btn-danger')
-                .css({'background-color': '#ff5858', 'color': 'white', 'border': 'none'});
+                .css({ backgroundColor: '#ff5858', color: '#fff', border: 'none' });
         }, 10);
     }
 
-    // 3. OTP Verification Logic with 5-minute timer
-    function request_otp_verification(on_success) {
+    function handleBulkUndo() {
+        const selected = getSelectedNames();
+        if (!selected.length) return frappe.msgprint(__('Please select at least one item'));
+
+        const msg = selected.length > 1
+            ? __('Undo Action for {0} selected items?', [selected.length])
+            : __('Undo Action for {0}? Record will move back to draft.', [selected[0]]);
+
+        frappe.confirm(msg, () => {
+            performBulkUpdate(selected, {
+                initiated_at: null,
+                initiated_by: null,
+                authorised_at: null,
+                authorised_by: null
+            }, __('Action undone successfully'));
+        });
+    }
+
+    // ====================== OTP VERIFICATION (Clean & Modern) ======================
+    function requestOtpVerification(onSuccess) {
         frappe.call({
-            method: "fanaka_app.api.MpesaDisbursement.send_otp_notification", 
+            method: "fanaka_app.api.MpesaDisbursement.send_otp_notification",
             callback: function(r) {
                 if (r.exc) return;
 
-                let d = new frappe.ui.Dialog({
+                const dialog = new frappe.ui.Dialog({
                     title: __('Verify Authorisation'),
                     fields: [
                         {
-                            label: __('Enter OTP sent to your phone/email'),
+                            label: __('Enter OTP sent to your phone'),
                             fieldname: 'otp',
                             fieldtype: 'Data',
                             reqd: 1
@@ -205,114 +222,99 @@ frappe.pages['unpaid-requisitions'].on_page_load = function(wrapper) {
                         {
                             fieldtype: 'HTML',
                             fieldname: 'timer_html',
-                            content: `<div id="otp-timer" style="color: #ff5858; font-weight: bold; margin-top: 10px; text-align: center;">
-                                ${__('Expires in')}: 05:00
-                            </div>`
+                            content: `<div id="otp-timer" style="color:#ff5858;font-weight:bold;margin:12px 0;text-align:center;">Expires in: 05:00</div>`
                         }
                     ],
-					
                     primary_action_label: __('Verify & Authorise'),
                     primary_action(values) {
-                        d.get_primary_btn().prop('disabled', true);
-                        
+                        dialog.get_primary_btn().prop('disabled', true);
+
                         frappe.call({
                             method: "fanaka_app.api.MpesaDisbursement.verify_authorisation_otp",
                             args: { otp: values.otp },
                             callback: function(res) {
                                 if (res.message === true) {
-                                    d.hide();
-                                    clearInterval(timer_interval);
-                                    on_success(values.otp);
+                                    dialog.hide();
+                                    onSuccess(values.otp);
                                 } else {
                                     frappe.msgprint(__('Invalid or expired OTP. Please try again.'));
-                                    d.get_primary_btn().prop('disabled', false);
+                                    dialog.get_primary_btn().prop('disabled', false);
                                 }
                             }
                         });
                     }
                 });
 
-                d.show();
+                dialog.show();
 
-                // 5 Minute Timer Logic
-                let duration = 5 * 60;
-                let timer_display = d.get_field('timer_html').$wrapper.find('#otp-timer');
-                
-                let timer_interval = setInterval(() => {
-                    let minutes = parseInt(duration / 60, 10);
-                    let seconds = parseInt(duration % 60, 10);
-
-                    minutes = minutes < 10 ? "0" + minutes : minutes;
-                    seconds = seconds < 10 ? "0" + seconds : seconds;
-
-                    timer_display.text(`${__('Expires in')}: ${minutes}:${seconds}`);
+                // Timer
+                let duration = 300;
+                const timerEl = dialog.get_field('timer_html').$wrapper.find('#otp-timer');
+                const interval = setInterval(() => {
+                    const min = String(Math.floor(duration / 60)).padStart(2, '0');
+                    const sec = String(duration % 60).padStart(2, '0');
+                    timerEl.text(`Expires in: ${min}:${sec}`);
 
                     if (--duration < 0) {
-                        clearInterval(timer_interval);
-                        timer_display.text(__('OTP Expired. Please close and try again.'));
-                        d.get_primary_btn().prop('disabled', true);
+                        clearInterval(interval);
+                        timerEl.text('OTP Expired. Please close and try again.');
+                        dialog.get_primary_btn().prop('disabled', true);
                     }
                 }, 1000);
 
-                d.on_hide = () => clearInterval(timer_interval);
+                dialog.on_hide = () => clearInterval(interval);
             }
         });
     }
 
-    function get_selected_names() {
+    // ====================== HELPERS ======================
+    function getSelectedNames() {
         return page.main.find('.row-checker:checked').map(function() {
             return $(this).data('name');
         }).get();
     }
 
-    function perform_bulk_update(names, values, success_msg) {
-        let promises = names.map(name => {
-            return new Promise((resolve) => {
-                frappe.call({
-                    method: 'frappe.client.set_value',
-                    args: {
-                        doctype: 'Requisitions',
-                        name: name,
-                        fieldname: values
-                    },
-                    callback: (r) => resolve(r),
-                    error: (r) => {
-                        console.error("Bulk update failed for: " + name, r);
-                        resolve(null);
-                    }
-                });
+    function performBulkUpdate(names, values, successMsg) {
+        const promises = names.map(name => new Promise(resolve => {
+            frappe.call({
+                method: 'frappe.client.set_value',
+                args: { doctype: 'Requisitions', name, fieldname: values },
+                callback: r => resolve(r),
+                error: () => resolve(null)
             });
-        });
+        }));
 
         Promise.all(promises).then(() => {
-            frappe.show_alert({message: success_msg, indicator: 'blue'});
+            frappe.show_alert({ message: successMsg, indicator: 'blue' });
             wrapper.refresh();
         });
     }
 
-    function handle_undo(names) {
-        let msg = names.length > 1 
-            ? __('Undo Action for {0} selected items?', [names.length]) 
-            : __('Undo Action for {0}? Record will move back to draft/pending initiation.', [names[0]]);
+    function handleUndo(names) {
+        const msg = names.length > 1
+            ? __('Undo Action for {0} selected items?', [names.length])
+            : __('Undo Action for {0}? Record will move back to draft.', [names[0]]);
 
         frappe.confirm(msg, () => {
-            perform_bulk_update(names, {
-                'initiated_at': null,
-                'initiated_by': null,
-                'authorised_at': null,
-                'authorised_by': null
+            performBulkUpdate(names, {
+                initiated_at: null,
+                initiated_by: null,
+                authorised_at: null,
+                authorised_by: null
             }, __('Action undone successfully'));
         });
     }
 
+    // ====================== REFRESH ======================
     wrapper.refresh = function() {
-        let active_btn = tab_container.find('.btn-primary');
-        if (active_btn.length) {
-            active_btn.trigger('click');
+        const activeBtn = tabContainer.find('.btn-primary');
+        if (activeBtn.length) {
+            activeBtn.trigger('click');
         } else {
-            tab_container.find('button:first').trigger('click');
+            tabContainer.find('button:first').trigger('click');
         }
     };
 
+    // Initial load
     wrapper.refresh();
 };

@@ -62,6 +62,7 @@ class MpesaDisbursement:
             "Authorization": f"Bearer {access_token}",
             "Content-Type": "application/json"
         }
+        released_by = frappe.session.user or "System"
         
         payload = {
             "InitiatorName": self.initiator_name,
@@ -70,9 +71,9 @@ class MpesaDisbursement:
             "Amount": int(requisition.total_amount),
             "PartyA": self.shortcode,
             "PartyB": self.format_phone(requisition.pay_to),
-            "Remarks": "Payment",
-            "QueueTimeOutURL": f"{self.settings.callback_url_timeout}?requisition_id={requisition.name}",
-            "ResultURL": f"{self.settings.callback_url_result}?requisition_id={requisition.name}",
+            "Remarks":  "Payment",
+            "QueueTimeOutURL": f"{self.settings.callback_url_timeout}?requisition_id={requisition.name}&released_by={released_by}",
+            "ResultURL": f"{self.settings.callback_url_result}?requisition_id={requisition.name}&released_by={released_by}",
             "Occasion": self.sanitize(requisition.name)
         }
 
@@ -86,6 +87,8 @@ class MpesaDisbursement:
             "Authorization": f"Bearer {access_token}",
             "Content-Type": "application/json"
         }
+        
+        released_by = frappe.session.user or "System"
         
         cmd_name = "BusinessBuyGoods" if command_id == "2" else "BusinessPayBill"
         receiver_type = "2" if command_id == "2" else "4"
@@ -101,8 +104,8 @@ class MpesaDisbursement:
             "PartyB": self.sanitize(requisition.pay_to),
             "AccountReference": self.sanitize(requisition.name),
             "Remarks":  "Payment",
-            "QueueTimeOutURL": f"{self.settings.callback_url_timeout}?requisition_id={requisition.name}",
-            "ResultURL": f"{self.settings.callback_url_result}?requisition_id={requisition.name}",
+            "QueueTimeOutURL": f"{self.settings.callback_url_timeout}?requisition_id={requisition.name}&released_by={released_by}",
+            "ResultURL": f"{self.settings.callback_url_result}?requisition_id={requisition.name}&released_by={released_by}",
         }
 
         # Laravel uses v1 → we try v1 first (then v2 fallback)
@@ -173,6 +176,7 @@ def payment_result():
         result_desc = result.get('ResultDesc')
         
         requisition_name = frappe.form_dict.get('requisition_id')
+        released_by = frappe.form_dict.get('released_by')
         if not requisition_name:
             if result.get('Occasion'):
                 requisition_name = result.get('Occasion')
@@ -190,6 +194,8 @@ def payment_result():
             transaction_id = result.get('TransactionID')
             req = frappe.get_doc("Requisitions", requisition_name)
             req.db_set('status', 'Paid')
+            req.db_set('released_at', frappe.datetime.now_datetime())
+            req.db_set('released_by', released_by)
             req.db_set('payment_reference', transaction_id)
             req.add_comment("Info", f"M-Pesa Success: {transaction_id}")
             frappe.publish_realtime("payment_success", {
