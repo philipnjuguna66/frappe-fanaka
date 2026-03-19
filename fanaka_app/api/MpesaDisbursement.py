@@ -176,88 +176,52 @@ def parse_mpesa_amount(amount_str):
         return float(match.group(1))
     return 0.0
 
+
 @frappe.whitelist(allow_guest=True)
 def payment_result():
-    """
-    Handles M-Pesa B2B/B2C callbacks.
-    """
     timestamp = frappe.utils.now_datetime()
     try:
-        # Load raw data and log for debugging
-        data = json.loads(frappe.request.data)
+        # Safeguard for JSON parsing and log format
+        data = json.loads(frappe.request.data) if frappe.request.data else {}
+        
+        # FIX: Convert frappe.form_dict to standard dict for JSON serialization
+        safe_form_dict = dict(frappe.form_dict)
+        
         frappe.log_error(
-            message=f"Timestamp: {timestamp}\nData: {json.dumps(data, indent=2)}\nForm Dict: {json.dumps(frappe.form_dict, indent=2)}",
-            title=f"M-Pesa Callback Received"
+            message=f"Timestamp: {timestamp}\nData: {json.dumps(data, indent=2)}\nForm Dict: {json.dumps(safe_form_dict, indent=2)}",
+            title=f"M-Pesa Payment Result Callback"
         )
         
         result = data.get('Result', {})
         result_code = result.get('ResultCode')
-        result_desc = result.get('ResultDesc')
         transaction_id = result.get('TransactionID')
         
-        # 1. Identify Requisition Name
         requisition_name = frappe.form_dict.get('requisition_id')
         released_by = frappe.form_dict.get('released_by') or "System"
         
-        if not requisition_name:
-            # Fallback to internal Result data
-            if result.get('Occasion'):
-                requisition_name = result.get('Occasion')
-            elif result.get('AccountReference'):
-                requisition_name = result.get('AccountReference')
-            else:
-                ref_items = result.get('ReferenceData', {}).get('ReferenceItem', [])
-                if isinstance(ref_items, dict): ref_items = [ref_items]
-                for item in ref_items:
-                    if item.get('Key') in ['Occasion', 'AccountReference', 'BillReferenceNumber']:
-                        requisition_name = item.get('Value')
-                        break
-
-        # 2. Handle Success (ResultCode 0)
-        if str(result_code) == "0":
-            # Update Requisition
-            if requisition_name and frappe.db.exists("Requisitions", requisition_name):
+        if str(result_code) == "0" and requisition_name:
+            if frappe.db.exists("Requisitions", requisition_name):
                 req = frappe.get_doc("Requisitions", requisition_name)
                 req.db_set('status', 'Paid')
                 req.db_set('released_at', timestamp)
                 req.db_set('released_by', released_by)
                 req.db_set('payment_reference', transaction_id)
-                req.add_comment("Info", f"{timestamp}: M-Pesa Success. TransID: {transaction_id}")
-                
-                frappe.publish_realtime("payment_success", {
-                    "requisitionId": requisition_name,
-                    "message": result_desc,
-                    "transaction_id": transaction_id
-                })
+                req.add_comment("Info", f"[{timestamp}] M-Pesa Success: {transaction_id}")
+                frappe.publish_realtime("payment_success", {"requisitionId": requisition_name})
 
-            # 3. Dynamic Balance Update from ResultParameters
+            # Auto-update working balance from result parameters
             params = result.get('ResultParameters', {}).get('ResultParameter', [])
             if isinstance(params, dict): params = [params]
-            
-            working_bal = None
             for p in params:
-                # B2B returns DebitAccountCurrentBalance
-                if p.get('Key') == 'DebitAccountCurrentBalance':
-                    working_bal = parse_mpesa_amount(p.get('Value'))
+                if p.get('Key') in ['DebitAccountCurrentBalance', 'InitiatorAccountCurrentBalance']:
+                    new_bal = parse_mpesa_amount(p.get('Value'))
+                    settings = frappe.get_doc("Mpesa B2B Settings")
+                    settings.db_set('working_balance', new_bal)
+                    settings.db_set('last_balance_update', timestamp)
                     break
-            
-            if working_bal is not None:
-                settings = frappe.get_doc("Mpesa B2B Settings")
-                settings.db_set('working_balance', working_bal)
-                settings.db_set('last_balance_update', timestamp)
-                
-        # 4. Handle Failure
-        elif requisition_name:
-            frappe.publish_realtime("payment_error", {
-                "requisitionId": requisition_name,
-                "message": result_desc
-            })
-
     except Exception:
         frappe.log_error(frappe.get_traceback(), f"M-Pesa Callback Error - {timestamp}")
-    
     return {"ResponseCode": "0", "ResponseDesc": "Success"}
-
 
 
 @frappe.whitelist(allow_guest=True)
