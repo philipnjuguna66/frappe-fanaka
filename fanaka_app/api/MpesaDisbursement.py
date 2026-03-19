@@ -180,7 +180,6 @@ def parse_mpesa_amount(amount_str):
 def payment_result():
     """
     Handles M-Pesa B2B/B2C callbacks.
-    URL: /api/method/fanaka_app.services.payment_result
     """
     timestamp = frappe.utils.now_datetime()
     try:
