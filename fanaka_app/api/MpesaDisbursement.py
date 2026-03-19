@@ -226,7 +226,9 @@ def payment_result():
             req.db_set("status", "Paid")
             req.db_set("released_at", timestamp)
             req.db_set("released_by", released_by)
-            req.db_set("payment_reference", transaction_id)
+            req.db_set("reference", transaction_id)
+            req.db_set("reference_date", timestamp)
+            req.db_set("posting_date", timestamp)
 
             req.add_comment(
                 "Info",
