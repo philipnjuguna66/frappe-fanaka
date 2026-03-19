@@ -82,7 +82,7 @@ class MpesaDisbursement:
         return response.json()
 
     def b2b_payment(self, requisition, command_id):
-        """Exactly matches your Laravel b2bPayment + handles the exact error you got"""
+        
         access_token = self.get_access_token()
         headers = {
             "Authorization": f"Bearer {access_token}",
@@ -109,7 +109,7 @@ class MpesaDisbursement:
             "ResultURL": f"{self.settings.callback_url_result}?requisition_id={requisition.name}&released_by={released_by}",
         }
 
-        # Laravel uses v1 → we try v1 first (then v2 fallback)
+     
         for version in ["/mpesa/b2b/v1/paymentrequest"]:
             url = f"{self.base_url}{version}"
             response = requests.post(url, json=payload, headers=headers, timeout=30)
