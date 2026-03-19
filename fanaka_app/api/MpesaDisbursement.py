@@ -3,7 +3,7 @@ import requests
 import base64
 import os
 import re
-from datetime import datetime
+from frappe.utils import now_datetime
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding
@@ -177,72 +177,95 @@ def parse_mpesa_amount(amount_str):
     return 0.0
 
 
+
+
+
 @frappe.whitelist(allow_guest=True)
 def payment_result():
-    timestamp = frappe.utils.now_datetime()
+
+    timestamp = now_datetime()
+
     try:
-        
+
+        # Query parameters
+        requisition_name = frappe.request.args.get("requisition_id")
+        released_by = frappe.request.args.get("released_by") or "System"
+
+        # Callback JSON
         data = json.loads(frappe.request.data) if frappe.request.data else {}
-        result = data.get('Result', {})
-        result_code = result.get('ResultCode')
-        transaction_id = result.get('TransactionID')
-        result_desc = result.get('ResultDesc', 'No description provided')
-        
-        # Requisition ID and Released By are extracted from the query string (frappe.form_dict)
-        requisition_name = frappe.form_dict.get('requisition_id')
-        released_by = frappe.form_dict.get('released_by') or "System"
-        
-        frappe.log_error(f"M-Pesa Requisition - {requisition_name} initiated by {released_by} total amount: ", "M-Pesa Payment Result")
-       
+        result = data.get("Result", {})
+
+        result_code = str(result.get("ResultCode"))
+        result_desc = result.get("ResultDesc")
+        transaction_id = result.get("TransactionID")
+
+        frappe.log_error(
+            f"Requisition: {requisition_name}\nResultCode: {result_code}\nDesc: {result_desc}",
+            "MPESA RESULT CALLBACK"
+        )
+
+        if not requisition_name:
+            return {"ResponseCode": "0", "ResponseDesc": "Received"}
+
+        if not frappe.db.exists("Requisitions", requisition_name):
+            frappe.log_error(
+                f"Requisition {requisition_name} not found",
+                "MPESA CALLBACK ERROR"
+            )
+            return {"ResponseCode": "0", "ResponseDesc": "Received"}
+
         req = frappe.get_doc("Requisitions", requisition_name)
 
-        frappe.log_error(f"M-Pesa Requisition - {req.name} initiated by {released_by} total amount: {req.total_amount}", "M-Pesa Payment Result")
-        
-        # Handle Successful Result (ResultCode 0)
-        if str(result_code) == "0" and requisition_name:
-            if frappe.db.exists("Requisitions", requisition_name):
-                req = frappe.get_doc("Requisitions", requisition_name)
-                
-                # Update status, release info, and payment reference
-                req.db_set('status', 'Paid')
-                req.db_set('released_at', timestamp)
-                req.db_set('released_by', released_by)
-                req.db_set('payment_reference', transaction_id)
-                
-                # Add timestamped comment to history log
-                req.add_comment("Info", f"[{timestamp}] M-Pesa Success. TransID: {transaction_id}. Message: {result_desc}")
-                
-                # Notify frontend
-                frappe.publish_realtime("payment_success", {
+        # Prevent duplicate updates
+        if req.status == "Paid":
+            return {"ResponseCode": "0", "ResponseDesc": "Already processed"}
+
+        # SUCCESS
+        if result_code == "0":
+
+            req.db_set("status", "Paid")
+            req.db_set("released_at", timestamp)
+            req.db_set("released_by", released_by)
+            req.db_set("payment_reference", transaction_id)
+
+            req.add_comment(
+                "Info",
+                f"[{timestamp}] M-Pesa SUCCESS. TransID: {transaction_id}. {result_desc}"
+            )
+
+            update_mpesa_balance(result)
+
+            frappe.publish_realtime(
+                "payment_success",
+                {
                     "requisitionId": requisition_name,
                     "transaction_id": transaction_id,
-                    "message": result_desc
-                })
+                    "message": result_desc,
+                },
+            )
 
-            # Auto-update working balance from B2B ResultParameters
-            params = result.get('ResultParameters', {}).get('ResultParameter', [])
-            if isinstance(params, dict): params = [params]
-            for p in params:
-                # B2B returns balance inside DebitAccountCurrentBalance or InitiatorAccountCurrentBalance
-                if p.get('Key') in ['DebitAccountCurrentBalance', 'InitiatorAccountCurrentBalance']:
-                    new_bal = parse_mpesa_amount(p.get('Value'))
-                    settings = frappe.get_doc("Mpesa B2B Settings")
-                    settings.db_set('working_account_balance', new_bal)
-                    #settings.db_set('last_balance_update', timestamp)
-                    break
-        
-        # Handle Failure
-        elif requisition_name:
-            frappe.publish_realtime("payment_error", {
-                "requisitionId": requisition_name,
-                "message": f"M-Pesa Failed (Code {result_code}): {result_desc}"
-            })
+        # FAILURE
+        else:
+
+            req.db_set("status", "Failed")
+
+            req.add_comment(
+                "Comment",
+                f"[{timestamp}] M-Pesa FAILED (Code {result_code}). {result_desc}"
+            )
+
+            frappe.publish_realtime(
+                "payment_error",
+                {
+                    "requisitionId": requisition_name,
+                    "message": result_desc,
+                },
+            )
 
     except Exception:
-        frappe.log_error(frappe.get_traceback(), f"M-Pesa Callback Error - {timestamp}")
-        
-    return {"ResponseCode": "0", "ResponseDesc": "Success"}
+        frappe.log_error(frappe.get_traceback(), "MPESA CALLBACK ERROR")
 
+    return {"ResponseCode": "0", "ResponseDesc": "Received"}
 
 @frappe.whitelist(allow_guest=True)
 def payment_timeout():
