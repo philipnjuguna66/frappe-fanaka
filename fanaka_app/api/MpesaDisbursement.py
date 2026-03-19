@@ -187,6 +187,7 @@ def payment_result():
         # FIX: Convert frappe.form_dict to standard dict for JSON serialization
         safe_form_dict = dict(frappe.form_dict)
         
+        # Comprehensive logging of the raw result and query params
         frappe.log_error(
             message=f"Timestamp: {timestamp}\nData: {json.dumps(data, indent=2)}\nForm Dict: {json.dumps(safe_form_dict, indent=2)}",
             title=f"M-Pesa Payment Result Callback"
@@ -195,32 +196,55 @@ def payment_result():
         result = data.get('Result', {})
         result_code = result.get('ResultCode')
         transaction_id = result.get('TransactionID')
+        result_desc = result.get('ResultDesc', 'No description provided')
         
+        # Requisition ID and Released By are extracted from the query string (frappe.form_dict)
         requisition_name = frappe.form_dict.get('requisition_id')
         released_by = frappe.form_dict.get('released_by') or "System"
         
+        # Handle Successful Result (ResultCode 0)
         if str(result_code) == "0" and requisition_name:
             if frappe.db.exists("Requisitions", requisition_name):
                 req = frappe.get_doc("Requisitions", requisition_name)
+                
+                # Update status, release info, and payment reference
                 req.db_set('status', 'Paid')
                 req.db_set('released_at', timestamp)
                 req.db_set('released_by', released_by)
                 req.db_set('payment_reference', transaction_id)
-                req.add_comment("Info", f"[{timestamp}] M-Pesa Success: {transaction_id}")
-                frappe.publish_realtime("payment_success", {"requisitionId": requisition_name})
+                
+                # Add timestamped comment to history log
+                req.add_comment("Info", f"[{timestamp}] M-Pesa Success. TransID: {transaction_id}. Message: {result_desc}")
+                
+                # Notify frontend
+                frappe.publish_realtime("payment_success", {
+                    "requisitionId": requisition_name,
+                    "transaction_id": transaction_id,
+                    "message": result_desc
+                })
 
-            # Auto-update working balance from result parameters
+            # Auto-update working balance from B2B ResultParameters
             params = result.get('ResultParameters', {}).get('ResultParameter', [])
             if isinstance(params, dict): params = [params]
             for p in params:
+                # B2B returns balance inside DebitAccountCurrentBalance or InitiatorAccountCurrentBalance
                 if p.get('Key') in ['DebitAccountCurrentBalance', 'InitiatorAccountCurrentBalance']:
                     new_bal = parse_mpesa_amount(p.get('Value'))
                     settings = frappe.get_doc("Mpesa B2B Settings")
                     settings.db_set('working_balance', new_bal)
                     settings.db_set('last_balance_update', timestamp)
                     break
+        
+        # Handle Failure
+        elif requisition_name:
+            frappe.publish_realtime("payment_error", {
+                "requisitionId": requisition_name,
+                "message": f"M-Pesa Failed (Code {result_code}): {result_desc}"
+            })
+
     except Exception:
         frappe.log_error(frappe.get_traceback(), f"M-Pesa Callback Error - {timestamp}")
+        
     return {"ResponseCode": "0", "ResponseDesc": "Success"}
 
 
