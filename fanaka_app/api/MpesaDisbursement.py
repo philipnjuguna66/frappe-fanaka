@@ -339,4 +339,15 @@ def balance_callback():
     except Exception as e:
         frappe.log_error(frappe.get_traceback(), "M-Pesa Balance Callback Error")
     
-    return {"ResponseCode": "0", "ResponseDesc": "Success"}        
+    return {"ResponseCode": "0", "ResponseDesc": "Success"}  
+
+@frappe.whitelist()
+def get_stored_mpesa_balance():
+    """Returns the balances currently stored in the database"""
+    settings = frappe.get_doc("Mpesa B2B Settings")
+    return {
+        "working_balance": frappe.format(settings.working_balance, "Currency"),
+        "utility_balance": frappe.format(settings.utility_balance, "Currency"),
+        "last_updated": frappe.utils.format_datetime(settings.last_balance_update) if settings.last_balance_update else "Never",
+        "shortcode": settings.shortcode
+    }      

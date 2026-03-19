@@ -12,24 +12,58 @@ frappe.pages['unpaid-requisitions'].on_page_load = function(wrapper) {
     });
 
     // ====================== DYNAMIC MPESA BALANCE CARD ======================
-    const balanceCard = $(`
-        <div class="card mb-4" style="background:#fff; border-radius:8px; padding:20px; border:1px solid #ebeff2;">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-                <div>
-                    <div style="font-size:13px; color:#666; margin-bottom:6px;">Current Mpesa Balance</div>
-                    <div id="balance-text" style="line-height:1.6; font-size:14px;">Loading balance...</div>
-                </div>
-                <button class="btn btn-success" id="get-balance-btn">
-                    <i class="fa fa-refresh"></i> Get Latest Mpesa Balance
+const headerHtml = `
+        <div class="mpesa-dashboard-header" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-bottom: 24px;">
+            <div class="stat-card" style="background: #fff; border: 1px solid #d1d8dd; border-radius: 8px; padding: 16px; box-shadow: var(--shadow-sm);">
+                <div style="color: #8d99a6; font-size: 12px; font-weight: 600; text-transform: uppercase;">Working Account</div>
+                <div id="working-balance" style="font-size: 20px; font-weight: 700; color: #1f272e; margin-top: 4px;">KES 0.00</div>
+            </div>
+            <div class="stat-card" style="background: #fff; border: 1px solid #d1d8dd; border-radius: 8px; padding: 16px; box-shadow: var(--shadow-sm);">
+                <div style="color: #8d99a6; font-size: 12px; font-weight: 600; text-transform: uppercase;">Utility Account</div>
+                <div id="utility-balance" style="font-size: 20px; font-weight: 700; color: #2490ef; margin-top: 4px;">KES 0.00</div>
+            </div>
+            <div class="stat-card" style="background: #f8fafc; border: 1px dashed #d1d8dd; border-radius: 8px; padding: 16px; display: flex; flex-direction: column; justify-content: center;">
+                <div id="last-updated-text" style="font-size: 11px; color: #8d99a6; margin-bottom: 8px;">Last updated: --</div>
+                <button class="btn btn-xs btn-default" id="refresh-mpesa-btn" style="width: fit-content;">
+                    <i class="fa fa-refresh text-success"></i> Sync Real-time Balance
                 </button>
             </div>
         </div>
-    `).appendTo(page.main);
+    `;
+    
+    page.main.append(headerHtml);
 
     // Load balance on page load
-    loadMpesaBalance();
+    
+	renderDatabaseBalances();
+    
+	
+	$('#refresh-mpesa-btn').on('click', function() {
+        $(this).find('i').addClass('fa-spin');
+        // Trigger the real-time API call
+        frappe.call({
+            method: 'fanaka_app.api.MpesaDisbursement.get_mpesa_balance',
+            callback: () => {
+                frappe.show_alert({message: __('Balance request sent to M-Pesa...'), indicator: 'orange'});
+                // We wait a bit then refresh from DB as the callback hits
+                setTimeout(renderDatabaseBalances, 3000);
+                $(this).find('i').removeClass('fa-spin');
+            }
+        });
+    });
 
-    $('#get-balance-btn').on('click', loadMpesaBalance);
+    function renderDatabaseBalances() {
+        frappe.call({
+            method: 'fanaka_app.api.get_stored_mpesa_balance',
+            callback: function(r) {
+                if(r.message) {
+                    $('#working-balance').text(r.message.working_balance);
+                    $('#utility-balance').text(r.message.utility_balance);
+                    $('#last-updated-text').text('Last Synced: ' + r.message.last_updated);
+                }
+            }
+        });
+    }
 
     // ====================== TABS ======================
     let tabs = [
@@ -217,13 +251,47 @@ frappe.pages['unpaid-requisitions'].on_page_load = function(wrapper) {
         }).get();
     }
 
-    function perform_bulk_update(names, values, success_msg) {
-        // Your original function
-    }
+   function perform_bulk_update(names, values, success_msg) {
+    let promises = names.map(name => {
+        return new Promise((resolve) => {
+            frappe.call({
+                method: 'frappe.client.set_value',
+                args: {
+                    doctype: 'Requisitions',
+                    name: name,
+                    fieldname: values
+                },
+                callback: (r) => resolve(r),
+                error: (r) => {
+                    console.error("Bulk update failed for: " + name, r);
+                    resolve(null);
+                }
+            });
+        });
+    });
 
-    function handle_undo(names) {
-        // Your original function
-    }
+    Promise.all(promises).then(() => {
+        frappe.show_alert({message: success_msg, indicator: 'blue'});
+        wrapper.refresh();
+    });
+}
+function handle_undo(names) {
+    let msg = names.length > 1 
+        ? __('Undo Action for {0} selected items?', [names.length]) 
+        : __('Undo Action for {0}? Record will move back to draft/pending initiation.', [names[0]]);
+
+    frappe.confirm(msg, () => {
+        perform_bulk_update(names, {
+            'initiated_at': null,
+            'initiated_by': null,
+            'authorised_at': null,
+            'authorised_by': null
+        }, __('Action undone successfully'));
+    });
+}
+
+
+
 
     wrapper.refresh = function() {
         let active_btn = tab_container.find('.btn-primary');
