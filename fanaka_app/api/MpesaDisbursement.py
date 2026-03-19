@@ -187,11 +187,7 @@ def payment_result():
         # FIX: Convert frappe.form_dict to standard dict for JSON serialization
         safe_form_dict = dict(frappe.form_dict)
         
-        # Comprehensive logging of the raw result and query params
-        frappe.log_error(
-            message=f"Timestamp: {timestamp}\nData: {json.dumps(data, indent=2)}\nForm Dict: {json.dumps(safe_form_dict, indent=2)}",
-            title=f"M-Pesa Payment Result Callback"
-        )
+       
         
         result = data.get('Result', {})
         result_code = result.get('ResultCode')
@@ -201,6 +197,10 @@ def payment_result():
         # Requisition ID and Released By are extracted from the query string (frappe.form_dict)
         requisition_name = frappe.form_dict.get('requisition_id')
         released_by = frappe.form_dict.get('released_by') or "System"
+
+        req = frappe.get_doc("Requisitions", requisition_name)
+
+        frappe.log_error(f"M-Pesa Requisition - {req.name} initiated by {released_by} total amount: {req.total_amount}", "M-Pesa Payment Result")
         
         # Handle Successful Result (ResultCode 0)
         if str(result_code) == "0" and requisition_name:
