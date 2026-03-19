@@ -181,7 +181,8 @@ def parse_mpesa_amount(amount_str):
 def payment_result():
     timestamp = frappe.utils.now_datetime()
     try:
-        data = json.loads(frappe.request.data)
+        
+        data = json.loads(frappe.request.data) if frappe.request.data else {}
         result = data.get('Result', {})
         result_code = result.get('ResultCode')
         transaction_id = result.get('TransactionID')
