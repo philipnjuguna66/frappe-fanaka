@@ -401,5 +401,6 @@ def get_stored_mpesa_balance():
     return {
         "working_balance": frappe.format(settings.working_account_balance, "Currency"),
         "utility_balance": frappe.format(settings.utility_working_balance, "Currency"),
+        "last_updated": settings.updated_on,
         "shortcode": settings.shortcode
     }      
