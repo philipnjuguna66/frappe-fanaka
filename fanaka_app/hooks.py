@@ -287,3 +287,13 @@ fixtures = [{
 		"doctype": "Workflow State"
 	}
 ]
+
+# inside your_app/hooks.py
+add_to_apps_screen = [
+    {
+        "name": "fanaka_app",
+        "logo": "storage/fanaka-real_estate_logo.png",
+        "title": "My Fanaka App",
+        "route": "/desk/fanaka-app",
+    }
+]
