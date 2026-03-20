@@ -1,6 +1,6 @@
 // ================================================
-// UNPAID REQUISITIONS – Modern Beautiful Dashboard
-// Fixed + Beautified | Realtime alerts working
+// UNPAID REQUISITIONS – Beautiful Modern Dashboard
+// Full merged version with realtime notifications + beautification
 // ================================================
 
 frappe.pages['unpaid-requisitions'].on_page_load = function(wrapper) {
@@ -10,11 +10,11 @@ frappe.pages['unpaid-requisitions'].on_page_load = function(wrapper) {
         single_column: true
     });
 
-    // ====================== REALTIME MESSAGES ======================
-    function setupRealtimeListeners() {
+    // ====================== REALTIME NOTIFICATIONS ======================
+    function setup_realtime_listeners() {
         frappe.realtime.on('payment_success', (data) => {
             frappe.show_alert({
-                message: __(`✅ <b>${data.requisitionId}</b> paid successfully!<br>Transaction: ${data.transaction_id}`),
+                message: __(`✅ ${data.requisitionId}: Payment Successful<br>TransID: ${data.transaction_id}`),
                 indicator: 'green'
             });
             wrapper.refresh();
@@ -22,14 +22,30 @@ frappe.pages['unpaid-requisitions'].on_page_load = function(wrapper) {
 
         frappe.realtime.on('payment_error', (data) => {
             frappe.msgprint({
-                title: __('❌ Payment Failed'),
-                message: __(`<b>${data.requisitionId}</b><br>${data.message}`),
+                title: __('❌ M-Pesa Payment Failed'),
+                message: __(`${data.requisitionId}: ${data.message}`),
                 indicator: 'red'
             });
             wrapper.refresh();
         });
     }
-    setupRealtimeListeners();
+    setup_realtime_listeners();
+
+    // ====================== MPESA BALANCE CARD ======================
+    const balanceHtml = `
+        <div class="card mb-4" style="background:#fff; border-radius:8px; padding:20px; border:1px solid #ebeff2;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                    <div style="font-size:13px; color:#666; margin-bottom:6px;">Current Mpesa Balance</div>
+                    <div id="balance-text" style="font-size:22px; font-weight:700; color:#1f272e;">Loading balance...</div>
+                </div>
+                <button class="btn btn-success" id="refresh-balance-btn">
+                    <i class="fa fa-refresh"></i> Refresh
+                </button>
+            </div>
+        </div>
+    `;
+    $(balanceHtml).appendTo(page.main);
 
     // ====================== TABS ======================
     let tabs = [
@@ -60,7 +76,7 @@ frappe.pages['unpaid-requisitions'].on_page_load = function(wrapper) {
 
         let list_wrapper = $('<div class="list-container" style="min-height: 300px;"></div>').appendTo(page.main);
 
-        let table = $(`<table class="table table-hover table-light" style="background: #fff; border-radius: 8px; overflow: hidden; border: 1px solid #ebeff2;">
+        let table = $(`<table class="table table-hover table-light" style="background: #fff; border-radius: 4px; overflow: hidden; border: 1px solid #ebeff2;">
             <thead>
                 <tr style="background: #f7fafc; color: #8d99a6; font-size: 12px; text-transform: uppercase; letter-spacing: 0.02em;">
                     <th style="width: 40px; text-align: center;"><input type="checkbox" class="master-checker"></th>
@@ -121,7 +137,7 @@ frappe.pages['unpaid-requisitions'].on_page_load = function(wrapper) {
         });
     }
 
-    // ====================== ALL YOUR ORIGINAL FUNCTIONS (unchanged) ======================
+    // ====================== YOUR ORIGINAL FUNCTIONS (EXACTLY AS YOU PROVIDED) ======================
     function setup_bulk_actions(context_id) {
         if (context_id === 'authorise') {
             page.set_primary_action(__('Bulk Authorise'), () => {
@@ -175,7 +191,6 @@ frappe.pages['unpaid-requisitions'].on_page_load = function(wrapper) {
     }
 
     function request_otp_verification(on_success) {
-        // Your original OTP code (kept exactly as you had it)
         frappe.call({
             method: "fanaka_app.api.MpesaDisbursement.send_otp_notification", 
             callback: function(r) {
@@ -184,12 +199,24 @@ frappe.pages['unpaid-requisitions'].on_page_load = function(wrapper) {
                 let d = new frappe.ui.Dialog({
                     title: __('Verify Authorisation'),
                     fields: [
-                        { label: __('Enter OTP sent to your phone/email'), fieldname: 'otp', fieldtype: 'Data', reqd: 1 },
-                        { fieldtype: 'HTML', fieldname: 'timer_html', content: `<div id="otp-timer" style="color: #ff5858; font-weight: bold; margin-top: 10px; text-align: center;">${__('Expires in')}: 05:00</div>` }
+                        {
+                            label: __('Enter OTP sent to your phone/email'),
+                            fieldname: 'otp',
+                            fieldtype: 'Data',
+                            reqd: 1
+                        },
+                        {
+                            fieldtype: 'HTML',
+                            fieldname: 'timer_html',
+                            content: `<div id="otp-timer" style="color: #ff5858; font-weight: bold; margin-top: 10px; text-align: center;">
+                                ${__('Expires in')}: 05:00
+                            </div>`
+                        }
                     ],
                     primary_action_label: __('Verify & Authorise'),
                     primary_action(values) {
                         d.get_primary_btn().prop('disabled', true);
+                        
                         frappe.call({
                             method: "fanaka_app.api.MpesaDisbursement.verify_authorisation_otp",
                             args: { otp: values.otp },
@@ -211,12 +238,16 @@ frappe.pages['unpaid-requisitions'].on_page_load = function(wrapper) {
 
                 let duration = 5 * 60;
                 let timer_display = d.get_field('timer_html').$wrapper.find('#otp-timer');
+                
                 let timer_interval = setInterval(() => {
                     let minutes = parseInt(duration / 60, 10);
                     let seconds = parseInt(duration % 60, 10);
+
                     minutes = minutes < 10 ? "0" + minutes : minutes;
                     seconds = seconds < 10 ? "0" + seconds : seconds;
+
                     timer_display.text(`${__('Expires in')}: ${minutes}:${seconds}`);
+
                     if (--duration < 0) {
                         clearInterval(timer_interval);
                         timer_display.text(__('OTP Expired. Please close and try again.'));
@@ -240,9 +271,16 @@ frappe.pages['unpaid-requisitions'].on_page_load = function(wrapper) {
             return new Promise((resolve) => {
                 frappe.call({
                     method: 'frappe.client.set_value',
-                    args: { doctype: 'Requisitions', name: name, fieldname: values },
+                    args: {
+                        doctype: 'Requisitions',
+                        name: name,
+                        fieldname: values
+                    },
                     callback: (r) => resolve(r),
-                    error: (r) => resolve(null)
+                    error: (r) => {
+                        console.error("Bulk update failed for: " + name, r);
+                        resolve(null);
+                    }
                 });
             });
         });
@@ -279,3 +317,20 @@ frappe.pages['unpaid-requisitions'].on_page_load = function(wrapper) {
 
     wrapper.refresh();
 };
+
+// ====================== DYNAMIC BALANCE FUNCTION ======================
+function loadMpesaBalance() {
+    const balanceText = $('#balance-text');
+    balanceText.html('<i class="fa fa-spinner fa-spin"></i> Loading...');
+
+    frappe.call({
+        method: 'fanaka_app.api.MpesaDisbursement.get_mpesa_balance',
+        callback: function(r) {
+            if (r.message && !r.message.error) {
+                balanceText.html(`Working: <strong>${r.message.working || 'N/A'}</strong><br>Utility: <strong>${r.message.utility || 'N/A'}</strong>`);
+            } else {
+                balanceText.html('<span style="color:red;">Failed to load balance</span>');
+            }
+        }
+    });
+}
