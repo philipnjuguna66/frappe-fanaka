@@ -32,24 +32,91 @@ frappe.pages['unpaid-requisitions'].on_page_load = function(wrapper) {
     setup_realtime_listeners();
 
   
-    // ====================== DYNAMIC MPESA BALANCE CARD ======================
-    const balanceHtml = `
-        <div class="card mb-4 shadow-sm" style="border-radius:10px; overflow:hidden;">
-            <div class="card-body" style="display:flex; justify-content:space-between; align-items:center; padding:20px;">
-                <div>
-                    <div style="font-size:13px; color:#6c757d; font-weight:600; text-transform:uppercase; letter-spacing:0.5px;">Current M-Pesa Balance</div>
-                    <div id="balance-text" style="font-size:22px; font-weight:700; color:#1f272e; margin-top:8px;">Loading balance...</div>
-                </div>
-                <button class="btn btn-success" id="refresh-balance-btn">
-                    <i class="fa fa-refresh"></i> Refresh Balance
-                </button>
-            </div>
-        </div>
-    `;
-    $(balanceHtml).appendTo(page.main);
+// Inject Modern Styles
+const styles = `
+    <style>
+        .mpesa-dashboard-header .stat-card {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            border-left: 4px solid transparent !important;
+        }
+        .mpesa-dashboard-header .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md) !important;
+        }
+        #working-balance-card { border-left-color: #28a745 !important; }
+        #utility-balance-card { border-left-color: #007bff !important; }
+        
+        .tab-btn { margin-right: 5px; border-radius: 20px !important; padding: 5px 15px !important; font-weight: 500; }
+        .tab-btn.btn-primary { box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        
+        .list-container table { border-collapse: separate; border-spacing: 0 8px; background: transparent !important; border: none !important; }
+        .list-container tr { background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.05); border-radius: 8px; }
+        .list-container td { border: none !important; vertical-align: middle !important; }
+        .list-container td:first-child { border-top-left-radius: 8px; border-bottom-left-radius: 8px; }
+        .list-container td:last-child { border-top-right-radius: 8px; border-bottom-right-radius: 8px; }
+        
+        .otp-timer { font-weight: bold; color: #d63031; font-size: 1.2em; }
+        .resend-link { cursor: pointer; color: #0984e3; text-decoration: underline; font-size: 13px; font-weight: 600; }
+        .resend-link.disabled { color: #b2bec3; cursor: not-allowed; text-decoration: none; pointer-events: none; }
+        .timer-container { background: #f1f2f6; padding: 10px; border-radius: 4px; margin-bottom: 15px; }
+    </style>
+`;
+$('head').append(styles);
 
-    loadMpesaBalance();
-    $('#refresh-balance-btn').on('click', loadMpesaBalance);
+// ====================== DYNAMIC MPESA BALANCE CARD ======================
+const headerHtml = `
+    <div class="mpesa-dashboard-header" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-bottom: 24px;">
+        <div id="working-balance-card" class="stat-card" style="background: #fff; border: 1px solid #d1d8dd; border-radius: 8px; padding: 16px; box-shadow: var(--shadow-sm);">
+            <div style="color: #8d99a6; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Working Account</div>
+            <div id="working-balance" style="font-size: 22px; font-weight: 700; color: #1f272e; margin-top: 4px;">KES 0.00</div>
+        </div>
+        <div id="utility-balance-card" class="stat-card" style="background: #fff; border: 1px solid #d1d8dd; border-radius: 8px; padding: 16px; box-shadow: var(--shadow-sm);">
+            <div style="color: #8d99a6; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Utility Account</div>
+            <div id="utility-balance" style="font-size: 22px; font-weight: 700; color: #2490ef; margin-top: 4px;">KES 0.00</div>
+        </div>
+        <div class="stat-card" style="background: #f8fafc; border: 1px dashed #d1d8dd; border-radius: 8px; padding: 16px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;">
+            <div id="last-updated-text" style="font-size: 11px; color: #8d99a6; margin-bottom: 8px; font-style: italic;">Syncing...</div>
+            <button class="btn btn-xs btn-default" id="refresh-mpesa-btn" style="border-radius: 4px;">
+                <i class="fa fa-refresh text-success"></i> Sync Balance
+            </button>
+        </div>
+    </div>
+`;
+
+page.main.append(headerHtml);
+renderDatabaseBalances();
+
+$('#refresh-mpesa-btn').on('click', function() {
+    const $btn = $(this);
+    $btn.find('i').addClass('fa-spin');
+    frappe.call({
+        method: 'fanaka_app.api.MpesaDisbursement.get_mpesa_balance',
+        callback: () => {
+            frappe.show_alert({message: __('Syncing with Safaricom...'), indicator: 'orange'});
+            setTimeout(() => {
+                renderDatabaseBalances();
+                $btn.find('i').removeClass('fa-spin');
+            }, 4000);
+        }
+    });
+});
+
+function renderDatabaseBalances() {
+    frappe.call({
+        method: 'fanaka_app.api.MpesaDisbursement.get_stored_mpesa_balance',
+        callback: function(r) {
+            if(r.message) {
+                $('#working-balance').text(r.message.working_balance);
+                $('#utility-balance').text(r.message.utility_balance);
+                $('#last-updated-text').text('Last Sync: ' + r.message.last_updated);
+            }
+        }
+    });
+}
+
+
+
+
 
     // ====================== TABS ======================
     let tabs = [
