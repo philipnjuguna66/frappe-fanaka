@@ -31,21 +31,25 @@ frappe.pages['unpaid-requisitions'].on_page_load = function(wrapper) {
     }
     setup_realtime_listeners();
 
-    // ====================== MPESA BALANCE CARD ======================
+  
+    // ====================== DYNAMIC MPESA BALANCE CARD ======================
     const balanceHtml = `
-        <div class="card mb-4" style="background:#fff; border-radius:8px; padding:20px; border:1px solid #ebeff2;">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div class="card mb-4 shadow-sm" style="border-radius:10px; overflow:hidden;">
+            <div class="card-body" style="display:flex; justify-content:space-between; align-items:center; padding:20px;">
                 <div>
-                    <div style="font-size:13px; color:#666; margin-bottom:6px;">Current Mpesa Balance</div>
-                    <div id="balance-text" style="font-size:22px; font-weight:700; color:#1f272e;">Loading balance...</div>
+                    <div style="font-size:13px; color:#6c757d; font-weight:600; text-transform:uppercase; letter-spacing:0.5px;">Current M-Pesa Balance</div>
+                    <div id="balance-text" style="font-size:22px; font-weight:700; color:#1f272e; margin-top:8px;">Loading balance...</div>
                 </div>
                 <button class="btn btn-success" id="refresh-balance-btn">
-                    <i class="fa fa-refresh"></i> Refresh
+                    <i class="fa fa-refresh"></i> Refresh Balance
                 </button>
             </div>
         </div>
     `;
     $(balanceHtml).appendTo(page.main);
+
+    loadMpesaBalance();
+    $('#refresh-balance-btn').on('click', loadMpesaBalance);
 
     // ====================== TABS ======================
     let tabs = [
