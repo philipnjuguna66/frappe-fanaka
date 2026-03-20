@@ -19,6 +19,15 @@ frappe.pages['unpaid-requisitions'].on_page_load = function(wrapper) {
             });
             wrapper.refresh();
         });
+        frappe.realtime.on('mpesa_balance_updated', (data) => {
+            renderDatabaseBalances();
+			frappe.show_alert({
+				message: __('🔄 M-Pesa balance updated from Safaricom'),
+				indicator: 'blue'
+			});
+			wrapper.refresh();
+		});
+    
 
         frappe.realtime.on('payment_error', (data) => {
             frappe.msgprint({
