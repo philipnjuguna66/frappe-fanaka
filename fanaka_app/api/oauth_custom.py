@@ -43,5 +43,33 @@ def login_via_fanaka_oauth(code=None, state=None):
 
 
 
+import frappe
+from frappe import _
 
+@frappe.whitelist()
+def get_user_api_keys(user_id):
+    """
+    Returns API Key and API Secret for a given user.
+    Note: This will regenerate the API Secret every time it is called.
+    """
+    # 1. Verify the user exists
+    if not frappe.db.exists("User", user_id):
+        frappe.throw(_("User {0} not found").format(user_id))
 
+    user = frappe.get_doc("User", user_id)
+
+    # 2. Handle API Key
+    if not user.api_key:
+        user.api_key = frappe.generate_hash(length=15)
+    
+    # 4. Generate a new API Secret every time this function is called
+    api_secret = frappe.generate_hash(length=15)
+    user.api_secret = api_secret
+    
+    user.save(ignore_permissions=True)
+    frappe.db.commit()
+
+    return {
+        "api_key": user.api_key,
+        "api_secret": api_secret
+    }
