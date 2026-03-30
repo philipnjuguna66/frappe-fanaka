@@ -5,6 +5,7 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
+  "requisition_details_tab",
   "requisition_items",
   "requisition_attachments",
   "section_break_fjpy",
@@ -18,15 +19,7 @@
   "status",
   "section_break_igut",
   "description",
-  "posting_requisitions_section",
-  "is_inter_company",
-  "credit_account",
-  "debit_account",
-  "posting_date",
-  "column_break_jidd",
-  "cost_center",
-  "reference",
-  "reference_date",
+  "requisition_payment_details_tab",
   "section_break_lhrd",
   "initiated_at",
   "authorised_by",
@@ -38,7 +31,17 @@
   "released_by",
   "section_break_umuf",
   "journal_entry",
-  "amended_from"
+  "amended_from",
+  "journal_posting_tab",
+  "posting_requisitions_section",
+  "is_inter_company",
+  "credit_account",
+  "debit_account",
+  "posting_date",
+  "column_break_jidd",
+  "cost_center",
+  "reference",
+  "reference_date"
  ],
  "fields": [
   {
@@ -267,6 +270,21 @@
    "fieldname": "rejected_at",
    "fieldtype": "Datetime",
    "label": "Rejected At"
+  },
+  {
+   "fieldname": "requisition_details_tab",
+   "fieldtype": "Tab Break",
+   "label": "Requisition Details"
+  },
+  {
+   "fieldname": "requisition_payment_details_tab",
+   "fieldtype": "Tab Break",
+   "label": "Requisition Payment Details"
+  },
+  {
+   "fieldname": "journal_posting_tab",
+   "fieldtype": "Tab Break",
+   "label": "Journal Posting"
   }
  ],
  "grid_page_length": 50,
@@ -278,7 +296,7 @@
    "link_fieldname": "voucher_no"
   }
  ],
- "modified": "2026-03-18 12:35:42.563310",
+ "modified": "2026-03-30 09:08:55.216896",
  "modified_by": "Administrator",
  "module": "Requisitions",
  "name": "Requisitions",
