@@ -6,6 +6,7 @@ from datetime import datetime
 
 class CommissionEngine:
     @staticmethod
+    @frappe.whitelist()
     def calculate_junior_commission(collection_amount):
         amount = float(collection_amount)
         if amount > 7000000: rate = 0.035
@@ -15,6 +16,7 @@ class CommissionEngine:
         return amount * rate, rate
 
     @staticmethod
+    @frappe.whitelist()
     def calculate_senior_commission(collection_amount):
         amount = float(collection_amount)
         if amount > 7000000: rate = 0.04
@@ -24,6 +26,7 @@ class CommissionEngine:
         return amount * rate, rate
 
     @staticmethod
+    @frappe.whitelist()
     def calculate_manager_performance_commission(collection_amount, plots_sold):
         """
         Calculates branch performance commission.
