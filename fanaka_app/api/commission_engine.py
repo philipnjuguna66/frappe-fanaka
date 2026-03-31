@@ -51,6 +51,40 @@ class CommissionEngine:
         commission = float(collection_amount) * rate
         return commission, perf_percent, rate
 
+@frappe.whitelist()
+def get_commission_details(sales_person, collection_amount, personal_collection, plots_sold):
+
+    sales_person_doc = frappe.get_doc("Sales Person", sales_person)
+    role = str(sales_person_doc.custom_role or "").strip()
+
+    engine = CommissionEngine()
+
+    if "Manager" in role:
+        branch_comm, perf_percent, branch_rate = engine.calculate_manager_performance_commission(
+            collection_amount,
+            plots_sold
+        )
+        personal_comm = float(personal_collection) * 0.03
+        total_commission = branch_comm + personal_comm
+        return {
+            "total_commission": total_commission,
+            "applied_rate": f"{branch_rate * 100}% (Performance) + 3% (Personal)",
+        
+        }
+    elif "Senior Sales" in role:
+        total_commission, applied_rate = engine.calculate_senior_commission(collection_amount)
+        return {
+            "total_commission": total_commission,
+            "applied_rate": f"{applied_rate * 100}%"
+        }
+    else:
+        total_commission, applied_rate = engine.calculate_junior_commission(collection_amount)
+        return {
+            "total_commission": total_commission,
+            "applied_rate": f"{applied_rate * 100}%"
+        }
+
+
 def calculate_commission(doc, method=None):
     """
     Triggered by after_insert hook.
