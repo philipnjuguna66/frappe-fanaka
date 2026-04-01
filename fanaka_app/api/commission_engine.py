@@ -29,7 +29,7 @@ class CommissionEngine:
     def calculate_hod_commission(collection_amount):
         amount = float(collection_amount)
     
-        return amount * 0.03
+        return amount * 0.03, 0.03
 
 
     @staticmethod
