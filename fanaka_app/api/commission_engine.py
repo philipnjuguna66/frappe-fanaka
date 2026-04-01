@@ -79,7 +79,7 @@ def get_commission_details(sales_person, collection_amount, personal_collection,
         
         }
     elif "HOD" in role:
-        total_commission, applied_rate = engine.calculate_hod_commission(collection_amount)
+        total_commission, applied_rate = engine.calculate_hod_commission(collection_amount + sales_person_doc.personal_collection)
         return {
             "total_commission": total_commission,
             "applied_rate": f"{applied_rate * 100}%"
