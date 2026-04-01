@@ -84,7 +84,6 @@ def get_commission_details(sales_person, collection_amount, personal_collection,
             "total_commission": total_commission,
             "applied_rate": f"{applied_rate * 100}%"
         }
-        }
     elif "Senior Sales" in role:
         total_commission, applied_rate = engine.calculate_senior_commission(collection_amount)
         return {
