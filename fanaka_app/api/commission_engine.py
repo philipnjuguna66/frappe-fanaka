@@ -24,6 +24,13 @@ class CommissionEngine:
         elif amount > 4000000: rate = 0.03
         else: rate = 0.025
         return amount * rate, rate
+    @staticmethod
+    @frappe.whitelist()
+    def calculate_hod_commission(collection_amount):
+        amount = float(collection_amount)
+    
+        return amount * 0.03, 0.03
+
 
     @staticmethod
     @frappe.whitelist()
@@ -70,6 +77,13 @@ def get_commission_details(sales_person, collection_amount, personal_collection,
             "total_commission": total_commission,
             "applied_rate": f"{branch_rate * 100}% (Performance) + 3% (Personal)",
         
+        }
+    elif "HOD" in role:
+        total_commission, applied_rate = engine.calculate_hod_commission(collection_amount)
+        return {
+            "total_commission": total_commission,
+            "applied_rate": f"{applied_rate * 100}%"
+        }
         }
     elif "Senior Sales" in role:
         total_commission, applied_rate = engine.calculate_senior_commission(collection_amount)
@@ -121,6 +135,9 @@ def calculate_commission(doc, method=None):
 
     elif "Senior Sales" in role:
         total_commission, applied_rate = engine.calculate_senior_commission(doc.collection_amount)
+        updates["rate"] = f"{applied_rate * 100}%"
+    elif "HOD" in role:
+        total_commission, applied_rate = engine.calculate_hod_commission(doc.collection_amount)
         updates["rate"] = f"{applied_rate * 100}%"
     else:
         total_commission, applied_rate = engine.calculate_junior_commission(doc.collection_amount)
