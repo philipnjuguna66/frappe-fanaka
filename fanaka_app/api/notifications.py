@@ -3,104 +3,119 @@ import re
 from frappe.core.doctype.sms_settings.sms_settings import send_sms
 
 
+# -----------------------------
+# NORMALIZE PHONE NUMBERS
+# -----------------------------
 def normalize_phone(number):
     """
-    Normalize Kenyan phone numbers to 2547XXXXXXXX format
-    Returns None if invalid
+    Convert Kenyan numbers to 2547XXXXXXXX format
     """
     if not number:
         return None
 
     digits = re.sub(r'\D', '', str(number))
 
-    # Convert formats
     if digits.startswith('0') and len(digits) == 10:
         digits = '254' + digits[1:]
     elif len(digits) == 9 and digits.startswith(('7', '1')):
         digits = '254' + digits
+    elif digits.startswith('254') and len(digits) == 12:
+        pass
+    else:
+        return None
 
-    # Final validation
-    if len(digits) == 12 and digits.startswith('254'):
-        return digits
-
-    return None
+    return digits
 
 
-def send_notification_sms(doc, method=None):
+# -----------------------------
+# EXTRACT FROM COMMA SEPARATED
+# -----------------------------
+def extract_numbers(raw_input):
     """
-    Send SMS using custom numbers field ONLY.
-    Safe: will never break document save.
+    Returns valid and invalid numbers from comma-separated input
     """
+    if not raw_input:
+        return [], []
 
+    raw_numbers = [n.strip() for n in raw_input.split(",") if n.strip()]
+
+    valid = []
+    invalid = []
+
+    for num in raw_numbers:
+        cleaned = normalize_phone(num)
+        if cleaned:
+            valid.append(cleaned)
+        else:
+            invalid.append(num)
+
+    return valid, invalid
+
+
+# -----------------------------
+# MAIN SMS FUNCTION (FOR LEADS)
+# -----------------------------
+def send_lead_sms(doc, method=None):
+    """
+    Trigger SMS when a Website Lead is created
+    """
     try:
-        # Only act on Notification doctype
-        if doc.doctype != "Notification":
-            return
+        frappe.logger().info("🚀 SMS Triggered for new lead")
 
-        # Ensure message exists
-        if not doc.message:
-            frappe.log_error("Missing message", "SMS Notification")
-            return
+        # -----------------------------
+        # MESSAGE
+        # -----------------------------
+        message = f"New Lead: {doc.lead_name or 'Unknown'} - {doc.phone or 'No Phone'}"
 
-        # Get numbers from custom field
+        # -----------------------------
+        # GET NUMBERS (comma-separated)
+        # -----------------------------
         raw_input = doc.get("custom_additional_sms_numbers") or ""
 
-        if not raw_input.strip():
-            frappe.log_error(
-                f"No numbers provided in Notification {doc.name}",
-                "SMS Notification"
-            )
-            return
+        valid_numbers, invalid_numbers = extract_numbers(raw_input)
 
-        raw_numbers = [n.strip() for n in raw_input.split(",") if n.strip()]
-
-        valid_numbers = []
-        invalid_numbers = []
-
-        for num in raw_numbers:
-            cleaned = normalize_phone(num)
-            if cleaned:
-                valid_numbers.append(cleaned)
-            else:
-                invalid_numbers.append(num)
-
-        # Log invalid numbers (but don't fail)
+        # -----------------------------
+        # LOG INVALID NUMBERS
+        # -----------------------------
         if invalid_numbers:
             frappe.log_error(
-                f"Invalid numbers skipped in {doc.name}: {', '.join(invalid_numbers)}",
-                "SMS Notification"
+                f"Invalid numbers skipped: {', '.join(invalid_numbers)}",
+                "SMS DEBUG"
             )
 
+        # -----------------------------
+        # STOP IF NONE VALID
+        # -----------------------------
         if not valid_numbers:
-            frappe.log_error(
-                f"No valid numbers after cleaning in {doc.name}",
-                "SMS Notification"
-            )
+            frappe.log_error("No valid phone numbers found", "SMS DEBUG")
             return
 
-        # ✅ SEND SMS
+        # -----------------------------
+        # DEBUG FINAL NUMBERS
+        # -----------------------------
+        frappe.log_error(
+            f"FINAL NUMBERS: {', '.join(valid_numbers)}",
+            "SMS DEBUG"
+        )
+
+        # -----------------------------
+        # SEND SMS
+        # -----------------------------
         send_sms(
             receiver_list=valid_numbers,
-            msg=doc.message,
+            msg=message,
             sender_name="Fanaka_Ltd"
         )
 
-        # ✅ SUCCESS LOG
+        # -----------------------------
+        # SUCCESS LOG
+        # -----------------------------
         frappe.logger().info(
-            f"SMS sent ({doc.name}) → {', '.join(valid_numbers)}"
+            f"✅ SMS sent to: {', '.join(valid_numbers)}"
         )
-
-        # Optional status tracking
-        if hasattr(doc, "sms_status"):
-            doc.db_set("sms_status", "Sent")
 
     except Exception:
-        error = frappe.get_traceback()
-
         frappe.log_error(
-            f"SMS failed for {doc.name}\n{error}",
-            "SMS Notification"
+            frappe.get_traceback(),
+            "SMS ERROR"
         )
-
-        if hasattr(doc, "sms_status"):
-            doc.db_set("sms_status", "Failed")
