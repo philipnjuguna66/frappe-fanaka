@@ -12,6 +12,7 @@
   "company",
   "size",
   "status",
+  "item_code",
   "column_break_xcfb",
   "plot_no",
   "block_no",
@@ -142,6 +143,13 @@
   {
    "fieldname": "column_break_igcj",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "item_code",
+   "fieldtype": "Link",
+   "label": "Item Code",
+   "options": "Item",
+   "search_index": 1
   }
  ],
  "grid_page_length": 50,
@@ -153,11 +161,11 @@
    "link_fieldname": "name"
   }
  ],
- "modified": "2026-02-04 12:32:06.525619",
+ "modified": "2026-04-15 12:04:44.495852",
  "modified_by": "Administrator",
  "module": "Fanaka App",
  "name": "Plot",
- "naming_rule": "Expression",
+ "naming_rule": "Expression (old style)",
  "owner": "Administrator",
  "permissions": [
   {
