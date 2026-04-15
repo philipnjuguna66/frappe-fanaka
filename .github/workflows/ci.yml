@@ -83,9 +83,9 @@ jobs:
       - name: Setup Bench
         run: |
           pip install frappe-bench
-          bench init --skip-redis-config-generation --skip-assets --python "$(which python)" ~/frappe-bench
+          # Add the --frappe-branch flag to target v15 (or v14)
+          bench init --frappe-branch version-15 --skip-redis-config-generation --skip-assets --python "$(which python)" ~/frappe-bench
           cd ~/frappe-bench
-          # Explicitly tell bench to use the containerized DB
           bench set-config -g db_host 127.0.0.1
           bench set-config -g redis_cache redis://localhost:13000
           bench set-config -g redis_queue redis://localhost:11000
