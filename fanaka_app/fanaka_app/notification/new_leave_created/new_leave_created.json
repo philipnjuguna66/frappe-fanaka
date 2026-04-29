@@ -1,0 +1,34 @@
+{
+ "attach_print": 0,
+ "channel": "Email",
+ "condition_type": "Python",
+ "creation": "2025-07-05 17:07:02.786146",
+ "days_in_advance": 0,
+ "docstatus": 0,
+ "doctype": "Notification",
+ "document_type": "Leave Application",
+ "enabled": 1,
+ "event": "New",
+ "idx": 0,
+ "is_standard": 1,
+ "message": "<!DOCTYPE html>\n<html>\n<head>\n    <meta charset=\"UTF-8\">\n    <style>\n        .email-container {\n            font-family: 'Segoe UI', Helvetica, Arial, sans-serif;\n            color: #333;\n            max-width: 600px;\n            margin: 20px auto;\n            border: 1px solid #eee;\n            border-radius: 8px;\n            overflow: hidden;\n        }\n        .header {\n            background-color: #f8f9fa;\n            padding: 20px 25px;\n            border-bottom: 3px solid #007bff;\n        }\n        .header p {\n            margin: 0;\n            font-size: 15px;\n            color: #666;\n        }\n        .header h2 {\n            margin: 5px 0 0 0;\n            font-size: 18px;\n            color: #1a1a1a;\n            text-transform: uppercase;\n            letter-spacing: 0.5px;\n        }\n        .content {\n            padding: 25px;\n        }\n        .leave-table {\n            width: 100%;\n            border-collapse: collapse;\n            margin-top: 10px;\n        }\n        .leave-table th {\n            background-color: #f8f9fa;\n            color: #555;\n            font-weight: 600;\n            font-size: 13px;\n            padding: 12px 15px;\n            border: 1px solid #edf2f7;\n            text-align: left;\n            width: 35%;\n        }\n        .leave-table td {\n            padding: 12px 15px;\n            border: 1px solid #edf2f7;\n            text-align: left;\n            font-size: 14px;\n            color: #2c3e50;\n            background-color: #fff;\n        }\n        .status-tag {\n            display: inline-block;\n            padding: 2px 8px;\n            background-color: #e7f3ff;\n            color: #007bff;\n            border-radius: 4px;\n            font-weight: bold;\n            font-size: 12px;\n        }\n        .footer {\n            padding: 15px 25px;\n            background-color: #f8f9fa;\n            font-size: 12px;\n            color: #999;\n            text-align: left;\n            border-top: 1px solid #eee;\n        }\n        .highlight {\n            font-weight: 600;\n            color: #1a1a1a;\n        }\n    </style>\n</head>\n<body>\n    <div class=\"email-container\">\n        <div class=\"header\">\n         \n            <h2>New Leave Application Created</h2>\n        </div>\n        \n        <div class=\"content\">\n            <table class=\"leave-table\">\n                <tr>\n                    <th>Staff Name</th>\n                    <td class=\"highlight\">{{ doc.employee_name }}</td>\n                </tr>\n                <tr>\n                    <th>Leave Type</th>\n                    <td><span class=\"status-tag\">{{ doc.leave_type }}</span></td>\n                </tr>\n                <tr>\n                    <th>From Date</th>\n                    <td>{{ frappe.utils.format_date(doc.from_date) if doc.from_date else \"\" }}</td>\n                </tr>\n                <tr>\n                    <th>To Date</th>\n                    <td>{{ frappe.utils.format_date(doc.to_date) if doc.to_date else \"\" }}</td>\n                </tr>\n                <tr>\n                    <th>Reliever</th>\n                    <td>{{ doc.custom_releaver or \"Not Specified\" }}</td>\n                </tr>\n                <tr>\n                    <th>Leave Approver</th>\n                    <td>{{ doc.leave_approver }}</td>\n                </tr>\n            </table>\n        </div>\n    </div>\n</body>\n</html>",
+ "message_type": "HTML",
+ "minutes_offset": 0,
+ "modified": "2026-04-07 18:19:35.832829",
+ "modified_by": "Administrator",
+ "module": "Fanaka App",
+ "name": "New Leave Created",
+ "owner": "Administrator",
+ "recipients": [
+  {
+   "cc": "fanaka.system@fanaka.co.ke\nfanaka.management@fanaka.co.ke",
+   "receiver_by_document_field": "owner",
+   "receiver_by_role": "Administrator"
+  }
+ ],
+ "send_system_notification": 1,
+ "send_to_all_assignees": 0,
+ "sender": "Notifications",
+ "sender_email": "fanaka.system@fanaka.co.ke",
+ "subject": "New Leave Created"
+}
