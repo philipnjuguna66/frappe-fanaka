@@ -141,7 +141,7 @@ class Plot(Document):
                 "item_code": self.item_code,
                 "qty": 1,
                 "serial_no": self.name,
-                "uom": "Qty",
+                "uom": "Nos",
                 "conversion_factor": 1,
                 "warehouse": warehouse
             })
