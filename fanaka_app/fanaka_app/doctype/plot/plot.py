@@ -66,9 +66,7 @@ class Plot(Document):
 
             serial = frappe.new_doc("Serial No")
             serial.item_code = self.item_code
-            serial.serial_no = self.name  # Use plot name as serial
-            serial.warehouse = self.get_warehouse()
-            serial.status = "Active"
+            serial.serial_no = self.name
             serial.insert(ignore_permissions=True)
 
             self.serial_number = serial.name
