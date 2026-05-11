@@ -219,33 +219,29 @@ class Plot(Document):
     def get_stock_status(plot_name):
         """Get current stock status of a plot"""
         try:
-            # Get serial number status
             serial = frappe.db.get_value(
                 "Serial No",
                 plot_name,
-                ["status", "warehouse", "item_code"]
+                ["status", "item_code"],
+                as_dict=True
             )
 
             if not serial:
                 return {"status": "Not Found", "qty": 0}
 
-            # Get quantity from stock ledger
-            qty = frappe.db.get_value(
+            sle = frappe.db.get_value(
                 "Stock Ledger Entry",
-                filters={
-                    "serial_no": plot_name,
-                    "item_code": serial[2]
-                },
-                fieldname="actual_qty",
-                order_by="posting_date desc",
-                limit_page_length=1
+                filters={"serial_no": plot_name, "item_code": serial.item_code},
+                fieldname=["actual_qty", "warehouse"],
+                order_by="posting_date desc, posting_time desc",
+                as_dict=True
             )
 
             return {
-                "status": serial[0],
-                "warehouse": serial[1],
-                "item_code": serial[2],
-                "qty": qty or 0
+                "status": serial.status,
+                "warehouse": sle.warehouse if sle else None,
+                "item_code": serial.item_code,
+                "qty": sle.actual_qty if sle else 0
             }
 
         except Exception as e:

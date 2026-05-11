@@ -1,8 +1,8 @@
 import frappe
-from frappe.model.document import Document
+from erpnext.stock.doctype.stock_entry.stock_entry import StockEntry as ERPNextStockEntry
 
 
-class StockEntry(Document):
+class StockEntry(ERPNextStockEntry):
     def generate_and_attach_plot_serials(self):
         """
         Generates serial numbers for 'Plot' items in a 'Repack' Stock Entry
