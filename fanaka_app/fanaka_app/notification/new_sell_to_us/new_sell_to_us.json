@@ -1,0 +1,32 @@
+{
+ "attach_print": 0,
+ "channel": "Email",
+ "creation": "2025-08-27 11:19:51.560262",
+ "days_in_advance": 0,
+ "docstatus": 0,
+ "doctype": "Notification",
+ "document_type": "Sell To Us",
+ "enabled": 1,
+ "event": "New",
+ "idx": 0,
+ "is_standard": 1,
+ "message": "<p>Greetings</p>\n\n<p>A Property has been created </p>\n\n<h4>Details</h4>\n\n<p>Seller Type: {{ doc.seller_type }}</p>\n\n<p>Name: {{ doc.vendor_name }}</p>\n\n<p>Phone Number: {{ doc.phone_number }}</p>\n\n<p>Email:  {{ doc.email }} </p>\n\n<p>Location: {{ doc.location }} </p>\n\n<p>Distance From Road: {{ doc.distance_from_location }} </p>\n\n<p>Date : {{ doc.creation }}</p><br></p>\n",
+ "message_type": "HTML",
+ "modified": "2025-08-27 11:20:35.104818",
+ "modified_by": "Administrator",
+ "module": "Fanaka App",
+ "name": "New Sell to Us",
+ "owner": "Administrator",
+ "recipients": [
+  {
+   "cc": "fanaka.system@fanaka.co.ke\nfanaka.management@fanaka.co.ke",
+   "receiver_by_document_field": "owner",
+   "receiver_by_role": "Administrator"
+  }
+ ],
+ "send_system_notification": 1,
+ "send_to_all_assignees": 0,
+ "sender": "Notifications",
+ "sender_email": "fanaka.system@fanaka.co.ke",
+ "subject": "New Property For Sale Submitted: {{ doc.location }}"
+}
