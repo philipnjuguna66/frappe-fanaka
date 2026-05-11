@@ -176,18 +176,18 @@ class Plot(Document):
                     return project_warehouse
 
             # Default to 'Main Warehouse'
-            if not frappe.db.exists("Warehouse", "Main Warehouse"):
+            if not frappe.db.exists("Warehouse", "Stores - FRE"):
                 # Create default warehouse if it doesn't exist
                 wh = frappe.new_doc("Warehouse")
-                wh.warehouse_name = "Main Warehouse"
+                wh.warehouse_name = "Stores - FRE"
                 wh.parent_warehouse = None
                 wh.insert(ignore_permissions=True)
 
-            return "Main Warehouse"
+            return "Stores - FRE"
 
         except Exception as e:
             frappe.log_error(frappe.get_traceback(), "Plot: Error getting warehouse")
-            return "Main Warehouse"
+            return "Stores - FRE"
 
     def get_or_create_item_group(self):
         """Get or create 'Plots' item group"""
