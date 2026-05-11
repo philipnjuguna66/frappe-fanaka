@@ -38,7 +38,7 @@ class Plot(Document):
             item = frappe.new_doc("Item")
             item.item_code = item_code
             item.item_name = f"Plot {self.name}"
-            item.description = f"Land plot - {self.location}" if self.location else f"Plot {self.name}"
+            item.description = f"Land plot - {self.name}"
             item.item_group = self.get_or_create_item_group()
             item.stock_uom = "Qty"
             item.has_serial_no = 1  # Enable serial number tracking
