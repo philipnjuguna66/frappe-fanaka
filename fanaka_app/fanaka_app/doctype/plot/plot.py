@@ -40,7 +40,7 @@ class Plot(Document):
             item.item_name = f"Plot {self.name}"
             item.description = f"Land plot - {self.name}"
             item.item_group = self.get_or_create_item_group()
-            item.stock_uom = "Qty"
+            item.stock_uom = "Nos"
             item.has_serial_no = 1  # Enable serial number tracking
             item.serial_no_series = "SN-"  # Serial number format
             item.is_stock_item = 1
