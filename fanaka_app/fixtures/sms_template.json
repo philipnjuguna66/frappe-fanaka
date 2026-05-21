@@ -1,0 +1,137 @@
+[
+ {
+  "category": "Client",
+  "doctype": "SMS Template",
+  "helper_text": "Sent to clients on their birthday.",
+  "is_active": 1,
+  "is_automated": 1,
+  "name": "birthday_message",
+  "template_name": "birthday_message"
+ },
+ {
+  "category": "Sale",
+  "doctype": "SMS Template",
+  "helper_text": "Sent when a new plot is attached to a client profile.",
+  "is_active": 1,
+  "is_automated": 1,
+  "name": "onboarding_sms",
+  "template_name": "onboarding_sms"
+ },
+ {
+  "category": "Payment",
+  "doctype": "SMS Template",
+  "helper_text": "Reminder for clients to pay for their plot.",
+  "is_active": 1,
+  "is_automated": 1,
+  "name": "payment_reminder_sms",
+  "template_name": "payment_reminder_sms"
+ },
+ {
+  "category": "Payment",
+  "doctype": "SMS Template",
+  "helper_text": "Sent when a payment is approved by the supervisor.",
+  "is_active": 1,
+  "is_automated": 1,
+  "name": "payment_notification_sms",
+  "template_name": "payment_notification_sms"
+ },
+ {
+  "category": "Payment",
+  "doctype": "SMS Template",
+  "helper_text": "Sent when a payment is removed from the client profile.",
+  "is_active": 1,
+  "is_automated": 1,
+  "name": "payment_removed_sms",
+  "template_name": "payment_removed_sms"
+ },
+ {
+  "category": "Payment",
+  "doctype": "SMS Template",
+  "helper_text": "Sent when a payment is overdue.",
+  "is_active": 1,
+  "is_automated": 1,
+  "name": "payment_overdue_sms",
+  "template_name": "payment_overdue_sms"
+ },
+ {
+  "category": "Payment",
+  "doctype": "SMS Template",
+  "helper_text": "Sent when a plot is fully paid; requests completion document.",
+  "is_active": 1,
+  "is_automated": 1,
+  "name": "payment_completed_sms",
+  "template_name": "payment_completed_sms"
+ },
+ {
+  "category": "Marketing",
+  "doctype": "SMS Template",
+  "helper_text": "Sent to referrers.",
+  "is_active": 1,
+  "is_automated": 1,
+  "name": "referral_message",
+  "template_name": "referral_message"
+ },
+ {
+  "category": "Payment",
+  "doctype": "SMS Template",
+  "helper_text": "Sent when a penalty is charged on a sale.",
+  "is_active": 1,
+  "is_automated": 1,
+  "name": "penalty_charge_sms",
+  "template_name": "penalty_charge_sms"
+ },
+ {
+  "category": "Sale",
+  "doctype": "SMS Template",
+  "helper_text": "Reminder when a plot is not paid for at release 3 days.",
+  "is_active": 1,
+  "is_automated": 1,
+  "name": "reservation_removal_reminder",
+  "template_name": "reservation_removal_reminder"
+ },
+ {
+  "category": "Sale",
+  "doctype": "SMS Template",
+  "helper_text": "Sent when a reservation is released due to lack of funds.",
+  "is_active": 1,
+  "is_automated": 1,
+  "name": "reservation_removed",
+  "template_name": "reservation_removed"
+ },
+ {
+  "category": "Site Visit",
+  "doctype": "SMS Template",
+  "helper_text": "Sent on site visit booking.",
+  "is_active": 1,
+  "is_automated": 1,
+  "name": "site_visit_booked",
+  "template_name": "site_visit_booked"
+ },
+ {
+  "category": "Site Visit",
+  "doctype": "SMS Template",
+  "helper_text": "Reminder before site visit.",
+  "is_active": 1,
+  "is_automated": 1,
+  "name": "site_visit_reminder",
+  "template_name": "site_visit_reminder"
+ },
+ {
+  "category": "Site Visit",
+  "doctype": "SMS Template",
+  "helper_text": "Sent when client missed scheduled site visit.",
+  "is_active": 1,
+  "is_automated": 1,
+  "name": "site_visit_absentee",
+  "template_name": "site_visit_absentee"
+ },
+ {
+  "category": "Site Visit",
+  "doctype": "SMS Template",
+  "helper_text": "Sent after a completed site visit.",
+  "is_active": 1,
+  "is_automated": 1,
+  "name": "site_visit_thankyou_note",
+  "template_name": "site_visit_thankyou_note"
+ }
+]
