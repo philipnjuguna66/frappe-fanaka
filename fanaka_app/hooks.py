@@ -285,9 +285,6 @@ fixtures = [{
 },
 	{
 		"doctype": "Workflow State"
-	},
-	{
-		"doctype": "SMS Template"
 	}
 ]
 
