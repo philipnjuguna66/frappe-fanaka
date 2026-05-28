@@ -2,6 +2,15 @@
  {
   "docstatus": 0,
   "doctype": "Workflow State",
+  "icon": "",
+  "modified": "2026-03-11 15:38:57.276085",
+  "name": "Confirm",
+  "style": "",
+  "workflow_state_name": "Confirm"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow State",
   "icon": "question-sign",
   "modified": "2024-09-11 13:56:05.017230",
   "name": "Pending",
@@ -25,5 +34,14 @@
   "name": "Rejected",
   "style": "Danger",
   "workflow_state_name": "Rejected"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow State",
+  "icon": "",
+  "modified": "2026-03-11 15:37:25.950612",
+  "name": "Pay",
+  "style": "",
+  "workflow_state_name": "Pay"
  }
 ]

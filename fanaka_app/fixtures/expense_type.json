@@ -1,0 +1,83 @@
+[
+ {
+  "default_expense_account": null,
+  "disabled": 0,
+  "docstatus": 0,
+  "doctype": "Expense Type",
+  "expense_type_name": "Survey",
+  "modified": "2026-05-28 10:02:53.054189",
+  "name": "Survey"
+ },
+ {
+  "default_expense_account": null,
+  "disabled": 0,
+  "docstatus": 0,
+  "doctype": "Expense Type",
+  "expense_type_name": "Legal",
+  "modified": "2026-05-28 10:02:53.058193",
+  "name": "Legal"
+ },
+ {
+  "default_expense_account": null,
+  "disabled": 0,
+  "docstatus": 0,
+  "doctype": "Expense Type",
+  "expense_type_name": "Transfer",
+  "modified": "2026-05-28 10:02:53.060620",
+  "name": "Transfer"
+ },
+ {
+  "default_expense_account": null,
+  "disabled": 0,
+  "docstatus": 0,
+  "doctype": "Expense Type",
+  "expense_type_name": "LCB Fees",
+  "modified": "2026-05-28 10:02:53.063068",
+  "name": "LCB Fees"
+ },
+ {
+  "default_expense_account": null,
+  "disabled": 0,
+  "docstatus": 0,
+  "doctype": "Expense Type",
+  "expense_type_name": "Infrastructure",
+  "modified": "2026-05-28 10:02:53.065678",
+  "name": "Infrastructure"
+ },
+ {
+  "default_expense_account": null,
+  "disabled": 0,
+  "docstatus": 0,
+  "doctype": "Expense Type",
+  "expense_type_name": "Beaconing",
+  "modified": "2026-05-28 10:02:53.068274",
+  "name": "Beaconing"
+ },
+ {
+  "default_expense_account": null,
+  "disabled": 0,
+  "docstatus": 0,
+  "doctype": "Expense Type",
+  "expense_type_name": "Commission",
+  "modified": "2026-05-28 10:02:53.070657",
+  "name": "Commission"
+ },
+ {
+  "default_expense_account": null,
+  "disabled": 0,
+  "docstatus": 0,
+  "doctype": "Expense Type",
+  "expense_type_name": "Marketing",
+  "modified": "2026-05-28 10:02:53.073001",
+  "name": "Marketing"
+ },
+ {
+  "default_expense_account": null,
+  "disabled": 0,
+  "docstatus": 0,
+  "doctype": "Expense Type",
+  "expense_type_name": "Other",
+  "modified": "2026-05-28 10:02:53.077245",
+  "name": "Other"
+ }
+]

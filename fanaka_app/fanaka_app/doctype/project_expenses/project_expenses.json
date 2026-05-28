@@ -7,8 +7,10 @@
  "field_order": [
   "section_break_gjfm",
   "project",
+  "project_block",
   "company",
   "supplier",
+  "expense_type",
   "expense_account",
   "amount",
   "reference_code",
@@ -18,6 +20,12 @@
   "supplier_name",
   "bank_account",
   "payment_date",
+  "expense_date",
+  "section_break_desc",
+  "description",
+  "attachment",
+  "status",
+  "journal_entry",
   "section_break_hpve",
   "amended_from"
  ],
@@ -44,6 +52,12 @@
    "reqd": 1
   },
   {
+   "fieldname": "project_block",
+   "fieldtype": "Data",
+   "label": "Block",
+   "description": "Block number this expense applies to"
+  },
+  {
    "fetch_from": "project.project_name",
    "fetch_if_empty": 1,
    "fieldname": "project_name",
@@ -51,6 +65,13 @@
    "in_list_view": 1,
    "label": "Project Name",
    "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "expense_type",
+   "fieldtype": "Link",
+   "label": "Expense Type",
+   "options": "Expense Type",
    "reqd": 1
   },
   {
@@ -96,6 +117,41 @@
    "reqd": 1
   },
   {
+   "fieldname": "expense_date",
+   "fieldtype": "Date",
+   "label": "Expense Date",
+   "default": "Today"
+  },
+  {
+   "fieldname": "section_break_desc",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Description"
+  },
+  {
+   "fieldname": "attachment",
+   "fieldtype": "Attach",
+   "label": "Receipt"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Draft\nSubmitted\nCancelled\nReconciled",
+   "read_only": 1,
+   "default": "Draft"
+  },
+  {
+   "fieldname": "journal_entry",
+   "fieldtype": "Link",
+   "label": "Journal Entry",
+   "options": "Journal Entry",
+   "read_only": 1
+  },
+  {
    "fieldname": "section_break_hpve",
    "fieldtype": "Section Break"
   },
@@ -116,7 +172,7 @@
   {
    "fieldname": "branch",
    "fieldtype": "Link",
-   "label": "Branch",
+   "label": "Cost Center",
    "options": "Cost Center"
   },
   {
@@ -133,7 +189,7 @@
  "grid_page_length": 50,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-02-04 12:36:33.896637",
+ "modified": "2026-05-28 00:00:00.000000",
  "modified_by": "Administrator",
  "module": "Fanaka App",
  "name": "Project Expenses",
@@ -151,6 +207,8 @@
    "role": "System Manager",
    "share": 1,
    "submit": 1,
+   "cancel": 1,
+   "amend": 1,
    "write": 1
   },
   {
@@ -165,6 +223,8 @@
    "select": 1,
    "share": 1,
    "submit": 1,
+   "cancel": 1,
+   "amend": 1,
    "write": 1
   },
   {

@@ -2,98 +2,103 @@ import frappe
 from frappe.model.document import Document
 from frappe.utils import flt, today
 
+
 class ProjectExpenses(Document):
+    def validate(self):
+        if not self.expense_date:
+            self.expense_date = today()
+
+        if not self.payment_date:
+            self.payment_date = self.expense_date
+
+        if self.project and not self.branch:
+            project_cc = frappe.db.get_value("Project", self.project, "cost_center")
+            if project_cc:
+                self.branch = project_cc
+
+        if self.expense_type and not self.expense_account:
+            default_acc = frappe.db.get_value(
+                "Expense Type", self.expense_type, "default_expense_account"
+            )
+            if default_acc:
+                self.expense_account = default_acc
+
+        if flt(self.amount) <= 0:
+            frappe.throw("Amount must be greater than zero")
+
     def on_submit(self):
-        try:
-            # Validate company
-            company = frappe.defaults.get_user_default("Company")
-            if not company:
-                frappe.throw("Default Company not set. Please set a default company.")
+        company = self.company or frappe.defaults.get_user_default("Company")
+        if not company:
+            frappe.throw("Company not set on the document or as a default")
 
-            # Basic validations
-            if not self.project:
-                frappe.throw("Project is mandatory")
-            if not self.expense_account:
-                frappe.throw("Expense Account is mandatory")
-            if not self.bank_account:
-                frappe.throw("Bank Account is mandatory")
-            if not self.payment_date:
-                frappe.throw("Payment Date is mandatory")
-            if not self.supplier:
-                frappe.throw("Supplier is mandatory")
+        for account in [self.expense_account, self.bank_account]:
+            if not frappe.db.exists("Account", account):
+                frappe.throw(f"Account {account} does not exist")
+            acc_company = frappe.db.get_value("Account", account, "company")
+            if acc_company != company:
+                frappe.throw(f"Account {account} does not belong to company {company}")
 
-            # Validate accounts exist and are valid
-            for account in [self.expense_account, self.bank_account]:
-                if not frappe.db.exists("Account", account):
-                    frappe.throw(f"Account {account} does not exist")
-                
-                # Check if account belongs to the company
-                acc = frappe.get_doc("Account", account)
-                if acc.company != company:
-                    frappe.throw(f"Account {account} does not belong to company {company}")
+        expense_amount = flt(self.amount)
 
-            # Validate supplier
-            if not frappe.db.exists("Supplier", self.supplier):
-                frappe.throw(f"Supplier {self.supplier} does not exist")
+        je = frappe.new_doc("Journal Entry")
+        je.posting_date = self.payment_date or self.expense_date or today()
+        je.company = company
+        je.voucher_type = "Journal Entry"
+        je.remark = (
+            f"Project Expense {self.name} for {self.project_name or self.project}"
+            + (f" - Supplier: {self.supplier}" if self.supplier else "")
+        )
 
-            expense_amount = flt(self.amount)
-            if expense_amount <= 0:
-                frappe.throw("Amount must be greater than zero")
+        if self.reference_code:
+            je.cheque_no = self.reference_code
+            je.cheque_date = je.posting_date
 
-            # Create Journal Entry with error handling
-            try:
-                je = frappe.new_doc("Journal Entry")
-                je.posting_date = self.payment_date
-                je.company = company
-                je.voucher_type = 'Journal Entry'
-                je.remark = f"Project Expense for {self.project_name or self.project} - Supplier: {self.supplier}"
-                
-                # Add reference details if available
-                if self.reference_code:
-                    je.cheque_no = self.reference_code
-                    je.cheque_date = self.payment_date
+        if self.supplier:
+            je.party_type = "Supplier"
+            je.party = self.supplier
 
-                # Add supplier details
-                je.party_type = "Supplier"
-                je.party = self.supplier
+        je.append(
+            "accounts",
+            {
+                "account": self.expense_account,
+                "debit_in_account_currency": expense_amount,
+                "credit_in_account_currency": 0,
+                "project": self.project,
+                "cost_center": self.branch,
+            },
+        )
 
-                # Append expense entry
-                je.append("accounts", {
-                    "account": self.expense_account,
-                    "debit_in_account_currency": expense_amount,
-                    "credit_in_account_currency": 0,
-                    "project": self.project,
-                   # "party_type": "Supplier",
-                   # "party": self.supplier,
-                    "cost_center": self.branch if hasattr(self, 'cost_center') else None
-                })
+        je.append(
+            "accounts",
+            {
+                "account": self.bank_account,
+                "credit_in_account_currency": expense_amount,
+                "debit_in_account_currency": 0,
+                "project": self.project,
+                "cost_center": self.branch,
+            },
+        )
 
-                # Append bank entry
-                je.append("accounts", {
-                    "account": self.bank_account,
-                    "credit_in_account_currency": expense_amount,
-                    "debit_in_account_currency": 0,
-                    "project": self.project,
-                    #"party_type": "Supplier",
-                   # "party": self.supplier,
-                    "cost_center": self.branch if hasattr(self, 'cost_center') else None
-                })
+        je.flags.ignore_permissions = True
+        je.set_total_debit_credit()
+        je.insert()
+        je.submit()
 
-                # Insert with additional validations
+        self.db_set("journal_entry", je.name)
+        self.db_set("status", "Submitted")
+
+        frappe.msgprint(f"Journal Entry {je.name} created")
+
+    def on_cancel(self):
+        if self.journal_entry and frappe.db.exists("Journal Entry", self.journal_entry):
+            je = frappe.get_doc("Journal Entry", self.journal_entry)
+            if je.docstatus == 1:
                 je.flags.ignore_permissions = True
-                je.set_total_debit_credit()
-                je.validate_reference_doc()
-                je.insert()
-                
-                # Submit the journal entry
-                je.submit()
-                
-                frappe.msgprint(f"Journal Entry {je.name} created successfully")
+                je.cancel()
+            try:
+                frappe.delete_doc("Journal Entry", je.name, force=1)
+            except Exception:
+                pass
 
-            except Exception as e:
-                frappe.db.rollback()
-                frappe.throw(f"Failed to create Journal Entry: {str(e)}")
-
-        except Exception as e:
-            frappe.log_error(frappe.get_traceback(), "Project Expenses: Journal Entry Creation Error")
-            frappe.throw(f"Error creating Journal Entry: {str(e)}")
+        self.db_set("journal_entry", None)
+        self.db_set("status", "Cancelled")

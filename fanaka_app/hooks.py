@@ -170,6 +170,10 @@ doc_events = {
 	},
 	"Notification": {
 		"after_insert": "fanaka_app.api.notifications.handle_sms_cc"
+	},
+	"Project": {
+		"validate": "fanaka_app.events.project.project.validate",
+		"after_insert": "fanaka_app.events.project.project.after_insert"
 	}
 
 }
@@ -280,12 +284,39 @@ doc_events = {
 # }
 
 
-fixtures = [{
-	"doctype": "Workflow"
-},
+fixtures = [
+	{"doctype": "Workflow"},
+	{"doctype": "Workflow State"},
 	{
-		"doctype": "Workflow State"
-	}
+		"doctype": "Custom Field",
+		"filters": [
+			["name", "in", [
+				"Supplier-custom_land_details_section",
+				"Supplier-custom_kra_pin",
+				"Supplier-custom_next_of_kin",
+				"Supplier-custom_vendor_col_break",
+				"Supplier-custom_default_block_number",
+				"Project-custom_land_section",
+				"Project-custom_total_acreage",
+				"Project-custom_county",
+				"Project-custom_primary_vendor",
+				"Project-custom_total_purchase_price",
+				"Project-custom_acquisition_status",
+				"Project-custom_blocks_section",
+				"Project-custom_blocks",
+				"Purchase Invoice-custom_project_block",
+				"Purchase Order-custom_project_block",
+				"Plot-custom_stock_section",
+				"Plot-custom_item",
+				"Plot-custom_serial_no",
+				"Plot-custom_warehouse",
+				"Plot-custom_project_block",
+				"Plot-custom_stock_status"
+			]]
+		]
+	},
+	{"doctype": "Property Setter", "filters": [["module", "=", "Fanaka App"]]},
+	{"doctype": "Expense Type"}
 ]
 
 # inside your_app/hooks.py

@@ -3,6 +3,12 @@ import re
 from frappe.core.doctype.sms_settings.sms_settings import send_sms
 
 
+def handle_sms_cc(doc, method=None):
+    """Stub referenced from hooks.py (Notification after_insert).
+    Original implementation missing — kept as no-op so migrate doesn't break."""
+    return
+
+
 # -----------------------------
 # NORMALIZE PHONE NUMBERS
 # -----------------------------

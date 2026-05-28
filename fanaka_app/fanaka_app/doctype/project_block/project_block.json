@@ -1,0 +1,93 @@
+{
+ "actions": [],
+ "creation": "2026-05-28 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "block_number",
+  "title_number",
+  "acreage",
+  "phase",
+  "column_break_1",
+  "purchase_price",
+  "vendor",
+  "number_of_plots",
+  "plot_size",
+  "block_status"
+ ],
+ "fields": [
+  {
+   "fieldname": "block_number",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Block Number",
+   "reqd": 1
+  },
+  {
+   "fieldname": "title_number",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Title Number"
+  },
+  {
+   "fieldname": "acreage",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Acreage"
+  },
+  {
+   "fieldname": "phase",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Phase"
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "purchase_price",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Purchase Price"
+  },
+  {
+   "fieldname": "vendor",
+   "fieldtype": "Link",
+   "label": "Vendor",
+   "options": "Supplier"
+  },
+  {
+   "fieldname": "number_of_plots",
+   "fieldtype": "Int",
+   "label": "No. of Plots"
+  },
+  {
+   "fieldname": "plot_size",
+   "fieldtype": "Data",
+   "label": "Plot Size"
+  },
+  {
+   "fieldname": "block_status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Acquisition\nLCB Approval\nTransfer\nSubdivided\nReady for Sale\nSold Out"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-05-28 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Fanaka App",
+ "name": "Project Block",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}
