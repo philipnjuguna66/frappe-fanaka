@@ -13,6 +13,7 @@
   "payment_method",
   "pay_to",
   "account_reference",
+  "pay_methods",
   "column_break_cpgv",
   "requisition_owner",
   "owner_full_name",
@@ -108,6 +109,13 @@
    "fieldname": "account_reference",
    "fieldtype": "Data",
    "label": "Account Reference"
+  },
+  {
+   "allow_in_quick_entry": 1,
+   "fieldname": "pay_methods",
+   "fieldtype": "Table",
+   "label": "Pay Methods",
+   "options": "Requisition Pay Methods"
   },
   {
    "fieldname": "amended_from",
