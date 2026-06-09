@@ -1,1 +1,13 @@
-[]
+[
+ {
+  "doctype": "Property Setter",
+  "doctype_or_field": "DocType",
+  "doc_type": "Sales Invoice",
+  "field_name": null,
+  "property": "default_print_format",
+  "property_type": "Data",
+  "value": "Fanaka Sales Invoice",
+  "module": "Fanaka App",
+  "name": "Sales Invoice-main-default_print_format"
+ }
+]
