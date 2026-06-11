@@ -5,8 +5,9 @@ from frappe.utils import date_diff, today, getdate
 
 def validate_leave_block(doc, method=None):
     """
-    Prevent leave application if date falls inside
-    Leave Block List created from Holiday List.
+    Leave may span across blocked days (e.g. Sunday), but it must NOT start or
+    end on a blocked day. Blocked days that fall inside the range are not
+    counted as leave days, so Fri -> Tue with a blocked Sunday is 4 days.
     """
 
     if not doc.from_date or not doc.to_date:
@@ -15,13 +16,12 @@ def validate_leave_block(doc, method=None):
     from_date = getdate(doc.from_date)
     to_date = getdate(doc.to_date)
 
-    # Get all submitted block lists for this leave type + company
+    # All block lists for this leave type + company
     block_lists = frappe.get_all(
         "Leave Block List",
         filters={
             "leave_type": doc.leave_type,
             "company": doc.company,
-
         },
         fields=["name"]
     )
@@ -31,8 +31,8 @@ def validate_leave_block(doc, method=None):
 
     block_list_names = [b.name for b in block_lists]
 
-    # Get blocked dates inside range
-    blocked_dates = frappe.get_all(
+    # Blocked dates within the leave range (inclusive of endpoints)
+    blocked_rows = frappe.get_all(
         "Leave Block List Date",
         filters={
             "parent": ["in", block_list_names],
@@ -41,12 +41,25 @@ def validate_leave_block(doc, method=None):
         fields=["block_date"]
     )
 
-    if blocked_dates:
-        dates = ", ".join(str(d.block_date) for d in blocked_dates)
+    blocked_dates = {getdate(r.block_date) for r in blocked_rows}
 
-        frappe.throw(
-            f"Leave cannot be applied on blocked date(s): {dates}"
-        )
+    if not blocked_dates:
+        return
+
+    # Start / end day may not be a blocked day.
+    if from_date in blocked_dates:
+        frappe.throw(f"Leave cannot start on a blocked day ({from_date}). Choose a different start date.")
+
+    if to_date in blocked_dates:
+        frappe.throw(f"Leave cannot end on a blocked day ({to_date}). Choose a different end date.")
+
+    # Exclude interior blocked days from the leave-day count.
+    total_days = date_diff(to_date, from_date) + 1 - len(blocked_dates)
+
+    if getattr(doc, "half_day", 0) and total_days > 0:
+        total_days -= 0.5
+
+    doc.total_leave_days = total_days if total_days > 0 else 0
 
 def pass_requirement(doc, event):
     try:
