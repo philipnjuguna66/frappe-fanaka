@@ -183,23 +183,11 @@ doc_events = {
 # Scheduled Tasks
 # ---------------
 
-# scheduler_events = {
-# 	"all": [
-# 		"fanaka_app.tasks.all"
-# 	],
-# 	"daily": [
-# 		"fanaka_app.tasks.daily"
-# 	],
-# 	"hourly": [
-# 		"fanaka_app.tasks.hourly"
-# 	],
-# 	"weekly": [
-# 		"fanaka_app.tasks.weekly"
-# 	],
-# 	"monthly": [
-# 		"fanaka_app.tasks.monthly"
-# 	],
-# }
+scheduler_events = {
+	"daily": [
+		"fanaka_app.api.expiry_reminders.run"
+	],
+}
 
 # Testing
 # -------
