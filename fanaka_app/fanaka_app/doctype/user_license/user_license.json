@@ -11,6 +11,7 @@
   "provider_type",
   "code",
   "expiry_date",
+  "vehicle",
   "disabled"
  ],
  "fields": [
@@ -54,6 +55,14 @@
    "in_list_view": 1,
    "label": "Expiry Date",
    "reqd": 1
+  },
+  {
+   "fieldname": "vehicle",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Vehicle",
+   "options": "Vehicle"
   },
   {
    "default": "0",
