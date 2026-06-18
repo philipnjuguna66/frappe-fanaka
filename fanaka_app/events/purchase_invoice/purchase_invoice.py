@@ -27,7 +27,14 @@ def create_purchase_invoice(doc, event):
     serial = re.sub(r"[\W]+", "_", (project.project_name or project.name).lower()).strip("_")
 
     for item in doc.items:
-        item.serial_no = serial
         item.project = doc.project
         if project_cost_center and not item.get("cost_center"):
             item.cost_center = project_cost_center
+
+        # Serialised items need either a Serial & Batch Bundle or the plain
+        # serial_no field. Use the plain field (use_serial_batch_fields = 1) so
+        # no Serial No Series is required on the item.
+        has_serial_no = frappe.db.get_value("Item", item.item_code, "has_serial_no")
+        if has_serial_no:
+            item.use_serial_batch_fields = 1
+            item.serial_no = serial
