@@ -128,8 +128,12 @@ def get_p9_records(employee, year, company=None):
 
 		# Taxable income = gross - allowable deductions.
 		# HELB is treated the same as AHL (deducted from taxable).
-		allowable = row["nssf"] + row["shif"] + row["ahl"] + row["helb"]
-		row["taxable"] = max(flt(row["gross"]) - allowable, 0.0)
+		# If no PAYE was withheld for the month, taxable income is 0.
+		if flt(row["paye"]):
+			allowable = row["nssf"] + row["shif"] + row["ahl"] + row["helb"]
+			row["taxable"] = max(flt(row["gross"]) - allowable, 0.0)
+		else:
+			row["taxable"] = 0.0
 
 	totals = _blank_row("Totals")
 	for row in rows:
