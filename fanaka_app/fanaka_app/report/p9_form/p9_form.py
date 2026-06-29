@@ -33,8 +33,6 @@ def get_columns():
 		{"label": _("SHIF"), "fieldname": "shif", **money},
 		{"label": _("AHL"), "fieldname": "ahl", **money},
 		{"label": _("Taxable Income"), "fieldname": "taxable", **money},
-		{"label": _("Personal Relief"), "fieldname": "personal_relief", **money},
-		{"label": _("Insurance Relief"), "fieldname": "insurance_relief", **money},
 		{"label": _("Net Payee (PAYE)"), "fieldname": "paye", **money},
 		{"label": _("Net Pay"), "fieldname": "net_pay", **money},
 	]

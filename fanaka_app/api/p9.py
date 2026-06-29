@@ -12,10 +12,6 @@ import frappe
 from frappe import _
 from frappe.utils import flt, getdate
 
-# Statutory monthly personal relief (KShs). Used as fallback when no explicit
-# "Personal Relief" salary component exists but PAYE was charged.
-DEFAULT_PERSONAL_RELIEF = 2400.0
-
 # Keyword -> P9 bucket. Matched (case-insensitive) against both the salary
 # component name and its abbreviation. First matching bucket wins.
 DEDUCTION_KEYWORDS = {
@@ -24,8 +20,6 @@ DEDUCTION_KEYWORDS = {
 	"nhif": ["nhif", "national hospital", "hospital insurance"],
 	"ahl": ["ahl", "affordable housing", "housing levy"],
 	"paye": ["paye", "p.a.y.e", "income tax", "pay as you earn"],
-	"insurance_relief": ["insurance relief"],
-	"personal_relief": ["personal relief"],
 }
 
 MONTHS = list(calendar.month_name)[1:]  # ["January", ... "December"]
@@ -55,8 +49,6 @@ def _blank_row(month_label):
 		"shif": 0.0,
 		"ahl": 0.0,
 		"taxable": 0.0,
-		"personal_relief": 0.0,
-		"insurance_relief": 0.0,
 		"paye": 0.0,
 		"net_pay": 0.0,
 	}
@@ -101,8 +93,6 @@ def get_p9_records(employee, year, company=None):
 	)
 
 	rows = [_blank_row(m) for m in MONTHS]
-	has_personal_relief_component = False
-	paye_charged_any = False
 
 	for slip in slips:
 		month_idx = getdate(slip.end_date).month - 1
@@ -132,21 +122,13 @@ def get_p9_records(employee, year, company=None):
 			bucket = _match_bucket(d.salary_component, d.abbr)
 			if bucket == "paye":
 				row["paye"] += flt(d.amount)
-				paye_charged_any = True
-			elif bucket == "personal_relief":
-				row["personal_relief"] += flt(d.amount)
-				has_personal_relief_component = True
-			elif bucket in ("nssf", "nhif", "shif", "ahl", "insurance_relief"):
+			elif bucket in ("nssf", "nhif", "shif", "ahl"):
 				row[bucket] += flt(d.amount)
 			# unmatched deductions are ignored for P9 purposes
 
 		# Taxable income = gross - allowable statutory deductions.
 		allowable = row["nssf"] + row["nhif"] + row["shif"] + row["ahl"]
 		row["taxable"] = max(flt(row["gross"]) - allowable, 0.0)
-
-		# Fallback personal relief: KRA grants 2,400/month when PAYE applies.
-		if not has_personal_relief_component and flt(row["paye"]) > 0:
-			row["personal_relief"] = DEFAULT_PERSONAL_RELIEF
 
 	totals = _blank_row("Totals")
 	for row in rows:

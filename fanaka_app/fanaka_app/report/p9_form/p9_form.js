@@ -88,8 +88,6 @@ function p9_open_print_card(d) {
 			<td>${p9_fmt(m.shif)}</td>
 			<td>${p9_fmt(m.ahl)}</td>
 			<td>${p9_fmt(m.taxable)}</td>
-			<td>${p9_fmt(m.personal_relief)}</td>
-			<td>${p9_fmt(m.insurance_relief)}</td>
 			<td>${p9_fmt(m.paye)}</td>
 			<td>${p9_fmt(m.net_pay)}</td>
 		</tr>`
@@ -108,8 +106,6 @@ function p9_open_print_card(d) {
 			<td>${p9_fmt(t.shif)}</td>
 			<td>${p9_fmt(t.ahl)}</td>
 			<td>${p9_fmt(t.taxable)}</td>
-			<td>${p9_fmt(t.personal_relief)}</td>
-			<td>${p9_fmt(t.insurance_relief)}</td>
 			<td>${p9_fmt(t.paye)}</td>
 			<td>${p9_fmt(t.net_pay)}</td>
 		</tr>`;
@@ -174,14 +170,12 @@ function p9_open_print_card(d) {
 				<th colspan="3">Gross Pay (Kshs.)</th>
 				<th colspan="4">Allowable Deductions (Kshs.)</th>
 				<th rowspan="2">Taxable Income</th>
-				<th colspan="2">Reliefs (Kshs.)</th>
 				<th rowspan="2">Net Payee (PAYE)</th>
 				<th rowspan="2">Net Pay</th>
 			</tr>
 			<tr>
 				<th>Basic Salary</th><th>Benefits</th><th>Total Gross</th>
 				<th>NSSF</th><th>NHIF</th><th>SHIF</th><th>AHL</th>
-				<th>Personal Relief</th><th>Insurance Relief</th>
 			</tr>
 		</thead>
 		<tbody>
