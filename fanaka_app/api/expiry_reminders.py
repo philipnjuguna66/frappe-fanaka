@@ -36,11 +36,11 @@ def _remind_vehicles(targets):
         "Vehicle",
         filters={"end_date": ["in", list(targets.keys())]},
         fields=["name", "license_plate", "make", "model", "end_date",
-                "employee", "insurance_company"],
+                "notify_employee", "employee", "insurance_company"],
     )
 
     for v in rows:
-        email = _employee_email(v.employee)
+        email = _employee_email(v.notify_employee or v.employee)
         if not email:
             frappe.logger().info(f"Vehicle {v.name}: no employee email, skipped")
             continue
@@ -65,11 +65,11 @@ def _remind_vehicle_inspection(targets):
         "Vehicle",
         filters={"inspection_expiry_date": ["in", list(targets.keys())]},
         fields=["name", "license_plate", "make", "model", "inspection_expiry_date",
-                "inspection_cert_no", "employee"],
+                "inspection_cert_no", "notify_employee", "employee"],
     )
 
     for v in rows:
-        email = _employee_email(v.employee)
+        email = _employee_email(v.notify_employee or v.employee)
         if not email:
             frappe.logger().info(f"Vehicle {v.name}: no employee email, skipped")
             continue
