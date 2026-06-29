@@ -1,10 +1,11 @@
-"""Daily expiry reminders for vehicle insurance and driver licences.
+"""Daily expiry reminders for vehicle insurance, vehicle inspection and driver licences.
 
 Scheduled via ``scheduler_events.daily`` in hooks.py. For every Vehicle whose
-insurance (``end_date``) or Driver whose licence (``expiry_date``) falls due in
-exactly one month, in seven days, or today, an email is sent to the linked
-Employee. Matching on the exact milestone date means each record is mailed once
-per milestone without any extra bookkeeping.
+insurance (``end_date``) or inspection (``inspection_expiry_date``) falls due, or
+Driver whose licence (``expiry_date``) falls due in exactly one month, in seven
+days, or today, an email is sent to the linked Employee. Matching on the exact
+milestone date means each record is mailed once per milestone without any extra
+bookkeeping.
 """
 
 import frappe
@@ -26,6 +27,7 @@ def run():
     targets = {str(add_days(today, days)): label for days, label in MILESTONES.items()}
 
     _remind_vehicles(targets)
+    _remind_vehicle_inspection(targets)
     _remind_drivers(targets)
 
 
@@ -53,6 +55,35 @@ def _remind_vehicles(targets):
             body=(
                 f"<p>The insurance{insurer} for vehicle <b>{vehicle}</b> "
                 f"expires <b>{label}</b> ({formatdate(v.end_date)}).</p>"
+                f"<p>Please arrange renewal.</p>"
+            ),
+        )
+
+
+def _remind_vehicle_inspection(targets):
+    rows = frappe.get_all(
+        "Vehicle",
+        filters={"inspection_expiry_date": ["in", list(targets.keys())]},
+        fields=["name", "license_plate", "make", "model", "inspection_expiry_date",
+                "inspection_cert_no", "employee"],
+    )
+
+    for v in rows:
+        email = _employee_email(v.employee)
+        if not email:
+            frappe.logger().info(f"Vehicle {v.name}: no employee email, skipped")
+            continue
+
+        label = targets.get(str(getdate(v.inspection_expiry_date)))
+        vehicle = " ".join(filter(None, [v.license_plate or v.name, v.make, v.model]))
+        cert = f" (cert {v.inspection_cert_no})" if v.inspection_cert_no else ""
+
+        _send(
+            email,
+            subject=f"Vehicle inspection expiring {label}: {v.license_plate or v.name}",
+            body=(
+                f"<p>The inspection certificate{cert} for vehicle <b>{vehicle}</b> "
+                f"expires <b>{label}</b> ({formatdate(v.inspection_expiry_date)}).</p>"
                 f"<p>Please arrange renewal.</p>"
             ),
         )
