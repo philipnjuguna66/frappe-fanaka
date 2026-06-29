@@ -17,8 +17,8 @@ from frappe.utils import flt, getdate
 DEDUCTION_KEYWORDS = {
 	"nssf": ["nssf", "national social security"],
 	"shif": ["shif", "shia", "social health"],
-	"nhif": ["nhif", "national hospital", "hospital insurance"],
 	"ahl": ["ahl", "affordable housing", "housing levy"],
+	"helb": ["helb", "higher education"],
 	"paye": ["paye", "p.a.y.e", "income tax", "pay as you earn"],
 }
 
@@ -45,9 +45,9 @@ def _blank_row(month_label):
 		"benefits": 0.0,
 		"gross": 0.0,
 		"nssf": 0.0,
-		"nhif": 0.0,
 		"shif": 0.0,
 		"ahl": 0.0,
+		"helb": 0.0,
 		"taxable": 0.0,
 		"paye": 0.0,
 		"net_pay": 0.0,
@@ -122,12 +122,13 @@ def get_p9_records(employee, year, company=None):
 			bucket = _match_bucket(d.salary_component, d.abbr)
 			if bucket == "paye":
 				row["paye"] += flt(d.amount)
-			elif bucket in ("nssf", "nhif", "shif", "ahl"):
+			elif bucket in ("nssf", "shif", "ahl", "helb"):
 				row[bucket] += flt(d.amount)
 			# unmatched deductions are ignored for P9 purposes
 
-		# Taxable income = gross - allowable statutory deductions.
-		allowable = row["nssf"] + row["nhif"] + row["shif"] + row["ahl"]
+		# Taxable income = gross - tax-allowable statutory deductions.
+		# HELB is a loan repayment and is NOT deductible for tax purposes.
+		allowable = row["nssf"] + row["shif"] + row["ahl"]
 		row["taxable"] = max(flt(row["gross"]) - allowable, 0.0)
 
 	totals = _blank_row("Totals")

@@ -84,9 +84,9 @@ function p9_open_print_card(d) {
 			<td>${p9_fmt(m.benefits)}</td>
 			<td>${p9_fmt(m.gross)}</td>
 			<td>${p9_fmt(m.nssf)}</td>
-			<td>${p9_fmt(m.nhif)}</td>
 			<td>${p9_fmt(m.shif)}</td>
 			<td>${p9_fmt(m.ahl)}</td>
+			<td>${p9_fmt(m.helb)}</td>
 			<td>${p9_fmt(m.taxable)}</td>
 			<td>${p9_fmt(m.paye)}</td>
 			<td>${p9_fmt(m.net_pay)}</td>
@@ -102,9 +102,9 @@ function p9_open_print_card(d) {
 			<td>${p9_fmt(t.benefits)}</td>
 			<td>${p9_fmt(t.gross)}</td>
 			<td>${p9_fmt(t.nssf)}</td>
-			<td>${p9_fmt(t.nhif)}</td>
 			<td>${p9_fmt(t.shif)}</td>
 			<td>${p9_fmt(t.ahl)}</td>
+			<td>${p9_fmt(t.helb)}</td>
 			<td>${p9_fmt(t.taxable)}</td>
 			<td>${p9_fmt(t.paye)}</td>
 			<td>${p9_fmt(t.net_pay)}</td>
@@ -175,7 +175,7 @@ function p9_open_print_card(d) {
 			</tr>
 			<tr>
 				<th>Basic Salary</th><th>Benefits</th><th>Total Gross</th>
-				<th>NSSF</th><th>NHIF</th><th>SHIF</th><th>AHL</th>
+				<th>NSSF</th><th>SHIF</th><th>AHL</th><th>HELB</th>
 			</tr>
 		</thead>
 		<tbody>
