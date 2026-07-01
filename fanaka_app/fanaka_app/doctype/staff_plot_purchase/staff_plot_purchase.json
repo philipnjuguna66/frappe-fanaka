@@ -85,9 +85,11 @@
   },
   {
    "fieldname": "bank",
-   "fieldtype": "Data",
+   "fieldtype": "Link",
    "label": "Bank / Account",
-   "description": "mis-erp payment method / bank name to book the payment under (e.g. Salary)"
+   "options": "Account",
+   "link_filters": "[[\"Account\",\"account_type\",\"in\",[\"Bank\",\"Cash\"]]]",
+   "description": "Bank/cash account from the Chart of Accounts this payment is booked under."
   },
   {
    "fieldname": "reference_section",
