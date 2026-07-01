@@ -5,6 +5,17 @@ const PLOT_QUERY =
 	"fanaka_app.fanaka_app.doctype.staff_plot_purchase.staff_plot_purchase.get_project_plots";
 
 frappe.ui.form.on("Staff Plot Purchase", {
+	refresh(frm) {
+		// Default the payroll date to the last day of the previous month
+		// (editable). month_start() = 1st of this month, minus 1 day.
+		if (frm.is_new() && !frm.doc.payroll_date) {
+			frm.set_value(
+				"payroll_date",
+				frappe.datetime.add_days(frappe.datetime.month_start(), -1)
+			);
+		}
+	},
+
 	setup(frm) {
 		// Plots of the selected sale order, else the selected project. Shows all
 		// statuses (available + sold, sold plots show the buyer).

@@ -41,10 +41,10 @@
    "reqd": 1
   },
   {
-   "default": "Today",
    "fieldname": "payroll_date",
    "fieldtype": "Date",
    "label": "Payroll Date",
+   "description": "Usually the last day of the previous month.",
    "reqd": 1
   },
   {

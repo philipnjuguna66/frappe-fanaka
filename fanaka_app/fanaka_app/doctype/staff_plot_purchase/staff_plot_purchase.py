@@ -6,6 +6,7 @@ import requests
 from frappe.model.document import Document
 
 MIS_ERP_ENDPOINT = "/api/v1/webhook/staff-plot-payment"
+MIS_ERP_VOID_ENDPOINT = "/api/v1/webhook/staff-plot-payment/void"
 
 
 @frappe.whitelist()
@@ -64,6 +65,9 @@ class StaffPlotPurchase(Document):
             if ad.docstatus == 1:
                 ad.cancel()
 
+        # Reverse the payment recorded in mis-erp.
+        self.notify_mis_erp(void=True)
+
     def create_additional_salary(self):
         if self.additional_salary:
             return
@@ -86,7 +90,7 @@ class StaffPlotPurchase(Document):
 
         self.db_set("additional_salary", additional_salary.name)
 
-    def notify_mis_erp(self):
+    def notify_mis_erp(self, void=False):
         plot = frappe.db.get_value(
             "Plot", self.plot, ["plot_id", "project_name", "plot_no"], as_dict=True
         )
@@ -111,9 +115,11 @@ class StaffPlotPurchase(Document):
             "comment": f"Staff Plot Purchase {self.name} for {self.staff}",
         }
 
+        endpoint = MIS_ERP_VOID_ENDPOINT if void else MIS_ERP_ENDPOINT
+
         try:
             response = requests.post(
-                base_url.rstrip("/") + MIS_ERP_ENDPOINT,
+                base_url.rstrip("/") + endpoint,
                 json=payload,
                 headers={"X-Webhook-Secret": secret, "Accept": "application/json"},
                 timeout=30,
