@@ -10,6 +10,7 @@
   "salary_component",
   "payroll_date",
   "column_break_1",
+  "sale_order",
   "project",
   "plot",
   "amount",
@@ -17,6 +18,9 @@
   "payment_method",
   "bank",
   "reference_section",
+  "plot_id",
+  "plot_no",
+  "project_name",
   "additional_salary",
   "amended_from"
  ],
@@ -46,6 +50,13 @@
   {
    "fieldname": "column_break_1",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "sale_order",
+   "fieldtype": "Link",
+   "label": "Sale Order",
+   "options": "Sales Order",
+   "description": "Optional: pick the sale order to restrict the plot list to its plots."
   },
   {
    "fieldname": "project",
@@ -94,6 +105,30 @@
    "fieldname": "reference_section",
    "fieldtype": "Section Break",
    "label": "References"
+  },
+  {
+   "fetch_from": "plot.plot_id",
+   "fieldname": "plot_id",
+   "fieldtype": "Data",
+   "label": "Plot ID (mis-erp)",
+   "read_only": 1,
+   "fetch_if_empty": 0
+  },
+  {
+   "fetch_from": "plot.plot_no",
+   "fieldname": "plot_no",
+   "fieldtype": "Data",
+   "label": "Plot No",
+   "read_only": 1,
+   "fetch_if_empty": 0
+  },
+  {
+   "fetch_from": "plot.project_name",
+   "fieldname": "project_name",
+   "fieldtype": "Data",
+   "label": "Project Name",
+   "read_only": 1,
+   "fetch_if_empty": 0
   },
   {
    "fieldname": "additional_salary",
