@@ -1,18 +1,21 @@
 // Copyright (c) 2026, Philip Njuguna and contributors
 // For license information, please see license.txt
 
+const PLOT_QUERY =
+	"fanaka_app.fanaka_app.doctype.staff_plot_purchase.staff_plot_purchase.get_project_plots";
+
 frappe.ui.form.on("Staff Plot Purchase", {
 	setup(frm) {
-		// Restrict the plot list: to the selected sale order's plots if set,
-		// otherwise to the selected project. Search still works by plot_no.
+		// Plots of the selected sale order, else the selected project. Shows all
+		// statuses (available + sold, sold plots show the buyer).
 		frm.set_query("plot", () => {
+			const filters = {};
 			if (frm._sale_order_plots && frm._sale_order_plots.length) {
-				return { filters: { name: ["in", frm._sale_order_plots] } };
+				filters.plots = frm._sale_order_plots;
+			} else if (frm.doc.project) {
+				filters.project = frm.doc.project;
 			}
-			if (frm.doc.project) {
-				return { filters: { project: frm.doc.project } };
-			}
-			return {};
+			return { query: PLOT_QUERY, filters };
 		});
 	},
 
@@ -28,18 +31,13 @@ frappe.ui.form.on("Staff Plot Purchase", {
 			return;
 		}
 
-		// Pull the plots referenced on the sale order's item lines.
-		frappe.db
-			.get_doc("Sales Order", frm.doc.sale_order)
-			.then((so) => {
-				const plots = (so.items || [])
-					.map((row) => row.custom_plot)
-					.filter(Boolean);
-				frm._sale_order_plots = plots;
-
-				if (plots.length === 1) {
-					frm.set_value("plot", plots[0]);
-				}
-			});
+		// Pull the plots referenced on the sale order's item lines (any docstatus).
+		frappe.db.get_doc("Sales Order", frm.doc.sale_order).then((so) => {
+			const plots = (so.items || []).map((row) => row.custom_plot).filter(Boolean);
+			frm._sale_order_plots = plots;
+			if (plots.length === 1) {
+				frm.set_value("plot", plots[0]);
+			}
+		});
 	},
 });

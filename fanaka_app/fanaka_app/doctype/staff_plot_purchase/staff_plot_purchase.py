@@ -8,6 +8,50 @@ from frappe.model.document import Document
 MIS_ERP_ENDPOINT = "/api/v1/webhook/staff-plot-payment"
 
 
+@frappe.whitelist()
+@frappe.validate_and_sanitize_search_inputs
+def get_project_plots(doctype, txt, searchfield, start, page_len, filters):
+    """Plot picker for Staff Plot Purchase. Lists plots of the selected project
+    (matched by project link OR project_name, since plots may only carry the
+    name) or of a specific plot list (from a sale order). Shows every status and
+    appends the buyer for sold plots.
+    """
+    filters = frappe.parse_json(filters) if isinstance(filters, str) else (filters or {})
+
+    conditions = []
+    values = {"txt": f"%{txt or ''}%", "start": start, "page_len": page_len}
+
+    if filters.get("plots"):
+        placeholders = ", ".join([f"%(plot{i})s" for i in range(len(filters["plots"]))])
+        for i, p in enumerate(filters["plots"]):
+            values[f"plot{i}"] = p
+        conditions.append(f"p.name in ({placeholders})")
+    elif filters.get("project"):
+        values["project"] = filters["project"]
+        values["project_name"] = frappe.db.get_value("Project", filters["project"], "project_name")
+        conditions.append("(p.project = %(project)s or p.project_name = %(project_name)s)")
+
+    where = " and ".join(conditions) if conditions else "1 = 1"
+
+    return frappe.db.sql(
+        f"""
+        select p.name,
+               concat(
+                   coalesce(p.plot_no, p.name),
+                   ' — ', coalesce(p.status, ''),
+                   case when p.status = 'SOLD' and coalesce(p.customer_name, '') != ''
+                        then concat(' · ', p.customer_name) else '' end
+               ) as description
+        from `tabPlot` p
+        where {where}
+          and (p.plot_no like %(txt)s or p.name like %(txt)s or p.customer_name like %(txt)s)
+        order by p.plot_no asc
+        limit %(start)s, %(page_len)s
+        """,
+        values,
+    )
+
+
 class StaffPlotPurchase(Document):
     def on_submit(self):
         self.create_additional_salary()
