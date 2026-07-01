@@ -30,7 +30,6 @@
    "reqd": 1
   },
   {
-   "default": "Staff Plot Purchase",
    "fieldname": "salary_component",
    "fieldtype": "Link",
    "label": "Salary Component",
