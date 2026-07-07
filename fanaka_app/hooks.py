@@ -132,7 +132,7 @@ doctype_js = {
 # }
 
 override_doctype_class = {
-	#"Leave Application": "fanaka_app.overrides.leave_application.FanakaLeaveApplication"
+	"Leave Application": "fanaka_app.overrides.leave_application.FanakaLeaveApplication",
 	"Stock Entry": "fanaka_app.overrides.stock_entry.StockEntry"
 }
 

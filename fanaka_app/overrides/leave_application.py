@@ -1,31 +1,22 @@
 import frappe
 from hrms.hr.doctype.leave_application.leave_application import LeaveApplication
-from frappe.utils import date_diff, today
+
 
 class FanakaLeaveApplication(LeaveApplication):
-    def before_insert(self):
-        # Call the parent validate method to retain existing logic
-        super().validate()
+	"""
+	Blocked days (e.g. Sundays / holidays synced to Leave Block Lists) may fall
+	inside a leave range. Core HRMS raises a warning for them and throws
+	`LeaveDayBlockedError` when approving a leave that touches a block date.
 
-        try:
-            frappe.log_error(f"leave application validations triggered for {self.leave_type} | Name: {self.name}", "Custom Hook Log")
-            if (self.leave_type.upper() == "ANNUAL LEAVE"):
-                if self.from_date:
-                    days_to_leave_start = date_diff(self.from_date, today())
-                    if days_to_leave_start < 1:
-                        frappe.throw("You can only apply for Annual Leave at least 3 days in advance.")
+	Fanaka policy: blocked days inside the range are simply not counted as leave
+	days (handled in events.leave_applications.validate_leave_block). Approving
+	or editing such a leave must not raise. So both block-day gates are disabled.
+	"""
 
+	def show_block_day_warning(self):
+		# No warning toast for block dates inside the leave range.
+		pass
 
-            # Check for existing leave applications in "Draft" status
-            existing_draft_leaves = frappe.db.count(
-                'Leave Application',
-                filters={
-                    'employee': self.employee,
-                    'status': 'Open'
-                }
-            )
-            if existing_draft_leaves >= 2:
-                frappe.throw("You cannot create a third Annual Leave application while previous ones are still in 'Open' status.")
-        except Exception as e:
-            frappe.log_error(f"Error in custom_before_save: {str(e)}", "Custom Hook Error")
-            raise
+	def validate_block_days(self):
+		# Do not throw when approving a leave that spans a block date.
+		pass
