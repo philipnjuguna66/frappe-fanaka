@@ -8,9 +8,9 @@
   "enable_ai_screening",
   "shortlist_threshold_score",
   "column_break_screening",
-  "openrouter_api_key",
-  "openrouter_provider",
-  "openrouter_model",
+  "llm_provider",
+  "llm_model",
+  "llm_api_key",
   "regret_section",
   "auto_send_regret_emails",
   "regret_threshold_score",
@@ -52,23 +52,25 @@
    "fieldtype": "Column Break"
   },
   {
-   "description": "Stored encrypted. Create one at openrouter.ai/keys",
-   "fieldname": "openrouter_api_key",
-   "fieldtype": "Password",
-   "label": "OpenRouter API Key"
-  },
-  {
-   "description": "Refreshed from OpenRouter's public model list.",
-   "fieldname": "openrouter_provider",
+   "description": "Anthropic, OpenAI and Google are called directly. OpenRouter proxies many vendors behind one API/key -- pick it if you want a model not otherwise listed.",
+   "fieldname": "llm_provider",
    "fieldtype": "Select",
-   "label": "Provider"
+   "label": "Provider",
+   "options": "Anthropic\nOpenAI\nGoogle\nOpenRouter"
   },
   {
-   "depends_on": "openrouter_provider",
-   "description": "Model used to score applicants. Saved as the full <code>provider/model</code> slug.",
-   "fieldname": "openrouter_model",
+   "depends_on": "llm_provider",
+   "description": "Model used to score applicants. Options are fetched live from the selected provider.",
+   "fieldname": "llm_model",
    "fieldtype": "Select",
    "label": "Model"
+  },
+  {
+   "depends_on": "llm_provider",
+   "description": "Stored encrypted. Must be a key for the Provider selected above -- switching provider does not reuse this key.",
+   "fieldname": "llm_api_key",
+   "fieldtype": "Password",
+   "label": "API Key"
   },
   {
    "fieldname": "regret_section",

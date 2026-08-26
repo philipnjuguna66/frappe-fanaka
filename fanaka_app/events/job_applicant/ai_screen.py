@@ -2,19 +2,19 @@
 
 Runs as a background job, queued by ``fanaka_app.events.job_applicant.job_applicant``
 whenever a resume or cover letter is uploaded. Extracts resume text, sends it to
-OpenRouter alongside the Job Opening description, and writes back an aggregate score plus
-a per-category breakdown.
+whichever LLM provider is configured in Recruitment AI Settings (see
+``fanaka_app.api.llm_providers``) alongside the Job Opening description, and writes back
+an aggregate score plus a per-category breakdown.
 
-See specs/recruitment_ai_screening.md (Phase 2) for the plan this implements.
+See specs/recruitment_ai_screening.md (Phase 1/2) for the plan this implements.
 """
 
-import json
 import os
 
 import frappe
 from frappe.utils import flt, now_datetime, strip_html_tags
 
-from fanaka_app.api.openrouter import chat_completion
+from fanaka_app.api.llm_providers import get_adapter
 from fanaka_app.fanaka_app.doctype.recruitment_ai_settings.recruitment_ai_settings import get_settings
 
 SCORE_CATEGORIES = ("Skills", "Experience", "Education")
@@ -61,9 +61,10 @@ def analyze_candidate(job_applicant: str):
 	job_description = _job_opening_description(doc.job_title)
 
 	try:
-		result = chat_completion(
-			model=settings.openrouter_model,
-			api_key=settings.get_password("openrouter_api_key", raise_exception=False),
+		adapter = get_adapter(settings.llm_provider)
+		result = adapter.chat_completion(
+			model=settings.llm_model,
+			api_key=settings.get_password("llm_api_key", raise_exception=False),
 			messages=[
 				{"role": "system", "content": SYSTEM_PROMPT},
 				{
