@@ -42,4 +42,33 @@ frappe.ui.form.on("Recruitment AI Settings", {
 			},
 		});
 	},
+
+	send_test_email_button(frm) {
+		if (!frm.doc.test_email_template) {
+			frappe.msgprint(__("Select a Template to Test first."));
+			return;
+		}
+		if (!frm.doc.test_email_applicant) {
+			frappe.msgprint(__("Select a Job Applicant to render the placeholders against first."));
+			return;
+		}
+		frappe.call({
+			method: "fanaka_app.api.recruitment_emails.send_test_email",
+			args: {
+				template: frm.doc.test_email_template,
+				job_applicant: frm.doc.test_email_applicant,
+				recipient: frm.doc.test_email_recipient,
+			},
+			freeze: true,
+			freeze_message: __("Sending test email..."),
+			callback(r) {
+				if (r.message) {
+					frappe.show_alert({
+						message: __("Test email sent to {0}", [r.message]),
+						indicator: "green",
+					});
+				}
+			},
+		});
+	},
 });

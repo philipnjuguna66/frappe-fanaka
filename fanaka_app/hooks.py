@@ -46,6 +46,9 @@ doctype_js = {
 	"Stock Entry": "public/js/stock_entry_custom.js",
 	"Job Applicant": "public/js/job_applicant.js",
 }
+doctype_list_js = {
+	"Job Applicant": "public/js/job_applicant_list.js",
+}
 
 # Svg Icons
 # ------------------
@@ -188,7 +191,8 @@ doc_events = {
 
 scheduler_events = {
 	"daily": [
-		"fanaka_app.api.expiry_reminders.run"
+		"fanaka_app.api.expiry_reminders.run",
+		"fanaka_app.api.regret_emails.run"
 	],
 }
 
