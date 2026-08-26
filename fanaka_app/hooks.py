@@ -173,6 +173,9 @@ doc_events = {
 	"Project": {
 		"validate": "fanaka_app.events.project.project.validate",
 		"after_insert": "fanaka_app.events.project.project.after_insert"
+	},
+	"Job Applicant": {
+		"on_update": "fanaka_app.events.job_applicant.job_applicant.on_update"
 	}
 
 }
