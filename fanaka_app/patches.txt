@@ -7,3 +7,4 @@
 fanaka_app.patches.v1_0.add_recruitment_ai_fields
 fanaka_app.patches.v1_0.add_ai_score_card_field
 fanaka_app.patches.v1_0.add_reporting_fields
+fanaka_app.patches.v1_0.add_job_opening_qualifications

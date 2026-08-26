@@ -18,6 +18,7 @@ def opening():
             "department",
             "route",
             "description",
+            "custom_qualifications as qualifications",
             "posted_on",
             "closed_on",
             "closes_on"

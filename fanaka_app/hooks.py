@@ -315,7 +315,8 @@ fixtures = [
 				"Job Applicant-custom_regret_email_sent_on",
 				"Job Applicant-custom_ai_analysis_summary",
 				"Job Applicant-custom_ai_score_breakdown",
-				"Job Applicant-custom_ai_score_card_html"
+				"Job Applicant-custom_ai_score_card_html",
+				"Job Opening-custom_qualifications"
 			]]
 		]
 	},

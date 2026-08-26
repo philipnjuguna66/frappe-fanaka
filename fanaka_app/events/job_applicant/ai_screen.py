@@ -3,10 +3,10 @@
 Runs as a background job, queued by ``fanaka_app.events.job_applicant.job_applicant``
 whenever a resume or cover letter is uploaded. Extracts resume text, sends it to
 whichever LLM provider is configured in Recruitment AI Settings (see
-``fanaka_app.api.llm_providers``) alongside the Job Opening description, and writes back
-an aggregate score plus a per-category breakdown.
+``fanaka_app.api.llm_providers``) alongside the Job Opening's Qualifications + Description,
+and writes back an aggregate score plus a per-category breakdown.
 
-See specs/recruitment_ai_screening.md (Phase 1/2) for the plan this implements.
+See specs/recruitment_ai_screening.md (Phase 1/2, Phase 7) for the plan this implements.
 """
 
 import os
@@ -58,7 +58,7 @@ def analyze_candidate(job_applicant: str):
 		frappe.logger().info(f"Job Applicant {doc.name}: nothing to analyze (no resume/cover letter text)")
 		return
 
-	job_description = _job_opening_description(doc.job_title)
+	job_context = _job_opening_context(doc.job_title)
 
 	try:
 		adapter = get_adapter(settings.llm_provider)
@@ -70,7 +70,7 @@ def analyze_candidate(job_applicant: str):
 				{
 					"role": "user",
 					"content": (
-						f"JOB OPENING:\n{job_description or '(no description provided)'}\n\n"
+						f"JOB OPENING:\n{job_context or '(no description or qualifications provided)'}\n\n"
 						f"CANDIDATE COVER LETTER:\n{cover_letter_text or '(none provided)'}\n\n"
 						f"CANDIDATE RESUME:\n{resume_text or '(none provided)'}"
 					),
@@ -131,11 +131,27 @@ def _valid_breakdown_rows(breakdown) -> list[dict]:
 	return rows
 
 
-def _job_opening_description(job_title: str | None) -> str:
+def _job_opening_context(job_title: str | None) -> str:
+	"""Qualifications + Description, in that order -- Qualifications is the primary
+	screening signal (Description is written for the careers page and often padded
+	with "why join us" copy), with Description still included for role-summary context
+	(e.g. seniority level implied by the pitch). If Qualifications is empty (an opening
+	predating this field, or HR hasn't filled it in yet), this naturally reduces to just
+	Description -- no special-cased fallback branch needed.
+	"""
 	if not job_title:
 		return ""
-	description = frappe.db.get_value("Job Opening", job_title, "description")
-	return strip_html_tags(description) if description else ""
+
+	description, qualifications = frappe.db.get_value(
+		"Job Opening", job_title, ["description", "custom_qualifications"]
+	)
+
+	parts = []
+	if qualifications:
+		parts.append("Qualifications:\n" + strip_html_tags(qualifications))
+	if description:
+		parts.append("Description:\n" + strip_html_tags(description))
+	return "\n\n".join(parts)
 
 
 def _extract_resume_text(resume_attachment: str | None) -> str:

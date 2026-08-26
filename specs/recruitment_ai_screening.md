@@ -384,3 +384,76 @@ unset. This keeps all recruitment mail coming from one recognizable address.
 Phases 1–2 are the critical path. Phase 6 depends on Phase 3's approve/reject methods and
 Phase 4's send path, so it lands after both — it's the surface that ties them together, and is
 where HR actually works day to day. Phase 5 (reporting) is last and independent.
+
+---
+
+## Phase 7 — Structured Qualifications field (NEW, spans two repos)
+
+Added 2026-08-26, after the original 6 phases shipped and screening went live. Prompted by a
+real gap: `Job Opening.description` is written for humans browsing the careers page — often
+padded with "why join us" / perks copy — and is the *only* context `analyze_candidate` has ever
+had to score against. A distinct, structured Qualifications field gives the AI (and the public
+page) a cleaner signal of the actual bar, separate from the pitch.
+
+This phase touches **two separate codebases**:
+- `fanaka_app` (this repo) — Frappe side: the field itself, exposing it via the careers API,
+  and wiring it into the screening prompt
+- `~/sites/system/website/fanaka` — the public careers site, a Laravel app, **not part of
+  this repo**, reachable locally on this machine. It consumes `fanaka_app.api.job.opening`
+  through `App\Utils\Services\Frappe::jobOpening()` (5-minute cache) and renders it in
+  `resources/views/pages/careers/{index,show}.blade.php`. Confirmed live by reading both files
+  — `show.blade.php` currently has exactly one content section, "About the role", rendering
+  `$job->description`; `index.blade.php` doesn't render either field, so it needs no changes.
+
+### Frappe side — data model
+
+- New custom field on `Job Opening` (hrms's doctype, so Custom Field + fixtures whitelist
+  entry, same pattern as every `Job Applicant` custom field in Phase 1 — confirmed `Job
+  Opening` has no existing requirements/qualifications field of any kind):
+  - `custom_qualifications` (Text Editor — same fieldtype as `description`, so HR gets the
+    same rich-text/bullet-list editing UX they already know, matching the bulleted style in
+    the reference careers poster) — insert after `description`
+
+### Frappe side — expose to the careers API
+
+- `fanaka_app/api/job.py`'s `opening()` currently returns a fixed field list via
+  `frappe.get_all(..., fields=[...])` (confirmed, read live) — add `custom_qualifications`,
+  **aliased to `qualifications`** in the query (`frappe.get_all` supports `"fieldname as
+  alias"`) so the public JSON contract doesn't leak the internal `custom_` prefix and the
+  Laravel side gets a clean `$job->qualifications`.
+
+### Frappe side — screening prompt
+
+- `events/job_applicant/ai_screen.py`'s `_job_opening_description(job_title)` becomes
+  `_job_opening_context(job_title)`: fetch both `description` and `custom_qualifications` via
+  one `frappe.db.get_value(..., ["description", "custom_qualifications"])` call, strip HTML
+  from both, and combine as **Qualifications + Description** in the prompt (decided: cleaner
+  signal alone was considered, but role-summary context from Description still helps the model
+  judge fit, e.g. seniority level implied by the pitch). If `custom_qualifications` is empty
+  (an opening created before this phase, or HR hasn't filled it in yet), the combined context
+  is just `description` alone — this is the natural result of concatenating an empty string,
+  not a special-cased fallback branch, so screening keeps working through the transition
+  without erroring or scoring blind.
+
+### Laravel side — public page
+
+- `resources/views/pages/careers/show.blade.php`: add a second content section next to the
+  existing "About the role" card — "Requirements" (or "Qualifications"), rendering
+  `{!! $job->qualifications !!}` (same raw-HTML pattern already used for `$job->description`,
+  since both are Text Editor output), shown only `@if($job->qualifications)` so older openings
+  without it don't get an empty section.
+- **Nice-to-have, not required**: schema.org's `JobPosting` type has its own native
+  `qualifications` property — the existing JSON-LD block in `show.blade.php` already builds a
+  `Schema::jobPosting()` for SEO; add `->qualifications($job->qualifications)` there too, for
+  richer search-result snippets. Skip if `$job->qualifications` is empty.
+- No changes needed to `index.blade.php` (doesn't render either field) or `CareersController`
+  / `App\Utils\Services\Frappe` (already pass through whatever `opening()` returns — confirmed
+  live, no field allowlisting on the Laravel side).
+
+### Open item
+
+- Exact heading/placement for the new Laravel section ("Requirements" vs "Qualifications" vs
+  matching the poster's exact wording, where it sits relative to "About the role") — cosmetic,
+  can decide at build time rather than blocking the plan on it now.
+
+**No other open questions. Ready to build once approved.**
