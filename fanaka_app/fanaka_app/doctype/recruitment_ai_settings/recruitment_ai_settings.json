@@ -11,6 +11,7 @@
   "llm_provider",
   "llm_model",
   "llm_api_key",
+  "test_connection_button",
   "regret_section",
   "auto_send_regret_emails",
   "regret_threshold_score",
@@ -71,6 +72,13 @@
    "fieldname": "llm_api_key",
    "fieldtype": "Password",
    "label": "API Key"
+  },
+  {
+   "description": "Sends a trivial real request to the selected provider using the values currently in this form (even if not yet saved) and reports success or the exact error -- the fastest way to confirm Provider/Model/API Key are actually working together before any candidate is screened.",
+   "depends_on": "llm_provider",
+   "fieldname": "test_connection_button",
+   "fieldtype": "Button",
+   "label": "Test Connection"
   },
   {
    "fieldname": "regret_section",

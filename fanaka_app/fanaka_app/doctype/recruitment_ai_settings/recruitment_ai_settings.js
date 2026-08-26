@@ -7,6 +7,16 @@
 // it for every provider except OpenRouter (whose model list is public).
 const PROVIDERS_NEEDING_KEY_TO_LIST_MODELS = ["Anthropic", "OpenAI", "Google"];
 
+// After a save+reload, a Password field shows only a string of "*" placeholders in
+// frm.doc, never the real value -- sending that straight to the server as if it were
+// the real key breaks both the Model picker and Test Connection for any already-saved
+// non-OpenRouter provider. Both call sites below need "the real key, or nothing" --
+// this is the one place that decides which.
+function real_key_or_blank(frm) {
+	const value = frm.doc.llm_api_key || "";
+	return /^\*+$/.test(value) ? "" : value;
+}
+
 frappe.ui.form.on("Recruitment AI Settings", {
 	onload(frm) {
 		// Every Password-fieldtype control fires frappe.core.doctype.user.user.
@@ -21,10 +31,9 @@ frappe.ui.form.on("Recruitment AI Settings", {
 	},
 
 	refresh(frm) {
-		// OpenRouter needs no key, so it's safe/useful to refresh its list on load.
-		// Other providers only refresh when the user actively edits provider/key below,
-		// since a saved key shows as a masked placeholder on reload, not the real value.
-		if (frm.doc.llm_provider === "OpenRouter") {
+		// get_models() now falls back server-side to the saved key when none is passed,
+		// so this is safe to run unconditionally on every provider, not just OpenRouter.
+		if (frm.doc.llm_provider) {
 			frm.trigger("set_model_options");
 		}
 	},
@@ -45,7 +54,11 @@ frappe.ui.form.on("Recruitment AI Settings", {
 			frm.refresh_field("llm_model");
 			return;
 		}
-		if (PROVIDERS_NEEDING_KEY_TO_LIST_MODELS.includes(provider) && !frm.doc.llm_api_key) {
+		const api_key = real_key_or_blank(frm);
+		if (PROVIDERS_NEEDING_KEY_TO_LIST_MODELS.includes(provider) && !api_key && frm.doc.__islocal) {
+			// New, unsaved doc with no key typed yet -- nothing to fetch with. On a
+			// saved doc a blank api_key here is fine: get_models() falls back to the
+			// key already on file.
 			frm.set_df_property("llm_model", "options", []);
 			frm.refresh_field("llm_model");
 			return;
@@ -53,11 +66,44 @@ frappe.ui.form.on("Recruitment AI Settings", {
 
 		frappe.call({
 			method: "fanaka_app.api.llm_settings.get_models",
-			args: { provider, api_key: frm.doc.llm_api_key || "" },
+			args: { provider, api_key },
 			callback(r) {
 				const options = (r.message || []).map((m) => m.value);
 				frm.set_df_property("llm_model", "options", options);
 				frm.refresh_field("llm_model");
+			},
+		});
+	},
+
+	test_connection_button(frm) {
+		if (!frm.doc.llm_provider) {
+			frappe.msgprint(__("Select a Provider first."));
+			return;
+		}
+		if (!frm.doc.llm_model) {
+			frappe.msgprint(__("Select a Model first."));
+			return;
+		}
+		if (!frm.doc.llm_api_key) {
+			frappe.msgprint(__("Enter an API Key first."));
+			return;
+		}
+		frappe.call({
+			method: "fanaka_app.api.llm_settings.test_connection",
+			args: {
+				provider: frm.doc.llm_provider,
+				model: frm.doc.llm_model,
+				api_key: real_key_or_blank(frm),
+			},
+			freeze: true,
+			freeze_message: __("Testing connection..."),
+			callback(r) {
+				if (r.message && r.message.ok) {
+					frappe.show_alert({
+						message: __("Connection OK -- {0} responded correctly.", [frm.doc.llm_provider]),
+						indicator: "green",
+					});
+				}
 			},
 		});
 	},
