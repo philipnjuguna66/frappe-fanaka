@@ -22,6 +22,7 @@ BASE_URL = "https://api.openai.com/v1"
 
 
 def list_models(api_key: str) -> list[dict]:
+	api_key = (api_key or "").strip()
 	if not api_key:
 		frappe.throw(_("OpenAI API Key is required to list models."))
 
@@ -34,6 +35,7 @@ def list_models(api_key: str) -> list[dict]:
 
 
 def chat_completion(*, model: str, api_key: str, messages: list[dict], timeout: int = 90) -> dict:
+	api_key = (api_key or "").strip()
 	if not api_key:
 		frappe.throw(_("OpenAI API Key is not configured in Recruitment AI Settings."))
 	if not model:

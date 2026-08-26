@@ -94,3 +94,32 @@ def _get_shortlisted_by_ai(name: str):
 			)
 		)
 	return doc
+
+
+@frappe.whitelist()
+def reanalyze_candidate(name: str) -> str:
+	"""Manually re-run AI screening for one applicant.
+
+	Bypasses the "did resume/cover letter actually change" guard that gates the
+	automatic on_update trigger -- needed to recover after fixing a misconfigured
+	Recruitment AI Settings (wrong model, missing/blank API key, etc.) without having
+	to re-upload the resume just to re-trigger analysis.
+	"""
+	frappe.only_for(APPROVAL_ROLES)
+
+	doc = frappe.get_doc("Job Applicant", name)
+	if not (doc.resume_attachment or doc.cover_letter):
+		frappe.throw(_("Nothing to analyze -- this applicant has no resume or cover letter."))
+
+	settings = get_settings()
+	if not settings.enable_ai_screening:
+		frappe.throw(_("AI Screening is currently disabled in Recruitment AI Settings."))
+
+	frappe.enqueue(
+		"fanaka_app.events.job_applicant.ai_screen.analyze_candidate",
+		queue="long",
+		timeout=600,
+		enqueue_after_commit=True,
+		job_applicant=doc.name,
+	)
+	return "queued"

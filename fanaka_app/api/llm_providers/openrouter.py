@@ -30,6 +30,11 @@ def list_models(api_key: str = "") -> list[dict]:
 
 
 def chat_completion(*, model: str, api_key: str, messages: list[dict], timeout: int = 90) -> dict:
+	# Guards against a whitespace-only key slipping past `if not api_key` and reaching
+	# OpenRouter as a technically-present-but-blank Authorization header -- OpenRouter
+	# reports that as "Missing Authentication header", which reads like the header
+	# never arrived at all and is easy to mistake for a code bug rather than bad config.
+	api_key = (api_key or "").strip()
 	if not api_key:
 		frappe.throw(_("OpenRouter API Key is not configured in Recruitment AI Settings."))
 	if not model:

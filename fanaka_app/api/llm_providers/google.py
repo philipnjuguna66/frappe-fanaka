@@ -22,6 +22,7 @@ BASE_URL = "https://generativelanguage.googleapis.com/v1beta"
 
 
 def list_models(api_key: str) -> list[dict]:
+	api_key = (api_key or "").strip()
 	if not api_key:
 		frappe.throw(_("Google API Key is required to list models."))
 
@@ -35,6 +36,7 @@ def list_models(api_key: str) -> list[dict]:
 
 
 def chat_completion(*, model: str, api_key: str, messages: list[dict], timeout: int = 90) -> dict:
+	api_key = (api_key or "").strip()
 	if not api_key:
 		frappe.throw(_("Google API Key is not configured in Recruitment AI Settings."))
 	if not model:

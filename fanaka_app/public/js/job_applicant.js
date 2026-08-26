@@ -13,6 +13,7 @@ frappe.ui.form.on("Job Applicant", {
 	refresh(frm) {
 		frm.trigger("render_ai_score_card");
 		frm.trigger("add_ai_review_buttons");
+		frm.trigger("add_reanalyze_button");
 	},
 
 	render_ai_score_card(frm) {
@@ -96,6 +97,37 @@ frappe.ui.form.on("Job Applicant", {
 						callback: () => frm.reload_doc(),
 					});
 				});
+			},
+			__("AI Screening"),
+		);
+	},
+
+	add_reanalyze_button(frm) {
+		if (frm.doc.__islocal) return;
+		if (!(frm.doc.resume_attachment || frm.doc.cover_letter)) return;
+		if (!frappe.user_roles.some((role) => AI_REVIEW_ROLES.includes(role))) return;
+
+		frm.add_custom_button(
+			__("Re-analyze"),
+			() => {
+				frappe.confirm(
+					__("Re-run AI screening for {0}? Useful after fixing Recruitment AI Settings.", [
+						frm.doc.applicant_name,
+					]),
+					() => {
+						frappe.call({
+							method: "fanaka_app.events.job_applicant.job_applicant.reanalyze_candidate",
+							args: { name: frm.doc.name },
+							freeze: true,
+							callback: () => {
+								frappe.show_alert({
+									message: __("Re-analysis queued -- refresh in a moment to see the result."),
+									indicator: "blue",
+								});
+							},
+						});
+					},
+				);
 			},
 			__("AI Screening"),
 		);
