@@ -33,6 +33,7 @@ class TestCreateJobApplication(FrappeTestCase):
 
 		applicant = frappe.get_doc("Job Applicant", result["name"])
 		self.assertTrue(applicant.resume_attachment)
+		self.assertEqual(applicant.resume_link, applicant.resume_attachment)
 		self.assertTrue(
 			frappe.db.exists(
 				"File",

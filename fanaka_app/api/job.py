@@ -78,7 +78,12 @@ def create_job_application():
         # db_set() never runs doc_events (only before_change/on_change, not on_update),
         # so it would silently skip the AI screening hook on Job Applicant.on_update --
         # save() runs the full lifecycle, which is what actually queues analyze_candidate.
+        #
+        # resume_link is set too: hrms's job_applicant.js "Open Resume in New Tab"
+        # button/preview and our shortlisted_candidates HR review page both read
+        # resume_link, not resume_attachment.
         job_application.resume_attachment = file_doc.file_url
+        job_application.resume_link = file_doc.file_url
         job_application.save(ignore_permissions=True)
 
     frappe.db.commit()
