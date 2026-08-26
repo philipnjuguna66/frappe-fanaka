@@ -10,6 +10,7 @@ dynamic = ["version"]
 dependencies = [
     # "frappe~=15.0.0" # Installed and managed by bench.
     "python-docx~=1.1", # DOCX text extraction for AI resume screening (specs/recruitment_ai_screening.md)
+    "pdfplumber~=0.11", # PDF text extraction for AI resume screening (specs/recruitment_ai_screening.md)
 ]
 
 [build-system]
