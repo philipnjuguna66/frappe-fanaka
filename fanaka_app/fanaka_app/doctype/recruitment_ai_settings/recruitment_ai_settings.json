@@ -1,0 +1,196 @@
+{
+ "actions": [],
+ "creation": "2026-08-26 10:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "screening_section",
+  "enable_ai_screening",
+  "shortlist_threshold_score",
+  "column_break_screening",
+  "openrouter_api_key",
+  "openrouter_provider",
+  "openrouter_model",
+  "regret_section",
+  "auto_send_regret_emails",
+  "regret_threshold_score",
+  "regret_send_after_days",
+  "regret_batch_size",
+  "column_break_regret",
+  "regret_email_template",
+  "interview_invite_template",
+  "test_email_section",
+  "test_email_template",
+  "test_email_applicant",
+  "column_break_test",
+  "test_email_recipient",
+  "send_test_email_button"
+ ],
+ "fields": [
+  {
+   "fieldname": "screening_section",
+   "fieldtype": "Section Break",
+   "label": "AI Screening"
+  },
+  {
+   "default": "0",
+   "description": "When enabled, uploading a resume or cover letter queues an AI analysis of the applicant against the Job Opening.",
+   "fieldname": "enable_ai_screening",
+   "fieldtype": "Check",
+   "label": "Enable AI Screening"
+  },
+  {
+   "default": "70",
+   "depends_on": "enable_ai_screening",
+   "description": "Applicants scoring at or above this are moved to <b>Shortlisted by AI</b> for human review. Nobody is shortlisted without a human approving it afterwards.",
+   "fieldname": "shortlist_threshold_score",
+   "fieldtype": "Percent",
+   "label": "Shortlist Threshold Score"
+  },
+  {
+   "fieldname": "column_break_screening",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Stored encrypted. Create one at openrouter.ai/keys",
+   "fieldname": "openrouter_api_key",
+   "fieldtype": "Password",
+   "label": "OpenRouter API Key"
+  },
+  {
+   "description": "Refreshed from OpenRouter's public model list.",
+   "fieldname": "openrouter_provider",
+   "fieldtype": "Select",
+   "label": "Provider"
+  },
+  {
+   "depends_on": "openrouter_provider",
+   "description": "Model used to score applicants. Saved as the full <code>provider/model</code> slug.",
+   "fieldname": "openrouter_model",
+   "fieldtype": "Select",
+   "label": "Model"
+  },
+  {
+   "fieldname": "regret_section",
+   "fieldtype": "Section Break",
+   "label": "Regret & Interview Emails"
+  },
+  {
+   "default": "0",
+   "description": "Off by default. When enabled, low-scoring applicants are emailed a regret automatically by the daily scheduler.",
+   "fieldname": "auto_send_regret_emails",
+   "fieldtype": "Check",
+   "label": "Auto Send Regret Emails"
+  },
+  {
+   "default": "40",
+   "description": "Applicants scoring <b>below</b> this may receive a regret email. Must be lower than the Shortlist Threshold — the gap between the two is a grey zone that HR decides manually.",
+   "fieldname": "regret_threshold_score",
+   "fieldtype": "Percent",
+   "label": "Regret Threshold Score"
+  },
+  {
+   "default": "3",
+   "depends_on": "auto_send_regret_emails",
+   "description": "Grace period after scoring before an automatic regret is sent, so HR has a window to review first.",
+   "fieldname": "regret_send_after_days",
+   "fieldtype": "Int",
+   "label": "Send Regret After (Days)"
+  },
+  {
+   "default": "50",
+   "depends_on": "auto_send_regret_emails",
+   "description": "Maximum regret emails queued per scheduler run.",
+   "fieldname": "regret_batch_size",
+   "fieldtype": "Int",
+   "label": "Regret Batch Size"
+  },
+  {
+   "fieldname": "column_break_regret",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Use bare placeholders, e.g. <code>{{ applicant_name }}</code>, <code>{{ job_title }}</code>, <code>{{ custom_ai_score }}</code> — any Job Applicant fieldname. A misspelt placeholder renders empty without raising an error, so use Send Test Email below before going live.",
+   "fieldname": "regret_email_template",
+   "fieldtype": "Link",
+   "label": "Regret Email Template",
+   "options": "Email Template"
+  },
+  {
+   "description": "Sent to the candidate when HR approves and invites them for an interview. Placeholders may also use <code>{{ interview_scheduled_on }}</code>, <code>{{ interview_from_time }}</code>, <code>{{ interview_to_time }}</code>, <code>{{ interview_type }}</code>.",
+   "fieldname": "interview_invite_template",
+   "fieldtype": "Link",
+   "label": "Interview Invitation Template",
+   "options": "Email Template"
+  },
+  {
+   "description": "Renders a template against a real applicant so you can check the wording and placeholders before any candidate receives it.",
+   "fieldname": "test_email_section",
+   "fieldtype": "Section Break",
+   "label": "Send Test Email"
+  },
+  {
+   "fieldname": "test_email_template",
+   "fieldtype": "Link",
+   "label": "Template to Test",
+   "options": "Email Template"
+  },
+  {
+   "description": "Its field values are used to fill the placeholders.",
+   "fieldname": "test_email_applicant",
+   "fieldtype": "Link",
+   "label": "Render Using Applicant",
+   "options": "Job Applicant"
+  },
+  {
+   "fieldname": "column_break_test",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Leave blank to send to yourself. The candidate is never emailed by this test.",
+   "fieldname": "test_email_recipient",
+   "fieldtype": "Data",
+   "label": "Send Test To",
+   "options": "Email"
+  },
+  {
+   "depends_on": "test_email_template",
+   "fieldname": "send_test_email_button",
+   "fieldtype": "Button",
+   "label": "Send Test Email"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "issingle": 1,
+ "links": [],
+ "modified": "2026-08-26 10:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Fanaka App",
+ "name": "Recruitment AI Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "HR Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

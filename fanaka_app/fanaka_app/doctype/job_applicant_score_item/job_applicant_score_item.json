@@ -1,0 +1,59 @@
+{
+ "actions": [],
+ "creation": "2026-08-26 10:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "category",
+  "criteria",
+  "points",
+  "remark"
+ ],
+ "fields": [
+  {
+   "columns": 2,
+   "fieldname": "category",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Category",
+   "options": "Skills\nExperience\nEducation",
+   "reqd": 1
+  },
+  {
+   "columns": 3,
+   "fieldname": "criteria",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Criteria",
+   "reqd": 1
+  },
+  {
+   "columns": 1,
+   "description": "Points contributed to the aggregate score. May be negative.",
+   "fieldname": "points",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Points",
+   "precision": "2"
+  },
+  {
+   "columns": 4,
+   "fieldname": "remark",
+   "fieldtype": "Small Text",
+   "in_list_view": 1,
+   "label": "Remark"
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2026-08-26 10:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Fanaka App",
+ "name": "Job Applicant Score Item",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

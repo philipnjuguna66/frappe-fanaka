@@ -298,7 +298,15 @@ fixtures = [
 				"Plot-custom_serial_no",
 				"Plot-custom_warehouse",
 				"Plot-custom_project_block",
-				"Plot-custom_stock_status"
+				"Plot-custom_stock_status",
+				"Job Applicant-custom_ai_section",
+				"Job Applicant-custom_ai_score",
+				"Job Applicant-custom_ai_analyzed_on",
+				"Job Applicant-custom_ai_column_break",
+				"Job Applicant-custom_regret_email_sent",
+				"Job Applicant-custom_regret_email_sent_on",
+				"Job Applicant-custom_ai_analysis_summary",
+				"Job Applicant-custom_ai_score_breakdown"
 			]]
 		]
 	},
