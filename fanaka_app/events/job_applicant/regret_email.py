@@ -12,12 +12,23 @@ from frappe.utils import now_datetime
 NON_REGRETTABLE_STATUSES = ("Shortlisted by AI", "Shortlisted", "Accepted", "Hold")
 
 
-def send_templated_email(*, template: str, applicant_name: str, recipient: str | None = None, sender: str | None = None):
+def send_templated_email(
+	*,
+	template: str,
+	applicant_name: str,
+	recipient: str | None = None,
+	sender: str | None = None,
+	extra_context: dict | None = None,
+):
 	"""Render an Email Template against a Job Applicant and send it.
 
 	Bare placeholders (``{{ applicant_name }}``, not ``{{ doc.applicant_name }}``) --
 	matches hrms's own shipped hiring templates, since ours sit in the same Email
 	Template list HR browses. See the Phase 4 placeholder-convention note in the spec.
+
+	``extra_context`` adds fields beyond the applicant's own (e.g. interview schedule
+	details for the invite email in Phase 6) -- merged on top of the applicant dict, so
+	an extra key can't be shadowed by a same-named Job Applicant field.
 
 	``recipient`` overrides the applicant's own email -- used by the settings "Send Test
 	Email" button so a test render never reaches a real candidate. A real send (no
@@ -27,7 +38,10 @@ def send_templated_email(*, template: str, applicant_name: str, recipient: str |
 	"""
 	applicant = frappe.get_doc("Job Applicant", applicant_name)
 	et = frappe.get_doc("Email Template", template)
-	rendered = et.get_formatted_email(applicant.as_dict())
+	context = applicant.as_dict()
+	if extra_context:
+		context.update(extra_context)
+	rendered = et.get_formatted_email(context)
 
 	frappe.sendmail(
 		recipients=[recipient or applicant.email_id],
@@ -83,7 +97,7 @@ def _send_regret_email(applicant_name: str):
 	send_templated_email(
 		template=settings.regret_email_template,
 		applicant_name=applicant_name,
-		sender=_hiring_sender_email(),
+		sender=hiring_sender_email(),
 	)
 
 	applicant.db_set("custom_regret_email_sent", 1)
@@ -122,6 +136,6 @@ def bulk_send_regret_emails(applicant_names: list[str] | str, force: bool = Fals
 	return {"queued": queued, "skipped": skipped}
 
 
-def _hiring_sender_email() -> str | None:
+def hiring_sender_email() -> str | None:
 	"""hrms's own dedicated recruitment sender, if HR has configured one."""
 	return frappe.db.get_single_value("HR Settings", "hiring_sender_email")
