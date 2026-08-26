@@ -1,4 +1,5 @@
 import frappe
+from frappe.utils.file_manager import save_file
 
 @frappe.whitelist(allow_guest=True)  # NOT allow_guest
 def opening():
@@ -63,6 +64,19 @@ def create_job_application():
     })
 
     job_application.insert(ignore_permissions=True)
+
+    uploaded = frappe.request.files.get("file") if frappe.request else None
+    if uploaded:
+        file_doc = save_file(
+            uploaded.filename,
+            uploaded.stream.read(),
+            "Job Applicant",
+            job_application.name,
+            is_private=1,
+            df="resume_attachment",
+        )
+        job_application.db_set("resume_attachment", file_doc.file_url)
+
     frappe.db.commit()
 
     return {
