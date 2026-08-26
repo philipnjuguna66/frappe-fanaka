@@ -75,7 +75,11 @@ def create_job_application():
             is_private=1,
             df="resume_attachment",
         )
-        job_application.db_set("resume_attachment", file_doc.file_url)
+        # db_set() never runs doc_events (only before_change/on_change, not on_update),
+        # so it would silently skip the AI screening hook on Job Applicant.on_update --
+        # save() runs the full lifecycle, which is what actually queues analyze_candidate.
+        job_application.resume_attachment = file_doc.file_url
+        job_application.save(ignore_permissions=True)
 
     frappe.db.commit()
 
