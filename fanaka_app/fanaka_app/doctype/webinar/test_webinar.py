@@ -2,8 +2,8 @@
 # See license.txt
 
 # import frappe
-from frappe.tests import IntegrationTestCase
+from fanaka_app.test_utils import FanakaTestCase
 
 
-class TestWebinar(IntegrationTestCase):
+class TestWebinar(FanakaTestCase):
 	pass

@@ -15,7 +15,15 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
-    name: Server
+      matrix:
+        include:
+          - frappe-branch: version-15
+            python-version: '3.10'
+            node-version: 18
+          - frappe-branch: version-16
+            python-version: '3.14'
+            node-version: 24
+    name: Server (${{ matrix.frappe-branch }})
 
     services:
       redis-cache:
@@ -45,12 +53,12 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.14'
+          python-version: ${{ matrix.python-version }}
 
       - name: Setup Node
         uses: actions/setup-node@v3
         with:
-          node-version: 24
+          node-version: ${{ matrix.node-version }}
           check-latest: true
 
       - name: Cache pip
@@ -83,7 +91,7 @@ jobs:
       - name: Setup Bench
         run: |
           pip install frappe-bench
-          bench init --frappe-branch version-16 --skip-redis-config-generation --skip-assets --python "$(which python)" ~/frappe-bench
+          bench init --frappe-branch ${{ matrix.frappe-branch }} --skip-redis-config-generation --skip-assets --python "$(which python)" ~/frappe-bench
           cd ~/frappe-bench
           bench set-config -g db_host 127.0.0.1
           bench set-config -g redis_cache redis://localhost:13000
@@ -92,6 +100,8 @@ jobs:
       - name: Install App & Build
         working-directory: /home/runner/frappe-bench
         run: |
+          bench get-app erpnext --branch ${{ matrix.frappe-branch }}
+          bench get-app hrms --branch ${{ matrix.frappe-branch }}
           bench get-app fanaka_app $GITHUB_WORKSPACE
           bench setup requirements --dev
           bench new-site --db-root-password root --admin-password admin --db-host 127.0.0.1 test_site

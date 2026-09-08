@@ -1,8 +1,8 @@
 # Copyright (c) 2026, Philip Njuguna and Contributors
 # See license.txt
 
-from frappe.tests import IntegrationTestCase
+from fanaka_app.test_utils import FanakaTestCase
 
 
-class TestMpesaResponse(IntegrationTestCase):
+class TestMpesaResponse(FanakaTestCase):
     pass

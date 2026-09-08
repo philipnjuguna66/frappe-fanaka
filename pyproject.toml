@@ -4,11 +4,11 @@ authors = [
     { name = "Philip Njuguna", email = "philipnjuguna66@gmail.com"}
 ]
 description = "Fanaka Real Estate App"
-requires-python = ">=3.14,<3.15"
+requires-python = ">=3.10"
 readme = "README.md"
 dynamic = ["version"]
 dependencies = [
-    # "frappe~=16.0.0" # Installed and managed by bench.
+    # "frappe" # Installed and managed by bench.
     "python-docx~=1.1", # DOCX text extraction for AI resume screening (specs/recruitment_ai_screening.md)
     "pdfplumber~=0.11", # PDF text extraction for AI resume screening (specs/recruitment_ai_screening.md)
 ]
@@ -22,6 +22,6 @@ build-backend = "flit_core.buildapi"
 # package_name = "~=1.1.0"
 
 [tool.bench.frappe-dependencies]
-frappe = ">=16.0.0,<17.0.0"
-erpnext = ">=16.0.0,<17.0.0"
-hrms = ">=16.0.0,<17.0.0"
+frappe = ">=15.0.0,<17.0.0"
+erpnext = ">=15.0.0,<17.0.0"
+hrms = ">=15.0.0,<17.0.0"
