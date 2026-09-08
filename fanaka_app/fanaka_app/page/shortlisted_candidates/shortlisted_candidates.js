@@ -171,7 +171,7 @@ class ShortlistedCandidates {
 				<tr>
 					<td><input type="checkbox" class="sc-row-check" data-name="${frappe.utils.escape_html(row.name)}"></td>
 					<td>
-						<a href="/app/job-applicant/${encodeURIComponent(row.name)}" class="font-medium">
+						<a href="/desk/job-applicant/${encodeURIComponent(row.name)}" class="font-medium">
 							${frappe.utils.escape_html(row.applicant_name || row.name)}
 						</a>
 						<div class="text-xs text-gray-400">${frappe.utils.escape_html(row.email_id || "")}</div>

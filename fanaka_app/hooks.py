@@ -11,7 +11,7 @@ app_license = "mit"
 # insights.www.insights.get_context = fanaka_app.overrides.insights.get_context
 
 
-# required_apps = []
+required_apps = ["erpnext", "hrms"]
 
 # Includes in <head>
 # ------------------

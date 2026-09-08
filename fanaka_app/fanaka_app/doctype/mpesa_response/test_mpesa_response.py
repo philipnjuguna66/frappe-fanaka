@@ -1,8 +1,8 @@
 # Copyright (c) 2026, Philip Njuguna and Contributors
 # See license.txt
 
-from frappe.tests.utils import FrappeTestCase
+from frappe.tests import IntegrationTestCase
 
 
-class TestMpesaResponse(FrappeTestCase):
+class TestMpesaResponse(IntegrationTestCase):
     pass

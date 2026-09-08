@@ -1,14 +1,14 @@
 import io
 
 import frappe
-from frappe.tests.utils import FrappeTestCase
+from frappe.tests import IntegrationTestCase
 from werkzeug.test import EnvironBuilder
 from werkzeug.wrappers import Request as WerkzeugRequest
 
 from fanaka_app.api.job import create_job_application
 
 
-class TestCreateJobApplication(FrappeTestCase):
+class TestCreateJobApplication(IntegrationTestCase):
 	def tearDown(self):
 		frappe.local.request = None
 		super().tearDown()

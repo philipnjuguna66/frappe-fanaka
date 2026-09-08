@@ -8,7 +8,7 @@ from insights.www.insights import (
 
 def get_context(context):
     if not frappe.db.get_single_value("System Settings", "setup_complete"):
-        frappe.local.flags.redirect_location = "/app/setup-wizard"
+        frappe.local.flags.redirect_location = "/desk/setup-wizard"
         raise frappe.Redirect
 
     is_v2_site = frappe.db.count("Insights Query", cache=True) > 0

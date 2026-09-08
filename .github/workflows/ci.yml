@@ -3,11 +3,11 @@ name: CI
 on:
   push:
     branches:
-      - develop
+      - version-16
   pull_request:
 
 concurrency:
-  group: develop-fanaka_app-${{ github.event.number }}
+  group: version-16-fanaka_app-${{ github.event.number }}
   cancel-in-progress: true
 
 jobs:
@@ -45,12 +45,12 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.10'
+          python-version: '3.14'
 
       - name: Setup Node
         uses: actions/setup-node@v3
         with:
-          node-version: 18
+          node-version: 24
           check-latest: true
 
       - name: Cache pip
@@ -83,8 +83,7 @@ jobs:
       - name: Setup Bench
         run: |
           pip install frappe-bench
-          # Add the --frappe-branch flag to target v15 (or v14)
-          bench init --frappe-branch version-15 --skip-redis-config-generation --skip-assets --python "$(which python)" ~/frappe-bench
+          bench init --frappe-branch version-16 --skip-redis-config-generation --skip-assets --python "$(which python)" ~/frappe-bench
           cd ~/frappe-bench
           bench set-config -g db_host 127.0.0.1
           bench set-config -g redis_cache redis://localhost:13000
