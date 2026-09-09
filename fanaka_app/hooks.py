@@ -46,6 +46,7 @@ doctype_js = {
 	"Stock Entry": "public/js/stock_entry_custom.js",
 	"Job Applicant": "public/js/job_applicant.js",
 	"Interview": "public/js/interview.js",
+	"Job Offer": "public/js/job_offer.js",
 }
 doctype_list_js = {
 	"Job Applicant": "public/js/job_applicant_list.js",
@@ -328,7 +329,9 @@ fixtures = [
 				"Job Applicant-custom_ai_score_card_html",
 				"Job Opening-custom_qualifications",
 				"Job Opening-custom_interview_rounds",
-				"Employee Onboarding-custom_confirmation_email_sent"
+				"Employee Onboarding-custom_confirmation_email_sent",
+				"Job Offer-custom_offer_letter_sent",
+				"Job Offer-custom_offer_letter_sent_on"
 			]]
 		]
 	},

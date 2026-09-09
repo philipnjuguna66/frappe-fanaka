@@ -16,8 +16,10 @@ See specs/recruitment_ai_screening.md (Phase 8) for the plan this implements.
 
 import frappe
 from frappe import _
+from frappe.utils import now_datetime
 
 from fanaka_app.events.hr_notify import notify_hr
+from fanaka_app.events.job_applicant.job_applicant import APPROVAL_ROLES
 from fanaka_app.events.job_applicant.regret_email import hiring_sender_email, send_templated_email
 from fanaka_app.fanaka_app.doctype.recruitment_ai_settings.recruitment_ai_settings import get_settings
 
@@ -73,3 +75,62 @@ def _send_offer_acceptance_email(job_offer: str):
 		sender=hiring_sender_email(),
 		extra_context={"offer_date": offer.offer_date, "designation": offer.designation},
 	)
+
+
+@frappe.whitelist()
+def send_offer_letter(job_offer: str) -> str:
+	"""HR action: email the offer letter itself to the candidate, PDF attached.
+
+	Nothing sends the offer to the candidate on its own -- creating (even submitting)
+	a Job Offer draft is silent by design, same as every other stage in this pipeline
+	("human-confirmed each step"). This is that step's own explicit send, the
+	counterpart to Phase 6's "Send Interview Invite".
+	"""
+	frappe.only_for(APPROVAL_ROLES)
+	offer = frappe.get_doc("Job Offer", job_offer)
+	if offer.docstatus != 1:
+		frappe.throw(_("Submit the Job Offer before sending the offer letter."))
+
+	frappe.enqueue(
+		"fanaka_app.events.job_offer.job_offer._send_offer_letter",
+		queue="short",
+		timeout=120,
+		enqueue_after_commit=True,
+		job_offer=job_offer,
+	)
+	return "queued"
+
+
+def _send_offer_letter(job_offer: str):
+	"""Background job body: render the print format to PDF (frappe.attach_print --
+	the standard "attach a doc's own print output to an email" helper, same one hrms
+	uses for hiring notification mails elsewhere) and send with the letter template."""
+	settings = get_settings()
+	if not settings.job_offer_letter_template:
+		frappe.log_error(
+			title="Offer letter not sent: no email template configured",
+			message=f"Job Offer {job_offer}",
+		)
+		return
+
+	offer = frappe.get_doc("Job Offer", job_offer)
+	if offer.docstatus != 1:
+		return
+
+	attachment = frappe.attach_print(
+		"Job Offer",
+		offer.name,
+		print_format=settings.job_offer_print_format or "Job Offer",
+		doc=offer,
+	)
+
+	send_templated_email(
+		template=settings.job_offer_letter_template,
+		applicant_name=offer.job_applicant,
+		sender=hiring_sender_email(),
+		extra_context={"offer_date": offer.offer_date, "designation": offer.designation},
+		attachments=[attachment],
+	)
+
+	offer.db_set("custom_offer_letter_sent", 1, update_modified=False)
+	offer.db_set("custom_offer_letter_sent_on", now_datetime(), update_modified=False)

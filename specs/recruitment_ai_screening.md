@@ -661,6 +661,43 @@ None new — `frappe.desk.form.assign_to`, `create_interview`/`make_employee` ar
 frappe/hrms APIs, no new package. (`get_mapped_doc` dropped from the original plan along with
 the auto-drafted Employee — see the build-time correction above.)
 
+### Job Offer letter send (added after ship, following user question)
+
+**The gap**: nothing in the original Phase 8 build ever sends the *offer itself* to the
+candidate — creating (even submitting) a Job Offer draft is silent, and the only email built
+was the *acceptance* confirmation, which fires only once status is already `Accepted`. A
+candidate could sit in `Awaiting Response` indefinitely with nothing ever having reached them.
+This is that missing send — the counterpart to Phase 6's "Send Interview Invite" on Interview,
+now on Job Offer.
+
+- **PDF attachment**: `frappe.attach_print(doctype, name, print_format=..., doc=...)` — the
+  standard Frappe helper for exactly this (render a doc's print format to PDF and return a
+  `frappe.sendmail(attachments=[...])`-ready dict), not a custom PDF pipeline. hrms already
+  ships a `Job Offer` print format (`hrms/hr/print_format/job_offer/job_offer.json`), used as
+  the default (`Recruitment AI Settings.job_offer_print_format`, overridable).
+- `send_templated_email` (`regret_email.py`, reused throughout this app) gained an optional
+  `attachments` parameter, threaded straight to `frappe.sendmail` — backward compatible, every
+  existing caller unaffected.
+- New whitelisted `fanaka_app.events.job_offer.job_offer.send_offer_letter(job_offer)`: role
+  gated, requires `docstatus == 1`, enqueues `_send_offer_letter` (background — PDF rendering
+  and mail-send stay off the web request, same as everywhere else in this app). New
+  `custom_offer_letter_sent` / `custom_offer_letter_sent_on` fields on Job Offer track it; a
+  resend is allowed but requires the same explicit confirm-dialog pattern used for regret
+  emails.
+- New settings: `job_offer_letter_template` (Link → Email Template) and `job_offer_print_format`
+  (Link → Print Format, default `"Job Offer"`), in a new "Job Offer Letter" section on
+  Recruitment AI Settings.
+- Form action: "Send Offer Letter" button on Job Offer (new `public/js/job_offer.js`, submitted
+  offers only), reads "Resend Offer Letter" once already sent.
+- **[not fully verified — environment gap, not a code issue]** `frappe.attach_print`'s PDF path
+  needs `wkhtmltopdf` on the machine; this dev bench doesn't have it installed (confirmed:
+  every doctype's own core "Print" button would hit the same `OSError` here, not something this
+  change introduced), so the actual PDF-generation step wasn't exercised end-to-end during this
+  build. Everything up to that call (template render, settings lookup, `attachments` plumbing,
+  sent-flag bookkeeping) was verified directly. Frappe Cloud images ship `wkhtmltopdf` by
+  default (every doctype's Print button depends on it), so this is expected to work there
+  without changes — flagging rather than silently assuming.
+
 ### Open items
 
 - **Job Offer Rejected**: no action defined yet (candidate declines the offer). Likely wants

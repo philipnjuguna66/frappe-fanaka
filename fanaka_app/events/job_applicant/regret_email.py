@@ -19,6 +19,7 @@ def send_templated_email(
 	recipient: str | None = None,
 	sender: str | None = None,
 	extra_context: dict | None = None,
+	attachments: list[dict] | None = None,
 ):
 	"""Render an Email Template against a Job Applicant and send it.
 
@@ -35,6 +36,9 @@ def send_templated_email(
 	recipient override) always goes through ``frappe.sendmail``'s own queueing
 	(``now=False`` by default); a test send goes out immediately so the sender gets
 	pass/fail feedback in the same request.
+
+	``attachments`` -- list of ``frappe.sendmail``-style attachment dicts, e.g. the
+	return value of ``frappe.attach_print(...)`` (used by the offer-letter send).
 	"""
 	applicant = frappe.get_doc("Job Applicant", applicant_name)
 	et = frappe.get_doc("Email Template", template)
@@ -50,6 +54,7 @@ def send_templated_email(
 		message=rendered["message"],
 		reference_doctype="Job Applicant",
 		reference_name=applicant.name,
+		attachments=attachments,
 		now=bool(recipient),
 	)
 

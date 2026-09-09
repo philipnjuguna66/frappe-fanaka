@@ -20,6 +20,10 @@
   "column_break_regret",
   "regret_email_template",
   "interview_invite_template",
+  "job_offer_letter_section",
+  "job_offer_letter_template",
+  "column_break_job_offer_letter",
+  "job_offer_print_format",
   "offer_onboarding_section",
   "offer_acceptance_confirmation_template",
   "column_break_offer_onboarding",
@@ -136,6 +140,30 @@
    "fieldtype": "Link",
    "label": "Interview Invitation Template",
    "options": "Email Template"
+  },
+  {
+   "fieldname": "job_offer_letter_section",
+   "fieldtype": "Section Break",
+   "label": "Job Offer Letter"
+  },
+  {
+   "description": "Sent when HR clicks \"Send Offer Letter\" on a submitted Job Offer, with the offer letter PDF attached. Placeholders may also use <code>{{ offer_date }}</code>, <code>{{ designation }}</code> (from the Job Offer).",
+   "fieldname": "job_offer_letter_template",
+   "fieldtype": "Link",
+   "label": "Job Offer Letter Email Template",
+   "options": "Email Template"
+  },
+  {
+   "fieldname": "column_break_job_offer_letter",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Job Offer",
+   "description": "Print format rendered to PDF and attached to the offer letter email. hrms ships a \"Job Offer\" print format by default.",
+   "fieldname": "job_offer_print_format",
+   "fieldtype": "Link",
+   "label": "Job Offer Print Format",
+   "options": "Print Format"
   },
   {
    "fieldname": "offer_onboarding_section",
