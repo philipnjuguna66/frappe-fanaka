@@ -92,6 +92,16 @@ def approve_and_invite(
 	if applicant.status == "Shortlisted by AI":
 		approve_ai_shortlist(job_applicant)
 
+	existing = frappe.db.exists("Interview", {"job_applicant": job_applicant, "docstatus": ["!=", 2]})
+	if existing:
+		frappe.throw(
+			_(
+				"{0} already has an active interview ({1}). Use \"Schedule Next Round\" on that "
+				"Interview, or cancel it first, instead of inviting again."
+			).format(job_applicant, existing),
+			title=_("Interview Already Exists"),
+		)
+
 	from hrms.hr.doctype.job_applicant.job_applicant import create_interview
 
 	try:

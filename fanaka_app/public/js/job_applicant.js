@@ -8,12 +8,14 @@
 
 const AI_REVIEW_ROLES = ["System Manager", "HR Manager", "HR User"];
 const AI_SCORE_CATEGORIES = ["Skills", "Experience", "Education"];
+const INVITABLE_STATUSES = ["Shortlisted by AI", "Shortlisted"];
 
 frappe.ui.form.on("Job Applicant", {
 	refresh(frm) {
 		frm.trigger("render_ai_score_card");
 		frm.trigger("add_ai_review_buttons");
 		frm.trigger("add_reanalyze_button");
+		frm.trigger("add_interview_invite_button");
 	},
 
 	render_ai_score_card(frm) {
@@ -100,6 +102,83 @@ frappe.ui.form.on("Job Applicant", {
 			},
 			__("AI Screening"),
 		);
+	},
+
+	add_interview_invite_button(frm) {
+		// hrms's own job_applicant.js already ships a bare "Create Interview" button
+		// (any status except Rejected/Accepted) -- it opens a blank, unscheduled
+		// Interview form and sends no invite email. This is the app's actual invite
+		// flow (schedule collected up front, email queued on save), the same one the
+		// Shortlisted Candidates page uses, now reachable straight from the form too.
+		// See specs/recruitment_ai_screening.md (Phase 6/8).
+		if (frm.doc.__islocal || !INVITABLE_STATUSES.includes(frm.doc.status)) return;
+		if (!frappe.user_roles.some((role) => AI_REVIEW_ROLES.includes(role))) return;
+
+		frappe.db
+			.get_list("Interview", {
+				filters: { job_applicant: frm.doc.name, docstatus: ["!=", 2] },
+				fields: ["name"],
+				limit: 1,
+				order_by: "creation desc",
+			})
+			.then((rows) => {
+				if (rows && rows.length) {
+					// Duplicate-invite guard: an active interview already exists --
+					// point at it instead of offering to create another. The
+					// "Schedule Next Round" button lives on the Interview form itself
+					// once that round is Cleared.
+					frm.add_custom_button(
+						__("View Interview"),
+						() => frappe.set_route("Form", "Interview", rows[0].name),
+						__("AI Screening"),
+					);
+					return;
+				}
+
+				frm.add_custom_button(
+					__("Invite to Interview"),
+					() => frm.trigger("open_invite_dialog"),
+					__("AI Screening"),
+				);
+			});
+	},
+
+	open_invite_dialog(frm) {
+		const dialog = new frappe.ui.Dialog({
+			title: __("Invite to Interview"),
+			fields: [
+				{
+					label: __("Interview Type"),
+					fieldname: "interview_type",
+					fieldtype: "Link",
+					options: "Interview Type",
+					reqd: 1,
+					get_query: () =>
+						frm.doc.designation ? { filters: [["designation", "=", frm.doc.designation]] } : {},
+				},
+				{ label: __("Date"), fieldname: "scheduled_on", fieldtype: "Date", reqd: 1 },
+				{ label: __("From Time"), fieldname: "from_time", fieldtype: "Time", reqd: 1 },
+				{ label: __("To Time"), fieldname: "to_time", fieldtype: "Time", reqd: 1 },
+			],
+			primary_action_label: __("Invite & Schedule"),
+			primary_action: (values) => {
+				frappe.call({
+					method: "fanaka_app.api.shortlisted_candidates.approve_and_invite",
+					args: { job_applicant: frm.doc.name, ...values },
+					freeze: true,
+					callback: (r) => {
+						dialog.hide();
+						frappe.show_alert({ message: __("Interview scheduled, invite queued."), indicator: "green" });
+						if (r.message && r.message.interview) {
+							frappe.set_route("Form", "Interview", r.message.interview);
+						} else {
+							frm.reload_doc();
+						}
+					},
+				});
+			},
+		});
+		dialog.show();
 	},
 
 	add_reanalyze_button(frm) {
