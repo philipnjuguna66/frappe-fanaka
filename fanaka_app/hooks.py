@@ -45,6 +45,7 @@ doctype_js = {
 	"Lead" : "public/js/lead.js",
 	"Stock Entry": "public/js/stock_entry_custom.js",
 	"Job Applicant": "public/js/job_applicant.js",
+	"Interview": "public/js/interview.js",
 }
 doctype_list_js = {
 	"Job Applicant": "public/js/job_applicant_list.js",
@@ -180,6 +181,15 @@ doc_events = {
 	},
 	"Job Applicant": {
 		"on_update": "fanaka_app.events.job_applicant.job_applicant.on_update"
+	},
+	"Interview": {
+		"on_submit": "fanaka_app.events.interview.interview.on_submit_advance_pipeline"
+	},
+	"Job Offer": {
+		"on_change": "fanaka_app.events.job_offer.job_offer.on_status_change"
+	},
+	"Employee Onboarding": {
+		"on_change": "fanaka_app.events.employee_onboarding.employee_onboarding.on_status_change"
 	}
 
 }
@@ -316,7 +326,9 @@ fixtures = [
 				"Job Applicant-custom_ai_analysis_summary",
 				"Job Applicant-custom_ai_score_breakdown",
 				"Job Applicant-custom_ai_score_card_html",
-				"Job Opening-custom_qualifications"
+				"Job Opening-custom_qualifications",
+				"Job Opening-custom_interview_rounds",
+				"Employee Onboarding-custom_confirmation_email_sent"
 			]]
 		]
 	},

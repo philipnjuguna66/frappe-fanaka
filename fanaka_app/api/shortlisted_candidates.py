@@ -14,7 +14,6 @@ from frappe.utils import cint, flt
 
 from fanaka_app.events.job_applicant.interview_invite import enqueue_interview_invite
 from fanaka_app.events.job_applicant.job_applicant import APPROVAL_ROLES, approve_ai_shortlist, reject_ai_shortlist
-from fanaka_app.events.job_applicant.regret_email import enqueue_regret_email
 
 LISTED_STATUSES = ("Shortlisted by AI", "Shortlisted")
 
@@ -113,8 +112,11 @@ def approve_and_invite(
 
 @frappe.whitelist()
 def reject_and_regret(job_applicant: str) -> dict:
-	"""Reject (if not already) and queue the regret email -- one send path, same as the
-	scheduler and the Job Applicant list's bulk action."""
+	"""Reject (if not already). The regret email itself is queued by Job Applicant's
+	on_update handler (fanaka_app.events.job_applicant.job_applicant._regret_on_reject)
+	whenever status becomes "Rejected" -- as of Phase 8 that covers every rejection
+	path (this one, hrms's native post-interview dialog, ...) from one place, so this
+	no longer enqueues it directly (it used to; doing both would double-queue)."""
 	frappe.only_for(APPROVAL_ROLES)
 
 	applicant = frappe.get_doc("Job Applicant", job_applicant)
@@ -131,7 +133,6 @@ def reject_and_regret(job_applicant: str) -> dict:
 		applicant.status = "Rejected"
 		applicant.save()
 
-	enqueue_regret_email(job_applicant)
 	return {"status": "Rejected"}
 
 

@@ -457,3 +457,211 @@ This phase touches **two separate codebases**:
   can decide at build time rather than blocking the plan on it now.
 
 **No other open questions. Ready to build once approved.**
+
+---
+
+## Phase 8 — Interview → Offer → Onboarding pipeline (NEW)
+
+Added 2026-09-09. Extends the pipeline past Phase 6's interview invite: today "Shortlisted"
+gets a candidate one invited interview and nothing wires up after that — Interview, Job Offer,
+and Employee Onboarding all exist as core hrms/erpnext doctypes but nothing in this app
+connects them, and no HR data (Interview Types, Job Offer Term Templates, Employee Onboarding
+Templates) has been configured yet [verified: all zero in this bench]. This phase closes that
+gap: interview rounds chain automatically, and each stage hands the next one a ready draft
+instead of HR starting from a blank form.
+
+**Decided (clarification round, 2026-09-09):**
+1. **Automation level**: human-confirmed at every stage. The system prepares the next record
+   (draft Interview, draft Job Offer, draft Employee + Employee Onboarding) and assigns it to
+   HR; a person still has to open it, fill in what only a human knows (salary, terms, joining
+   date, template choice), and submit/send it themselves. Nothing sends externally or changes
+   Job Applicant status without a human action — same principle Phase 1 already committed to
+   for AI screening ("AI recommends, it does not decide").
+2. **Interview rounds**: multiple, ordered, configured per Job Opening (roles differ — a sales
+   role and an engineering role won't share one fixed round sequence).
+3. **Job Offer draft**: bare — applicant, designation, company, offer date only. No salary
+   structure exists anywhere in this system yet to pull numbers from, so anything more would be
+   fabricated data, not a real default.
+4. **"Confirmation email" means both**: one sent when the candidate accepts the Job Offer
+   (offer-acceptance confirmation, candidate-facing), a second sent when Employee Onboarding is
+   marked Completed (employment confirmation, new-employee-facing).
+
+### What already exists vs. what this phase adds
+
+**[verified] Already native to hrms, unchanged by this phase:**
+- `Interview.on_submit` requires `status` to be `Cleared` or `Rejected`, then shows a msgprint
+  dialog offering to set the Job Applicant's status to `Accepted`/`Rejected` — HR clicks
+  "Mark as {status}" to confirm (`hrms/hr/doctype/interview/interview.py:87-108`). This **is**
+  the human-confirm step between Interview and Job Applicant status; this phase does not
+  replace it.
+- `JobOffer.on_change` sets Job Applicant status to `Accepted`/`Rejected` automatically whenever
+  HR changes the Offer's own status field and saves (`hrms/hr/doctype/job_offer/job_offer.py:
+  41-43, 61-63`) — already "human-confirmed" by construction, since a person has to open the
+  Job Offer and change its status.
+- `hrms.hr.doctype.job_offer.job_offer.make_employee` — mapped-doc, returns an **unsaved**
+  Employee prefilled with `personal_email`/`first_name` (from Job Applicant) and
+  `employee_name`/`scheduled_confirmation_date` (from Job Offer). Never saves on its own
+  [verified, read live].
+- `EmployeeOnboarding.on_submit` creates a Project; `on_update_after_submit` creates Tasks and
+  assigns them per the chosen `employee_onboarding_template`'s activities
+  (`hrms/controllers/employee_boarding_controller.py`). This phase never touches task creation —
+  it only gets a bare Employee Onboarding draft in front of HR with `job_applicant`/`job_offer`
+  linked; HR still picks the template and submits.
+- **v16 note** [verified]: "Interview Round" as a separate doctype was merged into
+  `Interview Type` in v16 (`hrms/patches/v16_0/merge_interview_round_with_interview_type.py`).
+  There is no native concept of an *ordered sequence* of rounds — `Interview Type` is just a
+  category (designation, expected skills, interviewers). Round ordering is this app's own
+  addition (below), not something hrms models.
+
+**New in this phase:**
+
+### Data model
+
+- New child doctype `Job Opening Interview Round` (fanaka_app): one field, `interview_type`
+  (Link → Interview Type). Row order = round order (Frappe child tables are already ordered by
+  `idx`; no separate sequence-number field needed).
+- Custom field on `Job Opening` (hrms doctype, so Custom Field + fixtures whitelist entry, same
+  pattern as Phase 7's `custom_qualifications`): `custom_interview_rounds` (Table →
+  `Job Opening Interview Round`), inserted after `custom_qualifications`.
+- New fields on `Recruitment AI Settings` (extending the existing Single doctype):
+  - `offer_acceptance_confirmation_template` (Link → Email Template)
+  - `employment_confirmation_template` (Link → Email Template)
+  (`interview_invite_template` already exists from Phase 6 and is reused as-is for every round,
+  not just the first.)
+- No new field on Job Applicant. Round progress is derived, not cached: it's the count of
+  `Interview` rows for `(job_applicant, job_opening)` with `docstatus=1, status=Cleared`,
+  matched positionally against the Job Opening's `custom_interview_rounds` list. (A cached
+  "current round" column for the list view is a cheap Phase-5-style follow-up, not required for
+  the logic to work — left out of the core build.)
+
+### Flow
+
+**1. Interview submitted (`doc_events["Interview"]["on_submit"]`, new handler
+`fanaka_app.events.interview.interview.on_submit_advance_pipeline`):**
+
+- `status == "Rejected"`: nothing new to do here — hrms's own dialog lets HR mark the Job
+  Applicant Rejected. That status change is already watched by the existing
+  `Job Applicant.on_update` handler (`fanaka_app/events/job_applicant/job_applicant.py`), which
+  this phase extends with one more line: if `status` just changed to `Rejected` and
+  `custom_regret_email_sent` is falsy, call the existing `enqueue_regret_email` (Phase 4). This
+  unifies "candidate rejected, at any stage" onto the one regret-email path already built —
+  today an interview-stage rejection sends no email at all, which is exactly the gap Phase 1's
+  "close the loop with every candidate" principle was written to prevent.
+- `status == "Cleared"`: look up the applicant's Job Opening's `custom_interview_rounds`, find
+  the position of `doc.interview_type` in that list.
+  - **Not the last round**: **[corrected during build, verified live]** the original plan here
+    was to create the next round's Interview as a blank draft for HR to fill in later — that
+    does not work. Interview's own doctype marks `scheduled_on`/`from_time`/`to_time` both
+    `reqd` **and** `set_only_once`, and Frappe's `validate_set_only_once` blocks changing a
+    set-only-once field on *any* save after the first, full stop — not just "once it's
+    non-empty" (confirmed reading `frappe/model/document.py`, and by hitting
+    `CannotChangeConstantError` against a real inserted draft during this build). hrms itself
+    only works around this with a dedicated `reschedule_interview` method that writes via
+    `db_set` to bypass the check. A blank draft would therefore be permanently unschedulable
+    the moment HR tried to save it normally. **Built instead**: only a HR notification is sent
+    (`notify_hr`, referencing the just-cleared Interview) plus a new **"Schedule Next Round"**
+    button on the Interview form, opening the same style of dialog as Phase 6's Shortlisted
+    Candidates page (date/from time/to time) and calling a new whitelisted
+    `fanaka_app.events.interview.interview.schedule_next_round(interview_name, scheduled_on,
+    from_time, to_time)`. That method sets the schedule fields **before** `insert()` — one
+    atomic step, exactly like Phase 6's `approve_and_invite` already does — then queues the
+    invite email, same as before. A generic **"Send Interview Invite"** button is also added to
+    the Interview form (for a resend, or any round created another way) via `hooks.py`
+    `doctype_js`, calling the existing
+    `fanaka_app.events.job_applicant.interview_invite.enqueue_interview_invite` — this makes the
+    Phase 6 invite function reachable from any round's Interview form, not only the first
+    round's Shortlisted-Candidates-page flow.
+  - **Is the last round** (qualified): create a **draft Job Offer** — bare, per your choice
+    above (`job_applicant`, `designation`, `company`, `offer_date` only) — and assign it to HR
+    to fill in salary/terms and send. This one *is* a plain auto-inserted draft, unlike the
+    Interview case above, because none of Job Offer's required fields
+    (`job_applicant`/`applicant_name`/`designation`/`company`/`offer_date`) are
+    `set_only_once` — confirmed reading `job_offer.json` — so HR can open it and fill in the
+    rest normally. Job Applicant status is left alone here; hrms's own "Mark as Accepted"
+    dialog (already native, see above) is still what moves it to `Accepted`.
+
+**2. Job Offer status changes (`doc_events["Job Offer"]["on_change"]`, new handler
+`fanaka_app.events.job_offer.job_offer.on_status_change`):**
+
+**[corrected during build, verified live]** registered on `on_change`, not `on_update` as
+originally planned. HR flips a submitted offer's status to `Accepted` — Frappe runs that as the
+`update_after_submit` action (fires `on_update_after_submit`, not `on_update`); `on_change` is
+the one event Frappe's `run_post_save_methods` always fires regardless of action type (save,
+submit, or update-after-submit — `frappe/model/document.py`). The handler registered on
+`on_update` silently never ran during this build's smoke test until switched to `on_change`.
+Detect the transition with `doc.has_value_changed("status")`, guarded by `doc.docstatus == 1`
+(matches hrms's own `job_offer.js` gate on its "Create Employee" button).
+
+- `status` just became `Accepted`:
+  - Send the **offer-acceptance confirmation** email to the candidate — reuses
+    `send_templated_email` from `regret_email.py` exactly as Phase 6 reuses it for interview
+    invites: `template=settings.offer_acceptance_confirmation_template`,
+    `applicant_name=doc.job_applicant`, `sender=hiring_sender_email()`.
+  - **[corrected during build]** Employee and Employee Onboarding are **not** auto-created here,
+    reversing the original plan. Employee's required fields include `gender`, `date_of_birth`,
+    `date_of_joining` — genuine business facts nothing in this system can derive, unlike Job
+    Offer's `offer_date` (`today()` is a legitimate default) or `company` (the org's actual
+    configured default). Employee Onboarding has the same problem
+    (`date_of_joining`/`boarding_begins_on` required, unknowable). Force-inserting either with
+    `ignore_mandatory` would leave a record HR must fully rewrite anyway — worse than just
+    pointing them at hrms's own native paths: the "Create Employee" button already on Job Offer
+    (`job_offer.js`, shown once submitted + Accepted) and the "+ New Employee Onboarding"
+    dashboard shortcut already on Job Applicant (`job_applicant_dashboard.py`). `notify_hr`
+    below tells HR to use both, in order.
+- `status` just became `Rejected`: out of scope for this phase — flagged as an open item below,
+  not built now.
+
+**3. Employee Onboarding completed (`doc_events["Employee Onboarding"]["on_change"]`, new
+handler `fanaka_app.events.employee_onboarding.employee_onboarding.on_status_change`):** same
+`on_change`-not-`on_update` correction as Job Offer above — `mark_onboarding_as_completed` sets
+`boarding_status` on an already-submitted doc, same `update_after_submit` action.
+
+- `boarding_status` just became `Completed` (set by hrms's own existing
+  `mark_onboarding_as_completed` button): send the **employment confirmation** email. Same
+  `send_templated_email` helper, `applicant_name=doc.job_applicant`. **[corrected during build]**
+  recipient is the Job Applicant's own `email_id` (the helper's default), not
+  `Employee.personal_email` as originally planned — `send_templated_email`'s `recipient=`
+  override also switches the send to immediate/unqueued (`now=bool(recipient)`, built for the
+  settings "Send Test Email" button, not a production send). Same person, same address used
+  throughout this app; not worth complicating for a second lookup.
+- Idempotency: a `custom_confirmation_email_sent` Check field on Employee Onboarding (fixtures
+  whitelist entry, same pattern as every other custom field in this app), guarding against the
+  handler firing again on a later unrelated save.
+
+### HR notification
+
+Every point where this phase hands control back to a human — a round cleared with another round
+to schedule, a Job Offer draft ready to complete, an offer just accepted — needs to reach that
+person, not just sit unactioned. New helper
+`fanaka_app.events.hr_notify.notify_hr(reference_doctype, reference_name, message)`: assigns a
+`ToDo` (via `frappe.desk.form.assign_to.add`) to every enabled user holding `System Manager`,
+`HR Manager`, or `HR User` (reuses `APPROVAL_ROLES` from `job_applicant.py` rather than a second,
+slightly different constant) — the same role-lookup-by-SQL pattern
+`EmployeeBoardingController.create_task_and_notify_user` already uses in hrms itself
+(`hrms/controllers/employee_boarding_controller.py`), so this isn't a new idiom in the codebase,
+just this app's own copy of one hrms already relies on. `ToDo` over email for this: it shows up
+in the assignee's desk "Assigned To Me" list against the actual record, which is where HR would
+go to act on it anyway. **[verified live]** `assign_to.add` requires the reference document to
+already exist — fine everywhere this is called, since it's always called after the referenced
+record (the just-cleared Interview, the newly drafted Job Offer) is already inserted.
+
+### Dependencies
+
+None new — `frappe.desk.form.assign_to`, `create_interview`/`make_employee` are all existing
+frappe/hrms APIs, no new package. (`get_mapped_doc` dropped from the original plan along with
+the auto-drafted Employee — see the build-time correction above.)
+
+### Open items
+
+- **Job Offer Rejected**: no action defined yet (candidate declines the offer). Likely wants
+  its own low-key acknowledgement email and possibly a regret-email-style close-out, but that's
+  a judgment call on tone, not a technical one — deferred to a follow-up decision rather than
+  guessing the wording now.
+- **Employee Onboarding Template default**: this phase deliberately leaves template selection to
+  HR since none exist yet. Once real templates are set up, a per-designation default mapping
+  would remove that manual step — worth revisiting after the first few real onboardings show
+  what the actual template needs look like, not before.
+
+**Ready to build once approved** — pending resolution of the two open items above, which can
+also simply be deferred (built later, once there's real usage to design against) rather than
+blocking this phase.

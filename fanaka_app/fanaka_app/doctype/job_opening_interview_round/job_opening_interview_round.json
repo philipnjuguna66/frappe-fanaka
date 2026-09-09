@@ -1,0 +1,31 @@
+{
+ "actions": [],
+ "creation": "2026-09-09 10:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "interview_type"
+ ],
+ "fields": [
+  {
+   "fieldname": "interview_type",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Interview Type",
+   "options": "Interview Type",
+   "reqd": 1
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2026-09-09 10:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Fanaka App",
+ "name": "Job Opening Interview Round",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

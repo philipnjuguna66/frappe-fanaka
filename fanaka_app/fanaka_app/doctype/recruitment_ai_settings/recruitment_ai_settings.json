@@ -20,6 +20,10 @@
   "column_break_regret",
   "regret_email_template",
   "interview_invite_template",
+  "offer_onboarding_section",
+  "offer_acceptance_confirmation_template",
+  "column_break_offer_onboarding",
+  "employment_confirmation_template",
   "test_email_section",
   "test_email_template",
   "test_email_applicant",
@@ -131,6 +135,29 @@
    "fieldname": "interview_invite_template",
    "fieldtype": "Link",
    "label": "Interview Invitation Template",
+   "options": "Email Template"
+  },
+  {
+   "fieldname": "offer_onboarding_section",
+   "fieldtype": "Section Break",
+   "label": "Offer & Onboarding Emails"
+  },
+  {
+   "description": "Sent to the candidate when their Job Offer status is set to Accepted (and submitted). Placeholders may also use <code>{{ offer_date }}</code>, <code>{{ designation }}</code>.",
+   "fieldname": "offer_acceptance_confirmation_template",
+   "fieldtype": "Link",
+   "label": "Offer Acceptance Confirmation Template",
+   "options": "Email Template"
+  },
+  {
+   "fieldname": "column_break_offer_onboarding",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Sent once Employee Onboarding is marked Completed.",
+   "fieldname": "employment_confirmation_template",
+   "fieldtype": "Link",
+   "label": "Employment Confirmation Template",
    "options": "Email Template"
   },
   {

@@ -16,6 +16,7 @@ APPROVAL_ROLES = ("System Manager", "HR Manager", "HR User")
 def on_update(doc, method=None):
 	_queue_ai_screening(doc)
 	_sync_employee_referral(doc)
+	_regret_on_reject(doc)
 
 
 def _queue_ai_screening(doc):
@@ -58,6 +59,26 @@ def _sync_employee_referral(doc):
 		return
 
 	frappe.db.set_value("Employee Referral", doc.employee_referral, "status", REFERRAL_SYNC_STATUS)
+
+
+def _regret_on_reject(doc):
+	"""Any-stage rejection gets the same regret email -- AI-stage reject (this module's
+	own reject_ai_shortlist) and hrms's native post-interview "Mark as Rejected" dialog
+	(hrms/hr/doctype/interview/interview.py) both just set status = "Rejected" and save,
+	so hooking the status change here covers both without hrms code changes. Before
+	Phase 8, an interview-stage rejection sent no email at all -- exactly the gap
+	Phase 1's "close the loop with every candidate" principle was written to prevent.
+
+	See specs/recruitment_ai_screening.md (Phase 8) for the plan this implements.
+	"""
+	if not doc.has_value_changed("status") or doc.status != "Rejected":
+		return
+	if doc.custom_regret_email_sent:
+		return
+
+	from fanaka_app.events.job_applicant.regret_email import enqueue_regret_email
+
+	enqueue_regret_email(doc.name)
 
 
 @frappe.whitelist()
