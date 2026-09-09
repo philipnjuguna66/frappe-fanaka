@@ -579,6 +579,16 @@ instead of HR starting from a blank form.
     `set_only_once` — confirmed reading `job_offer.json` — so HR can open it and fill in the
     rest normally. Job Applicant status is left alone here; hrms's own "Mark as Accepted"
     dialog (already native, see above) is still what moves it to `Accepted`.
+    - **[corrected, live failure after ship]** two problems surfaced against real data/a real
+      site: (1) `Job Applicant.designation` is optional (`reqd=0`) — an applicant without one
+      left the draft's `designation` blank and `insert()` threw, even though the field was
+      "set" (to `None`). Now falls back to the linked Job Opening's `designation`, which is
+      always required (`reqd=1` on `Job Opening`, confirmed) — real data, not a guess. (2) a
+      live site threw `"Value missing for Valid Till"`, a field this checkout's hrms doesn't
+      have at all — meaning Job Offer's required-field set isn't fixed across hrms versions,
+      so hardcoding "these 5 fields cover it" doesn't hold in general. `_build_offer_draft` now
+      inserts with `ignore_mandatory=True` too: the mandatory check still applies, just
+      deferred to HR's own save instead of blocking the draft from being created at all.
 
 **2. Job Offer status changes (`doc_events["Job Offer"]["on_change"]`, new handler
 `fanaka_app.events.job_offer.job_offer.on_status_change`):**

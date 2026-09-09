@@ -178,6 +178,7 @@ frappe.ui.form.on("Job Applicant", {
 				});
 			},
 		});
+		dialog.$wrapper.addClass("fanaka-slideover");
 		dialog.show();
 	},
 

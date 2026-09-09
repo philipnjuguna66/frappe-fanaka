@@ -17,7 +17,7 @@ required_apps = ["erpnext", "hrms"]
 # ------------------
 
 # include js, css files in header of desk.html
-# app_include_css = "/assets/fanaka_app/css/fanaka_app.css"
+app_include_css = "/assets/fanaka_app/css/slideover.css"
 # app_include_js = "/assets/fanaka_app/js/fanaka_app.js"
 
 # include js, css files in header of web template

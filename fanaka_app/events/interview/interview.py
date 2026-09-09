@@ -76,18 +76,36 @@ def _build_offer_draft(applicant):
 	"""Create + insert a bare Job Offer draft for a qualified applicant. Raises on
 	failure (e.g. one already exists) -- callers decide how to handle that: the
 	automatic hook logs and swallows it, the manual action below lets it surface to
-	the user."""
+	the user.
+
+	[corrected] Job Applicant.designation is optional (reqd=0), unlike Job Opening's
+	own (always reqd=1) -- an applicant without one left Job Offer's designation blank
+	and insert() threw "Value missing for Designation" even with the field "set" to
+	None. Falls back to the linked Job Opening's designation, which always has one.
+
+	Also inserts with ignore_mandatory=True: this bench's hrms has exactly 5 reqd
+	fields on Job Offer (job_applicant/applicant_name/offer_date/designation/company),
+	all covered above -- but a live site hit "Value missing for Valid Till", a field
+	that doesn't exist in this checkout's hrms at all, meaning a newer hrms version can
+	add reqd fields this code has no way to know about in advance. A bare draft that
+	can't be inserted at all defeats the point of "HR fills in the rest"; deferring the
+	mandatory check to HR's own save (which still enforces it, same protection) is the
+	only version-proof option."""
+	designation = applicant.designation
+	if not designation and applicant.job_title:
+		designation = frappe.db.get_value("Job Opening", applicant.job_title, "designation")
+
 	offer = frappe.get_doc(
 		{
 			"doctype": "Job Offer",
 			"job_applicant": applicant.name,
 			"applicant_name": applicant.applicant_name,
-			"designation": applicant.designation,
+			"designation": designation,
 			"offer_date": today(),
 			"company": frappe.defaults.get_global_default("company"),
 		}
 	)
-	offer.insert(ignore_permissions=True)
+	offer.insert(ignore_permissions=True, ignore_mandatory=True)
 	return offer
 
 

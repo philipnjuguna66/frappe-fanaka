@@ -101,6 +101,7 @@ frappe.ui.form.on("Interview", {
 				});
 			},
 		});
+		dialog.$wrapper.addClass("fanaka-slideover");
 		dialog.show();
 	},
 

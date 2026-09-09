@@ -249,6 +249,7 @@ class ShortlistedCandidates {
 				});
 			},
 		});
+		dialog.$wrapper.addClass("fanaka-slideover");
 		dialog.show();
 	}
 

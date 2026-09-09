@@ -1,0 +1,43 @@
+/* Slide-over variant of frappe.ui.Dialog: add the "fanaka-slideover" class to a
+ * dialog's $wrapper before calling .show(). Frappe has no built-in slide-over
+ * dialog -- this repositions the standard Bootstrap modal (.modal > .modal-dialog >
+ * .modal-content) to a fixed panel sliding in from the right, on top of its own
+ * existing fade transition. Used by the recruitment-pipeline dialogs (interview
+ * scheduling, interview invite) -- see interview.js, job_applicant.js,
+ * shortlisted_candidates.js.
+ */
+
+.modal.fanaka-slideover .modal-dialog {
+	position: fixed;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	margin: 0;
+	width: 100%;
+	max-width: 420px;
+	height: 100%;
+	transform: translateX(100%);
+	transition: transform 0.25s ease-out;
+}
+
+.modal.fanaka-slideover.show .modal-dialog {
+	transform: translateX(0);
+}
+
+.modal.fanaka-slideover .modal-content {
+	height: 100%;
+	border-radius: 0;
+	border: none;
+	box-shadow: -4px 0 24px rgba(0, 0, 0, 0.15);
+}
+
+.modal.fanaka-slideover .modal-body {
+	overflow-y: auto;
+	flex: 1;
+}
+
+@media (max-width: 480px) {
+	.modal.fanaka-slideover .modal-dialog {
+		max-width: 100%;
+	}
+}
