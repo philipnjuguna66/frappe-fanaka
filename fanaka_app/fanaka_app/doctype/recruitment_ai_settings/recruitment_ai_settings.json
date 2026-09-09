@@ -135,7 +135,7 @@
    "options": "Email Template"
   },
   {
-   "description": "Sent to the candidate when HR approves and invites them for an interview. Placeholders may also use <code>{{ interview_scheduled_on }}</code>, <code>{{ interview_from_time }}</code>, <code>{{ interview_to_time }}</code>, <code>{{ interview_type }}</code>.",
+   "description": "Sent to the candidate when HR approves and invites them for an interview. Placeholders may also use <code>{{ interview_scheduled_on }}</code>, <code>{{ interview_from_time }}</code>, <code>{{ interview_to_time }}</code>, <code>{{ interview_type }}</code>, <code>{{ job_opening_title }}</code>, <code>{{ interview_location }}</code> (blank if the Job Opening has no Location/Branch set).",
    "fieldname": "interview_invite_template",
    "fieldtype": "Link",
    "label": "Interview Invitation Template",
