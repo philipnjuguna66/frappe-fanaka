@@ -1,11 +1,14 @@
 """Interview doc_events: advances the recruitment pipeline once a round is Cleared.
 
-Automation only kicks in for a Job Opening that has actually configured a
+Automatic advancement only kicks in for a Job Opening that has actually configured a
 ``custom_interview_rounds`` sequence -- an opening with none configured (the default,
-since none exist anywhere in this system yet) gets no automatic behaviour at all, same
-as before this phase existed. This is a deliberate opt-in, not a fallback: guessing
-"this must be the only/last round" for an unconfigured opening would wrongly draft a
-Job Offer off a single interview HR never intended to be final.
+since none exist anywhere in this system yet) gets no *automatic* behaviour on
+on_submit. This is a deliberate opt-in, not a fallback: guessing "this must be the
+only/last round" for an unconfigured opening would wrongly draft a Job Offer off a
+single interview HR never intended to be final. HR still has an explicit manual way
+to move an unconfigured opening's candidate forward -- see ``get_pipeline_status`` /
+``proceed_to_offer`` below, surfaced as a "Proceed to Job Offer" button on the
+Interview form whenever there's no next round to schedule.
 
 **Why the next round is never auto-created as a blank draft** [verified against a live
 insert during build]: Interview's own doctype marks ``scheduled_on``/``from_time``/
@@ -69,24 +72,35 @@ def _configured_rounds(job_opening: str) -> list[str]:
 	)
 
 
+def _build_offer_draft(applicant):
+	"""Create + insert a bare Job Offer draft for a qualified applicant. Raises on
+	failure (e.g. one already exists) -- callers decide how to handle that: the
+	automatic hook logs and swallows it, the manual action below lets it surface to
+	the user."""
+	offer = frappe.get_doc(
+		{
+			"doctype": "Job Offer",
+			"job_applicant": applicant.name,
+			"applicant_name": applicant.applicant_name,
+			"designation": applicant.designation,
+			"offer_date": today(),
+			"company": frappe.defaults.get_global_default("company"),
+		}
+	)
+	offer.insert(ignore_permissions=True)
+	return offer
+
+
 def _create_offer_draft(doc):
 	applicant = frappe.get_doc("Job Applicant", doc.job_applicant)
 
 	try:
-		offer = frappe.get_doc(
-			{
-				"doctype": "Job Offer",
-				"job_applicant": applicant.name,
-				"applicant_name": applicant.applicant_name,
-				"designation": applicant.designation,
-				"offer_date": today(),
-				"company": frappe.defaults.get_global_default("company"),
-			}
-		)
-		offer.insert(ignore_permissions=True)
+		offer = _build_offer_draft(applicant)
 	except frappe.ValidationError:
 		# e.g. a Job Offer already exists for this applicant -- must never block this
-		# Interview's submission.
+		# Interview's submission. HR can retry manually via "Proceed to Job Offer" on
+		# the Interview form (get_pipeline_status/proceed_to_offer below), which
+		# reports errors instead of swallowing them.
 		frappe.log_error(
 			title="Could not auto-create Job Offer draft",
 			message=frappe.get_traceback(),
@@ -100,6 +114,61 @@ def _create_offer_draft(doc):
 			applicant.applicant_name
 		),
 	)
+
+
+@frappe.whitelist()
+def get_pipeline_status(interview_name: str) -> dict:
+	"""What the Interview form's action button should offer next: schedule the
+	configured next round, view the Job Offer if one already exists (created either
+	automatically or via a previous proceed_to_offer call), or -- if neither -- let HR
+	proceed to a Job Offer manually. Covers both cases where the automatic hook does
+	nothing on its own: no round sequence configured for this Job Opening at all, and
+	an opening's last configured round where the automatic draft failed (logged, not
+	surfaced -- see _create_offer_draft)."""
+	frappe.only_for(APPROVAL_ROLES)
+	doc = frappe.get_doc("Interview", interview_name)
+
+	next_round = None
+	if doc.job_opening:
+		rounds = _configured_rounds(doc.job_opening)
+		if doc.interview_type in rounds:
+			position = rounds.index(doc.interview_type)
+			if position + 1 < len(rounds):
+				next_round = rounds[position + 1]
+
+	job_offer = frappe.db.get_value(
+		"Job Offer", {"job_applicant": doc.job_applicant, "docstatus": ["!=", 2]}, "name"
+	)
+	return {"next_round": next_round, "job_offer": job_offer}
+
+
+@frappe.whitelist()
+def proceed_to_offer(interview_name: str) -> dict:
+	"""Manual "no next round" action for a Cleared, submitted interview: same bare
+	Job Offer draft the automatic on_submit hook creates when an opening's *last*
+	configured round clears -- reachable directly here for an opening with no round
+	sequence configured at all (where the hook intentionally does nothing, per
+	on_submit_advance_pipeline's module docstring), or as a retry if the automatic
+	creation failed silently."""
+	frappe.only_for(APPROVAL_ROLES)
+	doc = frappe.get_doc("Interview", interview_name)
+	if doc.status != "Cleared" or doc.docstatus != 1:
+		frappe.throw(_("Only a submitted, Cleared interview can proceed to a Job Offer."))
+
+	existing = frappe.db.exists("Job Offer", {"job_applicant": doc.job_applicant, "docstatus": ["!=", 2]})
+	if existing:
+		frappe.throw(_("{0} already has a Job Offer ({1}).").format(doc.job_applicant, existing))
+
+	applicant = frappe.get_doc("Job Applicant", doc.job_applicant)
+	offer = _build_offer_draft(applicant)
+	notify_hr(
+		"Job Offer",
+		offer.name,
+		_("{0} cleared the interview -- fill in salary/terms and send the Job Offer.").format(
+			applicant.applicant_name
+		),
+	)
+	return {"offer": offer.name}
 
 
 @frappe.whitelist()
