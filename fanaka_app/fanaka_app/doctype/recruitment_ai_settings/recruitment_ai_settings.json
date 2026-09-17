@@ -4,6 +4,8 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
+  "application_received_section",
+  "application_received_template",
   "screening_section",
   "enable_ai_screening",
   "shortlist_threshold_score",
@@ -36,6 +38,18 @@
   "send_test_email_button"
  ],
  "fields": [
+  {
+   "fieldname": "application_received_section",
+   "fieldtype": "Section Break",
+   "label": "Application Received Email"
+  },
+  {
+   "description": "Sent automatically when a candidate's Job Applicant record is created (i.e. when they apply). Use bare placeholders, e.g. <code>{{ applicant_name }}</code>, <code>{{ job_title }}</code> -- any Job Applicant fieldname.",
+   "fieldname": "application_received_template",
+   "fieldtype": "Link",
+   "label": "Application Received Email Template",
+   "options": "Email Template"
+  },
   {
    "fieldname": "screening_section",
    "fieldtype": "Section Break",

@@ -13,6 +13,12 @@ REFERRAL_SYNC_STATUS = "In Process"
 APPROVAL_ROLES = ("System Manager", "HR Manager", "HR User")
 
 
+def after_insert(doc, method=None):
+	from fanaka_app.events.job_applicant.application_received import enqueue_application_received_email
+
+	enqueue_application_received_email(doc.name)
+
+
 def on_update(doc, method=None):
 	_queue_ai_screening(doc)
 	_sync_employee_referral(doc)
