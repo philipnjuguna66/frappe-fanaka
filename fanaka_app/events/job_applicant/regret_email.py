@@ -18,6 +18,7 @@ def send_templated_email(
 	applicant_name: str,
 	recipient: str | None = None,
 	sender: str | None = None,
+	reply_to: str | None = None,
 	extra_context: dict | None = None,
 	attachments: list[dict] | None = None,
 ):
@@ -37,6 +38,9 @@ def send_templated_email(
 	(``now=False`` by default); a test send goes out immediately so the sender gets
 	pass/fail feedback in the same request.
 
+	``reply_to`` -- Reply-To header override; the application-received email points it at a
+	no-reply address so candidate replies never land in the hiring inbox.
+
 	``attachments`` -- list of ``frappe.sendmail``-style attachment dicts, e.g. the
 	return value of ``frappe.attach_print(...)`` (used by the offer-letter send).
 	"""
@@ -50,6 +54,7 @@ def send_templated_email(
 	frappe.sendmail(
 		recipients=[recipient or applicant.email_id],
 		sender=sender,
+		reply_to=reply_to,
 		subject=rendered["subject"],
 		message=rendered["message"],
 		reference_doctype="Job Applicant",

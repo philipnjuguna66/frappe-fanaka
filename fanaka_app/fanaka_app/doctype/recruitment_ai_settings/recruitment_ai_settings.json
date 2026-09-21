@@ -6,6 +6,7 @@
  "field_order": [
   "application_received_section",
   "application_received_template",
+  "no_reply_email",
   "screening_section",
   "enable_ai_screening",
   "shortlist_threshold_score",
@@ -49,6 +50,13 @@
    "fieldtype": "Link",
    "label": "Application Received Email Template",
    "options": "Email Template"
+  },
+  {
+   "description": "Reply-To on the application-received email. Use an address nobody reads (e.g. noreply@yourcompany.com) so candidate replies never reach the hiring inbox or trigger another acknowledgement. Leave blank to keep the normal reply address.",
+   "fieldname": "no_reply_email",
+   "fieldtype": "Data",
+   "label": "No-Reply Address",
+   "options": "Email"
   },
   {
    "fieldname": "screening_section",
