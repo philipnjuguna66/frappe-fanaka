@@ -62,6 +62,8 @@ def create_job_application():
         "currency": data.get("currency", "KES"),
         "lower_range": data.get("lower_range", 0),
         "upper_range": data.get("upper_range", 0),
+        # Optional, sent by the website apply form (fixed list of areas).
+        "custom_preferred_work_location": data.get("custom_preferred_work_location"),
     })
 
     job_application.insert(ignore_permissions=True)

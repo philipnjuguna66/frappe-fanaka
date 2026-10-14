@@ -44,3 +44,36 @@ class TestCreateJobApplication(FanakaTestCase):
 				},
 			)
 		)
+
+	def _apply(self, **extra):
+		builder = EnvironBuilder(
+			method="POST",
+			base_url="http://fanaka.localhost",
+			data={
+				"applicant_name": "Jane Doe",
+				"email_id": "jane.loc@example.com",
+				"phone_number": "0700000000",
+				"cover_letter": "Submitted via website.",
+				**extra,
+			},
+		)
+		wreq = WerkzeugRequest(builder.get_environ())
+		frappe.local.request = wreq
+		frappe.local.form_dict = frappe._dict(wreq.form.to_dict())
+		return create_job_application()
+
+	def test_preferred_work_location_is_saved_on_job_applicant(self):
+		result = self._apply(custom_preferred_work_location="Mombasa Road, including Kitengela")
+
+		self.assertEqual(
+			frappe.db.get_value("Job Applicant", result["name"], "custom_preferred_work_location"),
+			"Mombasa Road, including Kitengela",
+		)
+
+	def test_preferred_work_location_is_optional(self):
+		result = self._apply()
+
+		self.assertFalse(
+			frappe.db.get_value("Job Applicant", result["name"], "custom_preferred_work_location")
+		)
+
