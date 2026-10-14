@@ -350,3 +350,4 @@ add_to_apps_screen = [
         "route": "/desk/fanaka-app",
     }
 ]
+after_migrate = ["fanaka_app.setup.job_application_web_form.ensure_preferred_work_location"]
