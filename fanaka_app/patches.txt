@@ -10,3 +10,4 @@ fanaka_app.patches.v1_0.add_reporting_fields
 fanaka_app.patches.v1_0.add_job_opening_qualifications
 fanaka_app.patches.v1_0.add_pipeline_automation_fields
 fanaka_app.patches.v1_0.add_job_offer_letter_fields
+fanaka_app.patches.v1_0.add_preferred_work_location_field

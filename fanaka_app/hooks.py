@@ -332,7 +332,8 @@ fixtures = [
 				"Job Opening-custom_interview_rounds",
 				"Employee Onboarding-custom_confirmation_email_sent",
 				"Job Offer-custom_offer_letter_sent",
-				"Job Offer-custom_offer_letter_sent_on"
+				"Job Offer-custom_offer_letter_sent_on",
+				"Job Applicant-custom_preferred_work_location"
 			]]
 		]
 	},
